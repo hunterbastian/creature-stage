@@ -20,12 +20,12 @@ export function CreatureMaterial({
           map={maps.map}
           specularMap={maps.specMap}
           bumpMap={maps.bumpMap}
-          bumpScale={0.08}
+          bumpScale={0.26}
           color="#ffffff"
-          specular="#d4c2a4"
-          shininess={16}
+          specular="#6e6558"
+          shininess={9}
           emissive={color}
-          emissiveIntensity={0.07}
+          emissiveIntensity={0.015}
         />
       );
     case "keratin":
@@ -34,12 +34,12 @@ export function CreatureMaterial({
           map={maps.map}
           specularMap={maps.specMap}
           bumpMap={maps.bumpMap}
-          bumpScale={0.05}
+          bumpScale={0.14}
           color="#ffffff"
-          specular="#cbb892"
-          shininess={28}
+          specular="#7a7060"
+          shininess={16}
           emissive={color}
-          emissiveIntensity={0.04}
+          emissiveIntensity={0.01}
         />
       );
     case "wet":
@@ -48,12 +48,12 @@ export function CreatureMaterial({
           map={maps.map}
           specularMap={maps.specMap}
           bumpMap={maps.bumpMap}
-          bumpScale={0.02}
+          bumpScale={0.08}
           color="#ffffff"
-          specular="#efe6d4"
-          shininess={52}
+          specular="#8a8478"
+          shininess={28}
           emissive={color}
-          emissiveIntensity={0.05}
+          emissiveIntensity={0.02}
         />
       );
     case "plate":
@@ -62,12 +62,12 @@ export function CreatureMaterial({
           map={maps.map}
           specularMap={maps.specMap}
           bumpMap={maps.bumpMap}
-          bumpScale={0.11}
+          bumpScale={0.32}
           color="#ffffff"
-          specular="#c4b49a"
-          shininess={12}
+          specular="#6a6256"
+          shininess={7}
           emissive={color}
-          emissiveIntensity={0.03}
+          emissiveIntensity={0.01}
         />
       );
     default:

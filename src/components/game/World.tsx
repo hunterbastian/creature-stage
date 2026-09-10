@@ -14,9 +14,24 @@ type Clump = {
   color: string;
 };
 
+type Puddle = {
+  x: number;
+  z: number;
+  sx: number;
+  sz: number;
+  rot: number;
+};
+
+const PUDDLES: Puddle[] = [
+  { x: 1.8, z: -2.2, sx: 3.6, sz: 0.62, rot: 0.18 },
+  { x: -5.4, z: 2.6, sx: 2.8, sz: 0.5, rot: -0.42 },
+  { x: 6.2, z: 4.1, sx: 2.2, sz: 0.42, rot: 0.7 },
+  { x: -2.8, z: -6.4, sx: 3.1, sz: 0.48, rot: -0.15 },
+  { x: 8.4, z: -5.2, sx: 2.4, sz: 0.4, rot: 0.35 },
+];
+
 function seededClumps(count: number, salt: number): Clump[] {
   const clumps: Clump[] = [];
-  // Simple LCG so decor is stable across hot reloads in a session.
   let seed = (salt * 9301 + 49297) % 233280;
   const rand = () => {
     seed = (seed * 9301 + 49297) % 233280;
@@ -29,9 +44,7 @@ function seededClumps(count: number, salt: number): Clump[] {
     const x = Math.sin(angle) * radius;
     const z = Math.cos(angle) * radius;
     if (Math.hypot(x, z) < 2.4) continue;
-    if (
-      NEST_LAYOUT.some((nest) => Math.hypot(nest.x - x, nest.z - z) < 2.5)
-    ) {
+    if (NEST_LAYOUT.some((nest) => Math.hypot(nest.x - x, nest.z - z) < 2.5)) {
       continue;
     }
     clumps.push({
@@ -39,23 +52,31 @@ function seededClumps(count: number, salt: number): Clump[] {
       z,
       scale: 0.7 + rand() * 0.6,
       rot: rand() * Math.PI * 2,
-      color: rand() > 0.5 ? "#628444" : "#547038",
+      color: rand() > 0.55 ? "#4a5238" : "#3d4430",
     });
   }
   return clumps;
 }
 
-function GrassTuft({ clump }: { clump: Clump }) {
+function MossTuft({ clump }: { clump: Clump }) {
   return (
     <group position={[clump.x, 0, clump.z]} rotation={[0, clump.rot, 0]}>
-      {[0, 0.08, -0.07].map((offset, index) => (
+      <mesh
+        rotation={[-Math.PI / 2, 0, 0]}
+        position={[0, 0.012, 0]}
+        receiveShadow
+      >
+        <circleGeometry args={[0.16 * clump.scale, 7]} />
+        <meshPhongMaterial color={clump.color} shininess={3} specular="#5a6248" />
+      </mesh>
+      {[0, 0.07, -0.06].map((offset, index) => (
         <mesh
           key={index}
-          position={[offset, 0.1 * clump.scale, index * 0.03]}
+          position={[offset, 0.07 * clump.scale, index * 0.03]}
           castShadow
         >
-          <coneGeometry args={[0.045 * clump.scale, 0.2 * clump.scale, 5]} />
-          <meshPhongMaterial color={clump.color} shininess={4} specular="#8a9a6a" />
+          <coneGeometry args={[0.035 * clump.scale, 0.14 * clump.scale, 5]} />
+          <meshPhongMaterial color={clump.color} shininess={3} specular="#5a6248" />
         </mesh>
       ))}
     </group>
@@ -65,31 +86,68 @@ function GrassTuft({ clump }: { clump: Clump }) {
 function Rock({ clump }: { clump: Clump }) {
   return (
     <mesh
-      position={[clump.x, 0.16 * clump.scale, clump.z]}
+      position={[clump.x, 0.14 * clump.scale, clump.z]}
       rotation={[0.2, clump.rot, 0.1]}
-      scale={clump.scale * 0.55}
+      scale={clump.scale * 0.5}
       castShadow
       receiveShadow
     >
       <dodecahedronGeometry args={[0.45, 0]} />
-      <meshPhongMaterial color="#8a8170" shininess={6} specular="#b0a890" />
+      <meshPhongMaterial color="#7a7060" shininess={5} specular="#8a8070" />
     </mesh>
   );
 }
 
-function Mushroom({ clump }: { clump: Clump }) {
+function Scrub({ clump }: { clump: Clump }) {
+  const blush = clump.scale > 0.95 ? "#b89078" : "#c4a090";
   return (
-    <group position={[clump.x, 0, clump.z]}>
-      <mesh position={[0, 0.18, 0]} castShadow>
-        <cylinderGeometry args={[0.05, 0.07, 0.36, 6]} />
-        <meshPhongMaterial color="#e6d3ae" shininess={8} specular="#dcc8a4" />
-      </mesh>
-      <mesh position={[0, 0.38, 0]} castShadow>
-        <sphereGeometry args={[0.16 * clump.scale, 10, 8, 0, Math.PI * 2, 0, 1.3]} />
+    <group position={[clump.x, 0, clump.z]} rotation={[0, clump.rot, 0]}>
+      {[-0.04, 0, 0.05].map((x, index) => (
+        <mesh
+          key={x}
+          position={[x, 0.14 * clump.scale, index * 0.02]}
+          rotation={[0.15 * (index - 1), 0, 0.2 * (index - 1)]}
+          castShadow
+        >
+          <cylinderGeometry
+            args={[0.012, 0.02, 0.28 * clump.scale, 5]}
+          />
+          <meshPhongMaterial color="#8a7a68" shininess={4} specular="#7a6e5c" />
+        </mesh>
+      ))}
+      {[-0.05, 0.02, 0.06].map((x) => (
+        <mesh key={`tip-${x}`} position={[x, 0.28 * clump.scale, 0]} castShadow>
+          <sphereGeometry args={[0.035 * clump.scale, 6, 5]} />
+          <meshPhongMaterial color={blush} shininess={6} specular="#8a7a6c" />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+function TidePuddle({ puddle }: { puddle: Puddle }) {
+  return (
+    <group position={[puddle.x, 0.02, puddle.z]} rotation={[0, puddle.rot, 0]}>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <circleGeometry args={[1, 20]} />
         <meshPhongMaterial
-          color={clump.scale > 0.9 ? "#c46a5c" : "#c9a056"}
-          shininess={12}
-          specular="#dcc8a4"
+          color="#4a5348"
+          shininess={3}
+          specular="#6a7060"
+        />
+      </mesh>
+      <mesh
+        rotation={[-Math.PI / 2, 0, 0]}
+        position={[0, 0.008, 0]}
+        scale={[puddle.sx * 0.28, 1, puddle.sz * 1.15]}
+      >
+        <circleGeometry args={[1, 22]} />
+        <meshPhongMaterial
+          color="#3a4644"
+          shininess={62}
+          specular="#9aa8a0"
+          transparent
+          opacity={0.78}
         />
       </mesh>
     </group>
@@ -97,28 +155,28 @@ function Mushroom({ clump }: { clump: Clump }) {
 }
 
 export function World() {
-  const grass = useMemo(() => seededClumps(20, 3), []);
-  const rocks = useMemo(() => seededClumps(9, 11), []);
-  const shrooms = useMemo(() => seededClumps(6, 19), []);
+  const moss = useMemo(() => seededClumps(22, 3), []);
+  const rocks = useMemo(() => seededClumps(10, 11), []);
+  const scrub = useMemo(() => seededClumps(14, 19), []);
   const shadowMap = useMemo(() => (isCoarsePointer() ? 512 : 1024), []);
 
   return (
     <>
-      <color attach="background" args={["#9bb8c4"]} />
-      <fogExp2 attach="fog" args={["#c5d2c8", 0.024]} />
+      <color attach="background" args={["#b4aea4"]} />
+      <fogExp2 attach="fog" args={["#b8b2a6", 0.028]} />
       <Sky
-        sunPosition={[16, 6.5, 11]}
-        turbidity={9}
-        rayleigh={2.1}
-        mieCoefficient={0.006}
-        mieDirectionalG={0.82}
+        sunPosition={[10, 4.2, 8]}
+        turbidity={14}
+        rayleigh={1.1}
+        mieCoefficient={0.008}
+        mieDirectionalG={0.7}
       />
-      <hemisphereLight args={["#f0e2c4", "#5e6e48", 0.78]} />
-      <ambientLight color="#ead8b6" intensity={0.4} />
+      <hemisphereLight args={["#d0c8b8", "#5a5448", 0.62]} />
+      <ambientLight color="#c4b8a4" intensity={0.32} />
       <directionalLight
-        color="#ffd9a8"
-        position={[16, 17, 9]}
-        intensity={1.18}
+        color="#e6d8c0"
+        position={[14, 15, 8]}
+        intensity={0.88}
         castShadow
         shadow-mapSize-width={shadowMap}
         shadow-mapSize-height={shadowMap}
@@ -130,53 +188,32 @@ export function World() {
         shadow-camera-top={22}
         shadow-camera-bottom={-22}
       />
-      <directionalLight
-        color="#aebcc0"
-        position={[-10, 7, -8]}
-        intensity={0.32}
-      />
+      <directionalLight color="#8a908c" position={[-9, 6, -7]} intensity={0.22} />
 
-      {/* Cheap sun-shaft volume — Skyrim-era godray stand-in. */}
-      <mesh
-        position={[10, 11, 7]}
-        rotation={[0.55, 0.35, 0.08]}
-        renderOrder={-1}
-      >
-        <coneGeometry args={[7.5, 24, 10, 1, true]} />
-        <meshBasicMaterial
-          color="#f0ddb4"
-          transparent
-          opacity={0.05}
-          depthWrite={false}
-        />
-      </mesh>
-
-      {/* Surrounding shallows — sells the tiny island read. */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.18, 0]}>
         <circleGeometry args={[42, 48]} />
-        <meshPhongMaterial color="#3a6e8c" shininess={28} specular="#9ec0cc" />
+        <meshPhongMaterial color="#4a5856" shininess={18} specular="#7a8884" />
       </mesh>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.04, 0]}>
         <ringGeometry args={[WORLD_RADIUS - 0.15, WORLD_RADIUS + 1.4, 48]} />
-        <meshPhongMaterial color="#cbb48a" shininess={6} specular="#d8c9a4" />
+        <meshPhongMaterial color="#8a7c64" shininess={5} specular="#9a8c74" />
       </mesh>
-      <mesh
-        rotation={[-Math.PI / 2, 0, 0]}
-        position={[0, 0, 0]}
-        receiveShadow
-      >
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
         <circleGeometry args={[WORLD_RADIUS, 48]} />
-        <meshPhongMaterial color="#6b8c4a" shininess={4} specular="#8a9c64" />
+        <meshPhongMaterial color="#8a7c62" shininess={4} specular="#7a6e58" />
       </mesh>
 
-      {grass.map((clump, index) => (
-        <GrassTuft key={`g-${index}`} clump={clump} />
+      {PUDDLES.map((puddle) => (
+        <TidePuddle key={`${puddle.x}-${puddle.z}`} puddle={puddle} />
+      ))}
+      {moss.map((clump, index) => (
+        <MossTuft key={`g-${index}`} clump={clump} />
       ))}
       {rocks.map((clump, index) => (
         <Rock key={`r-${index}`} clump={clump} />
       ))}
-      {shrooms.map((clump, index) => (
-        <Mushroom key={`m-${index}`} clump={clump} />
+      {scrub.map((clump, index) => (
+        <Scrub key={`s-${index}`} clump={clump} />
       ))}
     </>
   );

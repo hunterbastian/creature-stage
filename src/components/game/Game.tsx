@@ -8,7 +8,7 @@ const GameCanvas = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="grid h-full w-full place-items-center bg-[#16301c] text-lime-100">
+      <div className="grid h-full w-full place-items-center bg-[#2a261c] text-stone-200">
         Waking Tideform…
       </div>
     ),
@@ -67,7 +67,7 @@ export function Game() {
   return (
     <div
       ref={shellRef}
-      className="fixed inset-0 overflow-hidden overscroll-none bg-[#16301c] select-none"
+      className="fixed inset-0 overflow-hidden overscroll-none bg-[#2a261c] select-none"
     >
       <GameCanvas />
       <Hud />

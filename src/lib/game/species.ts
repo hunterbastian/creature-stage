@@ -28,9 +28,9 @@ export const SPECIES: Record<SpeciesId, SpeciesDef> = {
     temperament: "curious",
     size: 0.9,
     parts: DEFAULT_PARTS,
-    weave: "#b89a72",
-    moss: "#6a8648",
-    egg: "#ead7b4",
+    weave: "#8a7a58",
+    moss: "#4a5238",
+    egg: "#c4b496",
   },
   tideglider: {
     id: "tideglider",
@@ -40,9 +40,9 @@ export const SPECIES: Record<SpeciesId, SpeciesDef> = {
     temperament: "timid",
     size: 0.92,
     parts: starterLoadout("plump"),
-    weave: "#7a9a92",
-    moss: "#5a7a58",
-    egg: "#c8dcc8",
+    weave: "#6e6a54",
+    moss: "#3d4430",
+    egg: "#b8ad90",
   },
   brambleback: {
     id: "brambleback",
@@ -52,9 +52,9 @@ export const SPECIES: Record<SpeciesId, SpeciesDef> = {
     temperament: "bold",
     size: 1.0,
     parts: starterLoadout("spiky"),
-    weave: "#8a746e",
-    moss: "#5c7040",
-    egg: "#e4d0c4",
+    weave: "#7a6858",
+    moss: "#4a4430",
+    egg: "#c4a090",
   },
 };
 

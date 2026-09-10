@@ -478,7 +478,7 @@ function EyesMesh({
               <Ball
                 position={[0.012, 0.014, 0.048]}
                 radius={0.012}
-                color="#f7f3ea"
+                color="#c8bba0"
                 finish="wet"
                 castShadow={false}
                 segments={8}

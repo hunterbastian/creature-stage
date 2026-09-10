@@ -34,6 +34,6 @@ export function canvasGlOptions(): {
     powerPreference: "high-performance",
     // Washed early-2010s tonemap — not ACES/UE5.
     toneMapping: ReinhardToneMapping,
-    toneMappingExposure: 1.12,
+    toneMappingExposure: 0.96,
   };
 }

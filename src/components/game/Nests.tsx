@@ -102,10 +102,10 @@ function NestMesh({
         <torusGeometry args={[0.78, 0.09, 8, 14]} />
         <meshPhongMaterial
           color={species.moss}
-          shininess={6}
-          specular="#9aaa70"
-          emissive={isHome ? "#b8c878" : "#000000"}
-          emissiveIntensity={isHome ? 0.18 : 0}
+          shininess={4}
+          specular="#6a6a50"
+          emissive={isHome ? "#8a7a50" : "#000000"}
+          emissiveIntensity={isHome ? 0.06 : 0}
         />
       </mesh>
       {TWIGS.map((twig) => (
@@ -137,11 +137,11 @@ function NestMesh({
           <mesh position={[0, 0.52, 0]} castShadow>
             <sphereGeometry args={[0.12, 10, 8]} />
             <meshPhongMaterial
-              color="#c4c878"
-              emissive="#b8c070"
-              emissiveIntensity={0.28}
-              shininess={18}
-              specular="#e8e0b8"
+              color="#b8a070"
+              emissive="#8a7850"
+              emissiveIntensity={0.08}
+              shininess={8}
+              specular="#a09070"
             />
           </mesh>
         </group>

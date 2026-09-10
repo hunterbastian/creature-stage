@@ -12,12 +12,12 @@ export type Finish = "skin" | "keratin" | "wet" | "plate";
 
 export type Vec3 = [number, number, number];
 
-/** Ivory plates and ammonite shells from the locked cliff-theropod keyart. */
-export const SHELL_CREAM = "#e8dcc4";
-export const BELLY_CREAM = "#eadfc8";
-export const FACE_CREAM = "#e6d4b8";
-export const CLAW_GREY = "#7a7670";
-export const EYE_AMBER = "#c48a38";
+/** Muted coastal modules — sand, olive, dusty rose. Not ivory candy. */
+export const SHELL_CREAM = "#c4a090";
+export const BELLY_CREAM = "#8a8670";
+export const FACE_CREAM = "#c8bba0";
+export const CLAW_GREY = "#2a2a28";
+export const EYE_AMBER = "#1c1c1a";
 
 export type SpiralSpec = {
   position: Vec3;
@@ -280,8 +280,8 @@ export function getCoastalMaps(hex: string, finish: Finish): CoastalMaps {
 }
 
 function paintMaps(hex: string, finish: Finish): CoastalMaps {
-  // PS3-era creature skins were modest resolution and a little muddy.
-  const size = 64;
+  // Porous sponge skin from the locked grit keyart — dense pits, dirt, no candy.
+  const size = 128;
   const albedo = makeCanvas(size);
   const spec = makeCanvas(size);
   const bump = makeCanvas(size);
@@ -293,15 +293,15 @@ function paintMaps(hex: string, finish: Finish): CoastalMaps {
   }
 
   const base = hexToRgb(hex);
+  const dirtRgb: [number, number, number] = [74, 62, 48];
   const rand = mulberry32(hashSeed(`${finish}:${hex}`));
-  const blotch = valueNoise(size, 4, rand);
-  const grain = valueNoise(size, 9, rand);
-  const salt = valueNoise(size, 3, rand);
+  const blotch = valueNoise(size, 5, rand);
+  const grain = valueNoise(size, 11, rand);
+  const stain = valueNoise(size, 3, rand);
 
   const contrast =
-    finish === "plate" ? 0.11 : finish === "keratin" ? 0.08 : 0.06;
-  const saltAmt = finish === "wet" ? 0.05 : 0.09;
-  const scaleAmt = finish === "wet" ? 0 : finish === "plate" ? 0.12 : 0.07;
+    finish === "plate" ? 0.14 : finish === "keratin" ? 0.1 : 0.09;
+  const pitAmt = finish === "wet" ? 0.22 : finish === "plate" ? 0.38 : 0.48;
 
   const aData = a.createImageData(size, size);
   const sData = s.createImageData(size, size);
@@ -312,28 +312,33 @@ function paintMaps(hex: string, finish: Finish): CoastalMaps {
       const i = y * size + x;
       const p = i * 4;
       const mottle = (blotch[i] - 0.5) * contrast;
-      const kiss = Math.max(0, salt[i] - 0.55) * saltAmt;
-      const scales = scaleHint(x, y, size) * scaleAmt;
-      const pore = (grain[i] - 0.5) * 0.04;
+      const grit = (grain[i] - 0.5) * 0.07;
+      const pit = poreHint(x, y, size) * pitAmt;
+      const dirt = Math.max(0, stain[i] - 0.58) * 0.42;
 
-      const lift = mottle + kiss + scales * 0.4 + pore;
-      aData.data[p] = clampByte(base[0] * (1 + lift));
-      aData.data[p + 1] = clampByte(base[1] * (1 + lift * 0.92));
-      aData.data[p + 2] = clampByte(base[2] * (1 + lift * 0.85));
+      const lift = mottle + grit - pit * 0.85;
+      let r = base[0] * (1 + lift);
+      let g = base[1] * (1 + lift * 0.94);
+      let bch = base[2] * (1 + lift * 0.82);
+      r = r * (1 - dirt) + dirtRgb[0] * dirt;
+      g = g * (1 - dirt) + dirtRgb[1] * dirt;
+      bch = bch * (1 - dirt) + dirtRgb[2] * dirt;
+
+      aData.data[p] = clampByte(r);
+      aData.data[p + 1] = clampByte(g);
+      aData.data[p + 2] = clampByte(bch);
       aData.data[p + 3] = 255;
 
       const gloss =
-        finish === "wet" ? 0.72 : finish === "keratin" ? 0.48 : 0.38;
-      const specV = clamp01(gloss + kiss * 0.5 - scales * 0.15 + mottle * 0.2);
+        finish === "wet" ? 0.42 : finish === "keratin" ? 0.22 : 0.14;
+      const specV = clamp01(gloss - pit * 0.35 - dirt * 0.2 + mottle * 0.12);
       const sv = Math.round(specV * 255);
       sData.data[p] = sv;
       sData.data[p + 1] = sv;
       sData.data[p + 2] = sv;
       sData.data[p + 3] = 255;
 
-      const bumpV = Math.round(
-        clamp01(0.5 + scales * 0.85 + pore * 1.6 + mottle * 0.45) * 255,
-      );
+      const bumpV = Math.round(clamp01(0.58 + grit * 0.8 - pit * 1.15 + mottle * 0.25) * 255);
       bData.data[p] = bumpV;
       bData.data[p + 1] = bumpV;
       bData.data[p + 2] = bumpV;
@@ -341,7 +346,6 @@ function paintMaps(hex: string, finish: Finish): CoastalMaps {
     }
   }
 
-  blurInPlace(bData.data, size, 1);
   blurInPlace(bData.data, size, 1);
 
   a.putImageData(aData, 0, 0);
@@ -393,15 +397,16 @@ function blurInPlace(data: Uint8ClampedArray, size: number, radius: number): voi
   }
 }
 
-function scaleHint(x: number, y: number, size: number): number {
-  const u = (x / size) * 7;
-  const v = (y / size) * 6;
+function poreHint(x: number, y: number, size: number): number {
+  const cells = 16;
+  const u = (x / size) * cells;
+  const v = (y / size) * cells;
   const row = Math.floor(v);
   const hx = u + (row % 2) * 0.5;
   const cx = hx - Math.floor(hx) - 0.5;
   const cy = v - row - 0.5;
   const d = Math.sqrt(cx * cx + cy * cy);
-  return Math.max(0, 0.46 - d);
+  return Math.max(0, 1 - d / 0.2) ** 2;
 }
 
 function valueNoise(

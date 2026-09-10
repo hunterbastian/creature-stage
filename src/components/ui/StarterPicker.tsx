@@ -7,11 +7,11 @@ import { assertNever, type BodyId } from "@/lib/game/types";
 function swatch(id: BodyId): string {
   switch (id) {
     case "sleek":
-      return "#6a9a8c";
+      return "#6a6e58";
     case "plump":
-      return "#7a9e90";
+      return "#7a7660";
     case "spiky":
-      return "#73988a";
+      return "#c4a090";
     default:
       return assertNever(id, "Unknown body");
   }
@@ -24,10 +24,10 @@ export function StarterPicker() {
   if (chosen) return null;
 
   return (
-    <div className="pointer-events-auto absolute inset-0 z-30 flex items-center justify-center bg-[#16301c]/55 px-4 backdrop-blur-[2px]">
+    <div className="pointer-events-auto absolute inset-0 z-30 flex items-center justify-center bg-[#2a261c]/55 px-4 backdrop-blur-[2px]">
       <div
         data-allow-scroll
-        className="w-full max-w-xl rounded-2xl border border-white/15 bg-[#102116]/92 p-4 shadow-2xl shadow-black/50"
+        className="w-full max-w-xl rounded-2xl border border-white/12 bg-[#1e1c18]/92 p-4 shadow-2xl shadow-black/50"
         style={{
           paddingBottom: "max(1rem, env(safe-area-inset-bottom))",
         }}
@@ -36,7 +36,7 @@ export function StarterPicker() {
           Choose your Tideform
         </h2>
         <p className="mt-1 text-center text-sm text-emerald-100/80">
-          Three coastal saurians. Same spiral-shell language. Swap parts later.
+          Three coastal saurians. Porous skin, muted grit. Swap parts later.
         </p>
         <div className="mt-4 grid gap-2 sm:grid-cols-3">
           {STARTER_CHOICES.map((choice) => (
