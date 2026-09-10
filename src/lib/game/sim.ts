@@ -13,10 +13,10 @@ export const sim = {
   size: 1,
 };
 
-export function resetSim(): void {
-  sim.x = 0;
-  sim.z = 0;
-  sim.yaw = 0;
+export function resetSim(x = 0, z = 0, yaw = 0): void {
+  sim.x = x;
+  sim.z = z;
+  sim.yaw = yaw;
   sim.moving = false;
 }
 

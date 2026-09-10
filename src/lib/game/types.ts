@@ -72,6 +72,39 @@ export type DerivedStats = {
   size: number;
 };
 
+export const SPECIES_IDS = ["sporling", "tideglider", "brambleback"] as const;
+export type SpeciesId = (typeof SPECIES_IDS)[number];
+
+export const TEMPERAMENTS = ["timid", "curious", "bold"] as const;
+export type Temperament = (typeof TEMPERAMENTS)[number];
+
+export const HERD_MOODS = [
+  "graze",
+  "curious",
+  "flee",
+  "chase",
+  "home",
+] as const;
+export type HerdMood = (typeof HERD_MOODS)[number];
+
+export type NestSite = {
+  id: string;
+  speciesId: SpeciesId;
+  name: string;
+  x: number;
+  z: number;
+  yaw: number;
+  eggs: number;
+};
+
+export type NearbyNest = {
+  id: string;
+  name: string;
+  speciesName: string;
+  isHome: boolean;
+  temperament: Temperament;
+};
+
 export function assertNever(value: never, message: string): never {
   throw new Error(`${message}: ${String(value)}`);
 }

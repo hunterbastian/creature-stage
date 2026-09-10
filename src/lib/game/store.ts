@@ -8,11 +8,13 @@ import {
 } from "./catalog";
 import {
   FOOD_RESPAWN_MS,
+  NEST_CLEARING,
   SLOT_UNLOCK_AT,
   STARTING_FOOD,
   WORLD_RADIUS,
 } from "./constants";
 import { resetSim, sim, syncSimStats } from "./sim";
+import { speciesDef } from "./species";
 import { computeStats } from "./stats";
 import {
   SLOT_IDS,
@@ -21,19 +23,28 @@ import {
   type EquippedParts,
   type FoodBit,
   type FoodKind,
+  type NearbyNest,
+  type NestSite,
   type PartId,
   type SlotId,
 } from "./types";
+import { playerSpawnAt, seedMeadow } from "./wildlife";
 
 export type GameStore = {
   parts: EquippedParts;
   eaten: number;
   unlocked: SlotId[];
   foods: FoodBit[];
+  nests: NestSite[];
+  homeNestId: string;
+  nearbyNest: NearbyNest | null;
+  meadowEpoch: number;
   stats: DerivedStats;
   toast: string | null;
   setPart: (slot: SlotId, id: PartId) => void;
   eat: (foodId: string) => void;
+  nestle: (nestId: string) => void;
+  setNearbyNest: (nest: NearbyNest | null) => void;
   randomize: () => void;
   reset: () => void;
   clearToast: () => void;
@@ -44,14 +55,25 @@ let foodSeq = 0;
 
 const FOOD_KINDS: FoodKind[] = ["berry", "plumpfruit", "sporepod"];
 
-export function spawnFood(avoidX = 0, avoidZ = 0): FoodBit {
+function tooCloseToNests(x: number, z: number, nests: NestSite[]): boolean {
+  return nests.some(
+    (nest) => Math.hypot(nest.x - x, nest.z - z) < NEST_CLEARING,
+  );
+}
+
+export function spawnFood(
+  avoidX = 0,
+  avoidZ = 0,
+  nests: NestSite[] = [],
+): FoodBit {
   foodSeq += 1;
-  for (let attempt = 0; attempt < 12; attempt += 1) {
+  for (let attempt = 0; attempt < 16; attempt += 1) {
     const angle = Math.random() * Math.PI * 2;
     const radius = 4 + Math.random() * (WORLD_RADIUS - 5.5);
     const x = Math.sin(angle) * radius;
     const z = Math.cos(angle) * radius;
     if (Math.hypot(x - avoidX, z - avoidZ) < 3) continue;
+    if (tooCloseToNests(x, z, nests)) continue;
     return {
       id: `food-${foodSeq}`,
       kind: FOOD_KINDS[Math.floor(Math.random() * FOOD_KINDS.length)],
@@ -62,13 +84,13 @@ export function spawnFood(avoidX = 0, avoidZ = 0): FoodBit {
   return {
     id: `food-${foodSeq}`,
     kind: "berry",
-    x: 6,
-    z: 4,
+    x: 5.4,
+    z: -2.8,
   };
 }
 
-function seedFoods(): FoodBit[] {
-  return Array.from({ length: STARTING_FOOD }, () => spawnFood());
+function seedFoods(nests: NestSite[]): FoodBit[] {
+  return Array.from({ length: STARTING_FOOD }, () => spawnFood(0, 0, nests));
 }
 
 function unlockedSlots(eaten: number): SlotId[] {
@@ -87,9 +109,27 @@ function buildState(parts: EquippedParts, eaten: number, foods: FoodBit[]) {
   };
 }
 
+function bootMeadow() {
+  const meadow = seedMeadow();
+  const home = meadow.nests.find((nest) => nest.id === meadow.homeNestId);
+  if (home) {
+    const spawn = playerSpawnAt(home);
+    resetSim(spawn.x, spawn.z, spawn.yaw);
+  } else {
+    resetSim();
+  }
+  return meadow;
+}
+
+const initialMeadow = bootMeadow();
+
 export const useGameStore = create<GameStore>((set, get) => ({
-  ...buildState(DEFAULT_PARTS, 0, seedFoods()),
-  toast: "Walk into glowing fruit. Eat to grow and unlock parts.",
+  ...buildState(DEFAULT_PARTS, 0, seedFoods(initialMeadow.nests)),
+  nests: initialMeadow.nests,
+  homeNestId: initialMeadow.homeNestId,
+  nearbyNest: null,
+  meadowEpoch: 0,
+  toast: "Fruit grows you. Herds graze. Walk into a nest to rest.",
 
   setPart: (slot, id) => {
     const { unlocked, parts, eaten } = get();
@@ -155,9 +195,32 @@ export const useGameStore = create<GameStore>((set, get) => ({
     window.setTimeout(() => {
       if (gen !== worldGen) return;
       set((state) => ({
-        foods: [...state.foods, spawnFood(sim.x, sim.z)],
+        foods: [...state.foods, spawnFood(sim.x, sim.z, state.nests)],
       }));
     }, FOOD_RESPAWN_MS);
+  },
+
+  nestle: (nestId) => {
+    const { nests, homeNestId } = get();
+    const nest = nests.find((site) => site.id === nestId);
+    if (!nest) return;
+    const species = speciesDef(nest.speciesId);
+    if (homeNestId === nestId) {
+      set({
+        toast: `Home nest. ${nest.eggs} eggs warm in the ${nest.name.toLowerCase()}.`,
+      });
+      return;
+    }
+    set({
+      homeNestId: nestId,
+      toast: `Claimed ${nest.name}. The ${species.name.toLowerCase()} herd turns curious.`,
+    });
+  },
+
+  setNearbyNest: (nest) => {
+    const current = get().nearbyNest;
+    if (current?.id === nest?.id && current?.isHome === nest?.isHome) return;
+    set({ nearbyNest: nest });
   },
 
   randomize: () => {
@@ -171,10 +234,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
   reset: () => {
     worldGen += 1;
     foodSeq = 0;
-    resetSim();
+    const meadow = bootMeadow();
     set({
-      ...buildState(DEFAULT_PARTS, 0, seedFoods()),
-      toast: "Back to a fresh sporling.",
+      ...buildState(DEFAULT_PARTS, 0, seedFoods(meadow.nests)),
+      nests: meadow.nests,
+      homeNestId: meadow.homeNestId,
+      nearbyNest: null,
+      meadowEpoch: get().meadowEpoch + 1,
+      toast: "Back to a fresh sporling and a new meadow flock.",
     });
   },
 

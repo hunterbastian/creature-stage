@@ -10,6 +10,8 @@ import { CameraRig } from "./CameraRig";
 import { Creature } from "./Creature";
 import { FoodField } from "./Food";
 import { GameLoop } from "./GameLoop";
+import { NestField } from "./Nests";
+import { WildlifeField } from "./Wildlife";
 import { World } from "./World";
 
 export function GameCanvas() {
@@ -27,6 +29,8 @@ export function GameCanvas() {
       onContextMenu={(event) => event.preventDefault()}
     >
       <World />
+      <NestField />
+      <WildlifeField />
       <Creature />
       <FoodField />
       <CameraRig />

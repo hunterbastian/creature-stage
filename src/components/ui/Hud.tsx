@@ -9,8 +9,35 @@ import {
 } from "@/lib/game/catalog";
 import { SLOT_UNLOCK_AT } from "@/lib/game/constants";
 import { readPlaySurface, usePlaySurface } from "@/lib/game/play-surface";
+import { temperamentLabel } from "@/lib/game/species";
 import { useGameStore } from "@/lib/game/store";
 import { SLOT_IDS, type SlotId } from "@/lib/game/types";
+
+function NestPrompt({ compact }: { compact?: boolean }) {
+  const nearby = useGameStore((state) => state.nearbyNest);
+  const toast = useGameStore((state) => state.toast);
+  const { touch } = usePlaySurface();
+
+  if (!nearby || toast) return null;
+
+  const action = touch ? "Eat" : "E or linger";
+  const line = nearby.isHome
+    ? `Home nest · ${action} to rest`
+    : `${nearby.name} · ${action} to claim`;
+
+  return (
+    <div
+      className={`pointer-events-none absolute left-1/2 z-10 -translate-x-1/2 rounded-full border border-lime-200/35 bg-black/55 px-4 py-2 text-center text-lime-50 backdrop-blur ${
+        compact ? "top-[7.1rem] text-xs" : "top-28 text-sm"
+      }`}
+    >
+      <span className="font-medium">{line}</span>
+      <span className="mt-0.5 block text-[11px] text-emerald-100/75">
+        {nearby.speciesName} · {temperamentLabel(nearby.temperament)} flock
+      </span>
+    </div>
+  );
+}
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
@@ -94,7 +121,10 @@ function SlotPicker({
 function StatsBlock() {
   const eaten = useGameStore((state) => state.eaten);
   const stats = useGameStore((state) => state.stats);
+  const homeNestId = useGameStore((state) => state.homeNestId);
+  const nests = useGameStore((state) => state.nests);
   const upcoming = nextUnlock(eaten);
+  const home = nests.find((nest) => nest.id === homeNestId);
 
   return (
     <div className="space-y-2 rounded-xl bg-black/25 p-3">
@@ -102,6 +132,7 @@ function StatsBlock() {
       <Stat label="Size" value={stats.size.toFixed(2)} />
       <Stat label="Speed" value={stats.speed.toFixed(2)} />
       <Stat label="Bite" value={stats.bite.toFixed(2)} />
+      <Stat label="Home nest" value={home?.name ?? "—"} />
       <div className="pt-1">
         <div className="mb-1 text-[11px] uppercase tracking-[0.14em] text-emerald-200/70">
           {upcoming ? `Next: ${slotLabel(upcoming.slot)}` : "All slots unlocked"}
@@ -188,6 +219,8 @@ function CompactHud({
           {toast}
         </div>
       ) : null}
+
+      <NestPrompt compact />
 
       {open ? (
         <div
@@ -276,7 +309,8 @@ function DesktopHud() {
             Tideform
           </h1>
           <p className="mt-1 max-w-sm text-sm text-emerald-100/80">
-            Build a critter, walk it around, and eat glowing fruit to grow.
+            Build a critter, graze with meadow herds, and nestle at a hollow to
+            rest.
           </p>
         </div>
       </header>
@@ -286,6 +320,8 @@ function DesktopHud() {
           {toast}
         </div>
       ) : null}
+
+      <NestPrompt />
 
       <aside
         className="pointer-events-auto absolute flex w-[min(100%,20rem)] flex-col gap-4 overflow-y-auto rounded-2xl border border-white/10 bg-[#102116]/78 p-4 shadow-2xl shadow-black/40 backdrop-blur-md"
@@ -311,9 +347,9 @@ function DesktopHud() {
       </aside>
 
       <footer className="mx-auto mb-1 w-fit max-w-xl rounded-xl border border-white/10 bg-black/35 px-4 py-2 text-xs text-emerald-50/90 backdrop-blur">
-        <span className="font-semibold text-lime-200">WASD</span> or arrows to
-        walk and turn · bump glowing fruit to eat · editor on the right swaps
-        parts
+        <span className="font-semibold text-lime-200">WASD</span> to walk · bump
+        fruit to eat · <span className="font-semibold text-lime-200">E</span> or
+        linger in a nest to nestle · editor swaps parts
       </footer>
     </div>
   );

@@ -34,6 +34,7 @@ npm start          # production server after build
 | `A` / `←` | Turn left |
 | `D` / `→` | Turn right |
 | Walk into fruit | Eat (grows the creature, may unlock a slot) |
+| `E` or linger in a nest | Nestle: rest at home, or claim a wild nest as your landmark |
 | Editor (right) | Swap body / legs / mouth / eyes / later arms, tail, accessory |
 | **Mutate** | Randomize every unlocked slot |
 | **Reset** | Fresh sporling and a new fruit scatter |
@@ -45,7 +46,7 @@ The camera is a third-person chase cam behind whatever you built.
 Built to be played in **landscape** on iPhone Safari:
 
 - Rotate to landscape. Portrait shows a light “Rotate for Tideform” hint (you can dismiss it).
-- **Left stick** walks and turns. **Eat** on the right nibbles nearby fruit (walking into fruit still works).
+- **Left stick** walks and turns. **Eat** on the right nibbles nearby fruit (walking into fruit still works) and nestles when you are standing in a nest.
 - **Editor** is a collapsible bottom sheet with large part taps — it stays out of the stick / eat corners.
 - The page is full-viewport and safe-area aware (notch / home indicator). Pinch-zoom and page-scroll are blocked while you play; pixel ratio is capped so the meadow does not melt an iPhone GPU.
 
@@ -58,22 +59,30 @@ Add the page to your Home Screen if you want a more app-like fullscreen, then ke
 - Live editor: swapping a part updates the 3D mesh immediately.
 - Survival nibble loop: 8 fruits in the world, they respawn after you eat them. Meals increase size, shift speed, and unlock slots at 3 / 6 / 9 bites.
 - Landscape-first mobile HUD with a virtual stick, eat button, and compact part editor.
+- **Nests & herds** — three woven nest bowls with eggs; same-morph flocks graze, peek, scatter, or trot after you.
+
+## Nests & herds
+
+The meadow keeps living nests, Spore creature-stage style: soft woven bowls, a few eggs, and a flock that treats that hollow as home.
+
+- You spawn at **Home hollow** with Sporling nestmates. They wear your current parts when you mutate.
+- **Tidegliders** (shy) and **Bramblebacks** (plucky) keep their own nests. Walk up for a prompt; press **E**, **Eat**, or stand still a beat to nestle.
+- Nestling at a wild nest **claims** it as your rest landmark (lime spore-cap). That herd turns curious instead of fleeing or chasing.
+- Herds wander as a group near their nest, separate so they do not stack, and react lightly — not a combat sim.
 
 ## Project map
 
 | Path | Role |
 | --- | --- |
 | `src/app/` | App Router layout + page |
-| `src/components/game/` | R3F canvas, world, creature, food, camera, movement loop |
+| `src/components/game/` | R3F canvas, world, nests, wildlife herds, creature, food, camera, movement loop |
 | `src/components/ui/` | Overlay editor, touch stick, rotate hint, stats, toasts |
-| `src/lib/game/` | Part catalog, derived stats, zustand store, input, sim refs |
+| `src/lib/game/` | Part catalog, species, wildlife sim, derived stats, zustand store, input |
 
-Locomotion (`x`, `z`, `yaw`) lives in `src/lib/game/sim.ts` instead of React state so the HUD does not rerender every frame.
+Locomotion (`x`, `z`, `yaw`) lives in `src/lib/game/sim.ts` instead of React state so the HUD does not rerender every frame. Wildlife poses live in `src/lib/game/wildlife.ts` for the same reason.
 
 ## What's next
 
 - Shareable DNA strings and a gallery of saved body plans
 - IK / better walk cycles, idle fidgets, and eat animations
-- Other critters in the pond (shy herds, a bully)
-- Nest / egg as a “stage clear” beat
 - Sound and a part-color picker

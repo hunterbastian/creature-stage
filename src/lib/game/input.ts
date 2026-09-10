@@ -10,6 +10,7 @@ export const steer = {
   throttle: 0,
   turn: 0,
   eat: false,
+  nestle: false,
 };
 
 function clamp(value: number, min: number, max: number): number {
@@ -44,6 +45,9 @@ function applyKey(code: string, down: boolean): boolean {
     case "ArrowRight":
       keys.right = down;
       return true;
+    case "KeyE":
+      steer.nestle = down;
+      return true;
     default:
       return false;
   }
@@ -57,6 +61,7 @@ function releaseAll(): void {
   steer.throttle = 0;
   steer.turn = 0;
   steer.eat = false;
+  steer.nestle = false;
 }
 
 export function bindInput(): () => void {
