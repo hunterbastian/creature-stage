@@ -9,7 +9,7 @@ const GameCanvas = dynamic(
     ssr: false,
     loading: () => (
       <div className="grid h-full w-full place-items-center bg-[#16301c] text-lime-100">
-        Waking the meadow…
+        Waking Tideform…
       </div>
     ),
   },

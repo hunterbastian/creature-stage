@@ -22,11 +22,11 @@ export function RotateHint() {
           aria-hidden
         />
         <p className="text-sm font-semibold uppercase tracking-[0.18em] text-lime-100">
-          Rotate your phone
+          Rotate for Tideform
         </p>
         <p className="mt-2 text-sm text-emerald-100/85">
-          Landscape gives you the meadow, a move stick, and the editor without
-          covering the critter.
+          Landscape gives Tideform a move stick and the editor without covering
+          the critter.
         </p>
         <button
           type="button"

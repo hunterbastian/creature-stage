@@ -167,11 +167,8 @@ function CompactHud({
         }}
       >
         <div>
-          <p className="text-[10px] uppercase tracking-[0.22em] text-lime-200/80">
-            Creature Stage
-          </p>
           <h1 className="text-lg font-semibold tracking-tight text-white">
-            Sporling Meadow
+            Tideform
           </h1>
           <p className="mt-0.5 font-mono text-[11px] text-emerald-100/80">
             {eaten} meals · size {stats.size.toFixed(2)}
@@ -275,11 +272,8 @@ function DesktopHud() {
     >
       <header className="flex items-start justify-between gap-4">
         <div>
-          <p className="text-[11px] uppercase tracking-[0.22em] text-lime-200/80">
-            Creature Stage
-          </p>
           <h1 className="font-sans text-2xl font-semibold tracking-tight text-white">
-            Sporling Meadow
+            Tideform
           </h1>
           <p className="mt-1 max-w-sm text-sm text-emerald-100/80">
             Build a critter, walk it around, and eat glowing fruit to grow.

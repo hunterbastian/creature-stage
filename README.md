@@ -1,6 +1,8 @@
-# Creature Stage
+# Tideform
 
 A Spore-inspired **creature stage** toy: assemble a modular critter from simple geometry, walk it around a tiny 3D meadow, and eat glowing fruit to grow and unlock new part slots.
+
+The GitHub repository stays `creature-stage`; the game players see is **Tideform**.
 
 Built with Next.js (App Router), TypeScript, Tailwind CSS v4, Three.js, `@react-three/fiber`, and `@react-three/drei`.
 
@@ -42,7 +44,7 @@ The camera is a third-person chase cam behind whatever you built.
 
 Built to be played in **landscape** on iPhone Safari:
 
-- Rotate to landscape. Portrait shows a light “rotate your phone” hint (you can dismiss it).
+- Rotate to landscape. Portrait shows a light “Rotate for Tideform” hint (you can dismiss it).
 - **Left stick** walks and turns. **Eat** on the right nibbles nearby fruit (walking into fruit still works).
 - **Editor** is a collapsible bottom sheet with large part taps — it stays out of the stick / eat corners.
 - The page is full-viewport and safe-area aware (notch / home indicator). Pinch-zoom and page-scroll are blocked while you play; pixel ratio is capped so the meadow does not melt an iPhone GPU.
