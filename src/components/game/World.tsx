@@ -12,8 +12,8 @@ export function World() {
 
   return (
     <>
-      <color attach="background" args={["#9bb0b8"]} />
-      <fogExp2 attach="fog" args={["#c5d0c8", 0.018]} />
+      <color attach="background" args={["#a3b6b8"]} />
+      <fogExp2 attach="fog" args={["#c8d4cc", 0.017]} />
       <Sky
         sunPosition={[18, 9.5, 12]}
         turbidity={6.5}
@@ -22,7 +22,7 @@ export function World() {
         mieDirectionalG={0.78}
       />
       <hemisphereLight args={["#d8e4ec", "#5a6a40", 0.88]} />
-      <ambientLight color="#e4d8bc" intensity={0.42} />
+      <ambientLight color="#e8dcc4" intensity={0.46} />
       <directionalLight
         color="#ffd4a0"
         position={[16, 15, 10]}
@@ -42,7 +42,7 @@ export function World() {
 
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.2, 0]}>
         <circleGeometry args={[48, 32]} />
-        <meshPhongMaterial color="#3a6e84" shininess={30} specular="#8eb4c0" />
+        <meshPhongMaterial color="#3d7288" shininess={28} specular="#9ec8d0" />
       </mesh>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.035, 0]}>
         <ringGeometry args={[WORLD_RADIUS + 0.04, WORLD_RADIUS + 0.62, 48]} />
@@ -58,7 +58,7 @@ export function World() {
       </mesh>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
         <circleGeometry args={[WORLD_RADIUS, 48]} />
-        <meshPhongMaterial color="#6a8a48" shininess={4} specular="#8a9c64" />
+        <meshPhongMaterial color="#5f7a48" shininess={5} specular="#9aaa70" />
       </mesh>
 
       <CoastalDress coarse={coarse} />

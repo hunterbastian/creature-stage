@@ -1,6 +1,8 @@
 import { WORLD_RADIUS } from "./constants";
 import { NEST_LAYOUT } from "./wildlife";
 
+/** Placement for ART_DIRECTION.md: shoreline groves, salt-light props, no forest wall. */
+
 export type PropPose = {
   x: number;
   y: number;
@@ -57,9 +59,18 @@ export type WorldDress = {
   crowns: PropPose[];
   canopies: PropPose[];
   scrub: PropPose[];
+  spirals: PropPose[];
+  haze: HazeSpec[];
   tidePools: TidePoolSpec[];
   clearings: ClearingSpec[];
   landforms: LandformSpec[];
+};
+
+export type HazeSpec = {
+  x: number;
+  y: number;
+  z: number;
+  radius: number;
 };
 
 /** Shore pockets — kept off nest bowls so herds still have a clearing. */
@@ -72,17 +83,22 @@ export const TIDE_POOLS: TidePoolSpec[] = [
 ];
 
 /**
- * Small groves on the inland beach edge / nest approaches — not a deep wood.
- * `salt` is a stable id so mobile can drop the two least-framing clusters.
+ * Pocket groves on the beach–meadow edge only. A full ring would read as a
+ * temperate forest wall — forbidden by ART_DIRECTION.md.
  */
 const GROVES: GroveSpec[] = [
   { x: 4.2, z: 9.4, count: 5, salt: 1 },
-  { x: 9.0, z: 11.0, count: 6, salt: 2 },
-  { x: -9.6, z: 8.8, count: 5, salt: 3 },
-  { x: -12.4, z: -6.6, count: 6, salt: 4 },
-  { x: 12.4, z: -8.4, count: 6, salt: 5 },
-  { x: 2.2, z: -13.2, count: 6, salt: 6 },
-  { x: -11.2, z: 1.6, count: 5, salt: 7 },
+  { x: -9.6, z: 8.8, count: 4, salt: 3 },
+  { x: -12.4, z: -6.6, count: 5, salt: 4 },
+  { x: 12.4, z: -8.4, count: 5, salt: 5 },
+  { x: -11.2, z: 1.6, count: 4, salt: 7 },
+];
+
+const HAZE: HazeSpec[] = [
+  { x: 17.4, y: 0.42, z: 2.2, radius: 5.1 },
+  { x: -16.6, y: 0.48, z: 6.4, radius: 4.7 },
+  { x: 5.4, y: 0.4, z: -17.6, radius: 5.0 },
+  { x: -7.2, y: 0.46, z: 16.8, radius: 4.5 },
 ];
 
 const LANDFORMS: LandformSpec[] = [
@@ -186,9 +202,9 @@ function ringPick(
 
 function nestClearings(): ClearingSpec[] {
   return [
-    { x: NEST_LAYOUT[0].x, z: NEST_LAYOUT[0].z, radius: 2.2, color: "#7a864c" },
-    { x: NEST_LAYOUT[1].x, z: NEST_LAYOUT[1].z, radius: 2.28, color: "#8a8460" },
-    { x: NEST_LAYOUT[2].x, z: NEST_LAYOUT[2].z, radius: 2.16, color: "#7a7a50" },
+    { x: NEST_LAYOUT[0].x, z: NEST_LAYOUT[0].z, radius: 2.2, color: "#6e7a4c" },
+    { x: NEST_LAYOUT[1].x, z: NEST_LAYOUT[1].z, radius: 2.28, color: "#8a8462" },
+    { x: NEST_LAYOUT[2].x, z: NEST_LAYOUT[2].z, radius: 2.16, color: "#7a7650" },
   ];
 }
 
@@ -199,6 +215,7 @@ function nestDress(): {
   reeds: PropPose[];
   shells: PropPose[];
   kelp: PropPose[];
+  spirals: PropPose[];
 } {
   const home = NEST_LAYOUT[0];
   const tide = NEST_LAYOUT[1];
@@ -258,6 +275,11 @@ function nestDress(): {
     kelp: [
       pose(tKelp.x, 0.12, tKelp.z, 0.45, 2.05, 0.12, 0.07, 0.26, 0.05),
     ],
+    spirals: [
+      pose(hShellA.x + 0.22, 0.03, hShellA.z + 0.16, 1.15, 0.4, 0.2, 0.07, 0.07, 0.026),
+      pose(tShellB.x - 0.18, 0.028, tShellB.z + 0.12, 1.05, 1.8, 0.15, 0.075, 0.075, 0.028),
+      pose(b1.x + 0.14, 0.03, b1.z - 0.2, 1.2, -0.5, 0.1, 0.068, 0.068, 0.024),
+    ],
   };
 }
 
@@ -292,50 +314,41 @@ function groveTrees(
         continue;
       }
 
-      const s = 0.88 + rand() * 0.52;
+      const s = 0.88 + rand() * 0.48;
       const inlandX = radial > 0.001 ? -x / radial : 0;
       const inlandZ = radial > 0.001 ? -z / radial : 0;
       const outward = Math.atan2(x, z);
-      const lean = 0.16 + rand() * 0.14;
-      const yaw = rand() * Math.PI * 2;
+      const lean = 0.24 + rand() * 0.12;
+      const rx = lean * Math.cos(outward);
+      const rz = -lean * Math.sin(outward);
       trunks.push(
-        pose(
-          x,
-          0.42 * s,
-          z,
-          lean * Math.sin(outward),
-          yaw,
-          lean * Math.cos(outward) * 0.4,
-          0.1 * s,
-          0.88 * s,
-          0.1 * s,
-        ),
+        pose(x, 0.5 * s, z, rx, outward, rz, 0.088 * s, 1.04 * s, 0.088 * s),
       );
       crowns.push(
         pose(
-          x + inlandX * 0.22 * s,
-          1.02 * s,
-          z + inlandZ * 0.22 * s,
-          0.28 + rand() * 0.12,
-          yaw,
-          0.14,
-          0.78 * s,
-          0.52 * s,
-          0.58 * s,
+          x + inlandX * 0.4 * s,
+          1.06 * s,
+          z + inlandZ * 0.4 * s,
+          0.38 + rand() * 0.08,
+          outward,
+          0.06,
+          0.44 * s,
+          0.38 * s,
+          0.9 * s,
         ),
       );
       if (withTips) {
         canopies.push(
           pose(
-            x + inlandX * 0.34 * s,
-            1.42 * s,
-            z + inlandZ * 0.34 * s,
-            0.22,
-            yaw + 0.5,
-            0.1,
-            0.42 * s,
-            0.55 * s,
-            0.32 * s,
+            x + inlandX * 0.58 * s,
+            1.5 * s,
+            z + inlandZ * 0.58 * s,
+            0.42,
+            outward + 0.12,
+            0.05,
+            0.26 * s,
+            0.64 * s,
+            0.22 * s,
           ),
         );
       }
@@ -346,7 +359,7 @@ function groveTrees(
         if (!blocked(bx, bz, 2.4)) {
           const bs = 0.62 + rand() * 0.4;
           scrub.push(
-            pose(bx, 0.22 * bs, bz, 0.18, yaw, 0.12, 0.32 * bs, 0.24 * bs, 0.26 * bs),
+            pose(bx, 0.22 * bs, bz, 0.18, outward, 0.12, 0.32 * bs, 0.24 * bs, 0.26 * bs),
           );
         }
       }
@@ -378,7 +391,7 @@ function poolRocks(mobile: boolean): PropPose[] {
 
 export function seedWorldDress(mobile: boolean): WorldDress {
   const groves = mobile
-    ? GROVES.filter((grove) => grove.salt !== 2 && grove.salt !== 6)
+    ? GROVES.filter((grove) => grove.salt !== 3)
     : GROVES;
   const trees = groveTrees(groves, !mobile);
   const dressed = nestDress();
@@ -519,6 +532,32 @@ export function seedWorldDress(mobile: boolean): WorldDress {
     },
   ).concat(dressed.driftwood);
 
+  const spirals = scatter(
+    mobile ? 5 : 8,
+    83,
+    1.65,
+    (rand) => {
+      const pool = TIDE_POOLS[Math.floor(rand() * TIDE_POOLS.length)];
+      const a = rand() * Math.PI * 2;
+      const r = 0.45 + rand() * (poolRadius(pool) + 0.4);
+      return { x: pool.x + Math.sin(a) * r, z: pool.z + Math.cos(a) * r };
+    },
+    (x, z, rand) => {
+      const s = 0.055 + rand() * 0.03;
+      return pose(
+        x,
+        0.028,
+        z,
+        1.05 + rand() * 0.25,
+        rand() * Math.PI * 2,
+        rand() * 0.25,
+        s,
+        s,
+        s * 0.38,
+      );
+    },
+  ).concat(dressed.spirals);
+
   const duneScrub = scatter(
     mobile ? 6 : 10,
     73,
@@ -552,6 +591,8 @@ export function seedWorldDress(mobile: boolean): WorldDress {
     crowns: trees.crowns,
     canopies: trees.canopies,
     scrub: trees.scrub.concat(duneScrub),
+    spirals,
+    haze: mobile ? HAZE.slice(0, 3) : HAZE,
     tidePools: TIDE_POOLS,
     clearings: nestClearings(),
     landforms: LANDFORMS,
