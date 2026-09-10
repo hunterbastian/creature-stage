@@ -14,18 +14,18 @@ export function CameraRig() {
   const initialized = useRef(false);
 
   useFrame((_, delta) => {
-    const back = 4.15 + sim.size * 1.15;
-    const height = 1.72 + sim.size * 0.52;
-    const side = 1.55 + sim.size * 0.2;
+    const back = 3.7 + sim.size * 1.0;
+    const height = 1.12 + sim.size * 0.34;
+    const side = 2.45 + sim.size * 0.28;
     desired.set(
       sim.x - Math.sin(sim.yaw) * back + Math.cos(sim.yaw) * side,
       height,
       sim.z - Math.cos(sim.yaw) * back - Math.sin(sim.yaw) * side,
     );
     focus.set(
-      sim.x + Math.sin(sim.yaw) * 0.55,
-      0.72 * sim.size,
-      sim.z + Math.cos(sim.yaw) * 0.55,
+      sim.x + Math.sin(sim.yaw) * 0.7,
+      0.58 * sim.size,
+      sim.z + Math.cos(sim.yaw) * 0.7,
     );
 
     if (!initialized.current) {

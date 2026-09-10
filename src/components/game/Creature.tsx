@@ -149,12 +149,10 @@ function SpiralShell({
 function SailPlate({
   spec,
   cream,
-  teal,
   castShadow,
 }: {
   spec: SpiralSpec;
   cream: string;
-  teal: string;
   castShadow: boolean;
 }) {
   return (
@@ -164,31 +162,22 @@ function SailPlate({
       scale={spec.scale}
     >
       <Ball
-        scale={[0.16, 2.55, 0.78]}
+        scale={[0.1, 3.2, 0.58]}
         radius={0.15}
         color={cream}
         finish="plate"
         castShadow={castShadow}
         segments={10}
       />
-      <mesh position={[0, 0.42, 0]} castShadow={castShadow}>
-        <coneGeometry args={[0.07, 0.22, 6]} />
+      <mesh position={[0, 0.52, 0]} castShadow={castShadow}>
+        <coneGeometry args={[0.05, 0.28, 6]} />
         <CreatureMaterial color={cream} finish="plate" />
       </mesh>
-      <Ball
-        position={[0.01, 0.04, 0]}
-        scale={[0.08, 2.05, 0.5]}
-        radius={0.13}
-        color={liftHex(teal, 0.32)}
-        finish="plate"
-        castShadow={false}
-        segments={8}
-      />
       <SpiralShell
         spec={{
-          position: [0.04, 0.04, 0],
+          position: [0.032, 0.08, 0],
           rotation: [0, 0, 0],
-          scale: 1.05,
+          scale: 1.18,
         }}
         color={cream}
         castShadow={castShadow}
@@ -359,7 +348,6 @@ function Chassis({
           key={`sail-${spec.position[2]}`}
           spec={spec}
           cream={SHELL_CREAM}
-          teal={color}
           castShadow={castShadow}
         />
       ))}
@@ -384,19 +372,19 @@ function MouthMesh({
       return (
         <group position={[x, y, z]}>
           <Capsule
-            position={[0, 0.01, 0.05]}
-            rotation={[Math.PI / 2.15, 0, 0]}
-            radius={0.042}
-            length={0.08}
-            color={SHELL_CREAM}
+            position={[0, -0.012, 0.055]}
+            rotation={[Math.PI / 2.02, 0, 0]}
+            radius={0.034}
+            length={0.1}
+            color={shadeHex(SHELL_CREAM, 0.24)}
             finish="keratin"
             castShadow={castShadow}
           />
           <Ball
-            position={[0, 0, 0.1]}
-            scale={[0.85, 0.55, 1.1]}
-            radius={0.038}
-            color={shadeHex(SHELL_CREAM, 0.06)}
+            position={[0, -0.018, 0.12]}
+            scale={[0.72, 0.42, 1.2]}
+            radius={0.032}
+            color={shadeHex(SHELL_CREAM, 0.32)}
             finish="keratin"
             castShadow={castShadow}
             segments={8}
@@ -738,14 +726,14 @@ function TailMesh({
               segments={8}
             />
           ))
-        : [0.72, 0.84, 0.94].map((t) => (
+        : [0.68, 0.78, 0.88, 0.97].map((t) => (
             <mesh
               key={`thorn-${t}`}
-              position={[0, 0.05 - t * 0.05, -plan.tailLength * t]}
-              rotation={[0.35, 0, 0]}
+              position={[0, 0.06 - t * 0.04, -plan.tailLength * t]}
+              rotation={[0.42, 0, 0]}
               castShadow={castShadow}
             >
-              <coneGeometry args={[0.028 * (1.1 - t), 0.1 * (1.15 - t), 5]} />
+              <coneGeometry args={[0.03 * (1.15 - t), 0.14 * (1.2 - t), 5]} />
               <CreatureMaterial color={SHELL_CREAM} finish="keratin" />
             </mesh>
           ))}
