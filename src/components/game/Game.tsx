@@ -1,9 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
-import { RotateHint } from "@/components/ui/RotateHint";
-import { TouchControls } from "@/components/ui/TouchControls";
 
 const GameCanvas = dynamic(
   () => import("@/components/game/GameCanvas").then((mod) => mod.GameCanvas),
@@ -22,13 +20,19 @@ const Hud = dynamic(
   { ssr: false },
 );
 
+const TouchControls = dynamic(
+  () =>
+    import("@/components/ui/TouchControls").then((mod) => mod.TouchControls),
+  { ssr: false },
+);
+
+const RotateHint = dynamic(
+  () => import("@/components/ui/RotateHint").then((mod) => mod.RotateHint),
+  { ssr: false },
+);
+
 export function Game() {
   const shellRef = useRef<HTMLDivElement>(null);
-  const [ready, setReady] = useState(false);
-
-  useEffect(() => {
-    setReady(true);
-  }, []);
 
   useEffect(() => {
     const root = shellRef.current;
@@ -60,13 +64,9 @@ export function Game() {
       className="fixed inset-0 overflow-hidden overscroll-none bg-[#16301c] select-none"
     >
       <GameCanvas />
-      {ready ? (
-        <>
-          <Hud />
-          <TouchControls />
-          <RotateHint />
-        </>
-      ) : null}
+      <Hud />
+      <TouchControls />
+      <RotateHint />
     </div>
   );
 }

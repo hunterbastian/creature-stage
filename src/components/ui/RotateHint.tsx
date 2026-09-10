@@ -1,15 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { usePlaySurface } from "@/lib/game/play-surface";
 
 export function RotateHint() {
   const { touch, portrait } = usePlaySurface();
   const [dismissed, setDismissed] = useState(false);
 
-  useEffect(() => {
-    if (!portrait) setDismissed(false);
-  }, [portrait]);
+  if (!portrait && dismissed) {
+    setDismissed(false);
+  }
 
   if (!touch || !portrait || dismissed) return null;
 
