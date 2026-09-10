@@ -5,21 +5,21 @@ import { useFrame } from "@react-three/fiber";
 import {
   NEST_INTERACT_RADIUS,
   NEST_LINGER_SEC,
-  TURN_SPEED,
-  WORLD_RADIUS,
 } from "@/lib/game/constants";
 import { bindInput, sampleMove, steer } from "@/lib/game/input";
+import { tickLocomotion } from "@/lib/game/locomotion";
 import {
   currentObjective,
   nearestFood,
   nearestWildNest,
   type Waypoint,
 } from "@/lib/game/progress";
-import { sim } from "@/lib/game/sim";
+import { pulseEncounter, sim, tickFeel } from "@/lib/game/sim";
 import { speciesDef } from "@/lib/game/species";
 import { useGameStore } from "@/lib/game/store";
 import { assertNever } from "@/lib/game/types";
 import {
+  chaseThreat,
   homeHerdNear,
   nearestHomeHerd,
   nestNear,
@@ -63,7 +63,7 @@ function syncNearbyNest(): void {
   });
 }
 
-function syncWaypoint(): void {
+function liveWaypoint(): Waypoint | null {
   const state = useGameStore.getState();
   const beat = currentObjective({
     eaten: state.eaten,
@@ -95,7 +95,11 @@ function syncWaypoint(): void {
     default:
       assertNever(beat.id, "Unknown objective");
   }
-  state.setWaypoint(next);
+  return next;
+}
+
+function syncWaypoint(next: Waypoint | null): void {
+  useGameStore.getState().setWaypoint(next);
 }
 
 function maybeGreet(): void {
@@ -115,14 +119,22 @@ export function GameLoop() {
   const linger = useRef(0);
   const lingerDone = useRef(false);
   const graceUntil = useRef(2.5);
+  const threatArmed = useRef(false);
 
   useEffect(() => bindInput(), []);
 
   useFrame((state, delta) => {
     const dt = Math.min(delta, 0.05);
+    tickFeel(dt);
     const { starterChosen, homeNestId, eaten } = useGameStore.getState();
+    if (steer.focusTap) {
+      sim.focus = !sim.focus;
+      steer.focusTap = false;
+    }
+
     if (!starterChosen) {
       sim.moving = false;
+      sim.gait = 0;
       tickWildlife(
         dt,
         state.clock.elapsedTime,
@@ -134,23 +146,17 @@ export function GameLoop() {
       return;
     }
 
-    const { throttle, turn } = sampleMove();
-    sim.yaw += turn * TURN_SPEED * dt;
-    sim.moving = Math.abs(throttle) > 0.04;
+    const waypoint = liveWaypoint();
+    const { throttle, turn, sprint } = sampleMove();
+    tickLocomotion(dt, throttle, turn, sprint, waypoint);
 
-    if (sim.moving) {
-      const dist = throttle * sim.speed * dt;
-      sim.x += Math.sin(sim.yaw) * dist;
-      sim.z += Math.cos(sim.yaw) * dist;
-
-      const limit = WORLD_RADIUS - 1.15 * sim.size;
-      const radius = Math.hypot(sim.x, sim.z);
-      if (radius > limit) {
-        const scale = limit / radius;
-        sim.x *= scale;
-        sim.z *= scale;
-      }
+    const threat = chaseThreat(sim.x, sim.z);
+    if (threat > 0.48 && !threatArmed.current) {
+      pulseEncounter("threat");
+      threatArmed.current = true;
     }
+    if (threat < 0.12) threatArmed.current = false;
+    sim.threat += (threat - sim.threat) * (1 - Math.exp(-dt * 3.1));
 
     tickWildlife(
       dt,
@@ -161,7 +167,7 @@ export function GameLoop() {
       eaten,
     );
     syncNearbyNest();
-    syncWaypoint();
+    syncWaypoint(waypoint);
     maybeGreet();
 
     if (steer.eat) {

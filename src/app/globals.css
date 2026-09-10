@@ -42,6 +42,25 @@ body {
   animation: tideform-pulse 1.4s ease-out infinite;
 }
 
+@keyframes tideform-impact {
+  0% {
+    transform: translateX(-50%) scale(0.9);
+    opacity: 0.55;
+  }
+  28% {
+    transform: translateX(-50%) scale(1.05);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-50%) scale(1);
+    opacity: 1;
+  }
+}
+
+.tideform-impact {
+  animation: tideform-impact 0.38s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
 @keyframes creature-rotate-hint {
   0%,
   18% {

@@ -9,6 +9,7 @@ import {
 } from "react";
 import { partsForSlot, slotLabel } from "@/lib/game/catalog";
 import { SLOT_UNLOCK_AT } from "@/lib/game/constants";
+import { steer } from "@/lib/game/input";
 import { readPlaySurface, usePlaySurface } from "@/lib/game/play-surface";
 import {
   bearingTo,
@@ -46,6 +47,7 @@ function waypointPos(id: string, kind: "food" | "nest" | "herd") {
 function Compass() {
   const waypoint = useGameStore((state) => state.waypoint);
   const needle = useRef<HTMLDivElement>(null);
+  const shell = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (!waypoint) return;
@@ -56,6 +58,11 @@ function Compass() {
         const bearing = bearingTo(sim.x, sim.z, sim.yaw, pos.x, pos.z);
         needle.current.style.transform = `rotate(${bearing}rad)`;
       }
+      if (shell.current) {
+        shell.current.style.borderColor = sim.focus
+          ? "rgba(200, 232, 168, 0.72)"
+          : "rgba(190, 242, 100, 0.3)";
+      }
       frame = window.requestAnimationFrame(tick);
     };
     frame = window.requestAnimationFrame(tick);
@@ -65,15 +72,64 @@ function Compass() {
   if (!waypoint) return null;
 
   return (
-    <div
-      className="pointer-events-none flex h-9 w-9 items-center justify-center rounded-full border border-lime-200/30 bg-black/45"
-      aria-hidden
+    <button
+      ref={shell}
+      type="button"
+      aria-label="Focus objective"
+      className="pointer-events-auto flex h-9 w-9 touch-manipulation items-center justify-center rounded-full border border-lime-200/30 bg-black/45"
+      onClick={() => {
+        steer.focusTap = true;
+      }}
     >
       <div
         ref={needle}
         className="h-0 w-0 border-x-[5px] border-b-[10px] border-x-transparent border-b-lime-200"
         style={{ transformOrigin: "50% 70%", marginBottom: "2px" }}
       />
+    </button>
+  );
+}
+
+function StaminaBreath({ compact }: { compact?: boolean }) {
+  const fill = useRef<HTMLDivElement>(null);
+  const wrap = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    let frame = 0;
+    const tick = () => {
+      const show = sim.stamina < 0.97 || sim.sprinting || sim.winded > 0;
+      if (wrap.current) wrap.current.style.opacity = show ? "1" : "0";
+      if (fill.current) {
+        fill.current.style.width = `${Math.round(sim.stamina * 100)}%`;
+        fill.current.style.background =
+          sim.winded > 0 ? "#c4a070" : "#d8e0c8";
+      }
+      frame = window.requestAnimationFrame(tick);
+    };
+    frame = window.requestAnimationFrame(tick);
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
+
+  return (
+    <div
+      ref={wrap}
+      className={`pointer-events-none transition-opacity duration-200 ${
+        compact ? "mt-1.5" : "mt-2"
+      }`}
+      style={{ opacity: 0 }}
+      aria-hidden
+    >
+      <div
+        className={`overflow-hidden rounded-full bg-white/10 ${
+          compact ? "h-[3px] w-20" : "h-[3px] w-28"
+        }`}
+      >
+        <div
+          ref={fill}
+          className="h-full rounded-full bg-[#d8e0c8]"
+          style={{ width: "100%" }}
+        />
+      </div>
     </div>
   );
 }
@@ -104,6 +160,14 @@ function ObjectiveChip({ compact }: { compact?: boolean }) {
         <p className="truncate text-[11px] text-emerald-100/75">{beat.hint}</p>
       </div>
     </div>
+  );
+}
+
+function MateLine({ mates }: { mates: number }) {
+  return (
+    <span className="font-mono text-[11px] text-emerald-100/70">
+      {mates === 1 ? "1 mate" : `${mates} mates`}
+    </span>
   );
 }
 
@@ -156,6 +220,8 @@ function FormBar({ compact }: { compact?: boolean }) {
           {upcoming
             ? `${eaten}/${upcoming.meals} · ${upcoming.name}`
             : `${eaten} meals`}
+          {" · "}
+          <MateLine mates={form.herdMates} />
         </span>
       </div>
       <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
@@ -303,6 +369,7 @@ function CompactHud({
           </p>
           <div className="mt-2">
             <ObjectiveChip compact />
+            <StaminaBreath compact />
           </div>
         </div>
         <button
@@ -322,7 +389,7 @@ function CompactHud({
       </header>
 
       {toast ? (
-        <div className="pointer-events-none absolute left-1/2 top-[6.35rem] -translate-x-1/2 rounded-full border border-lime-200/30 bg-black/55 px-4 py-2 text-center text-sm text-lime-50 backdrop-blur">
+        <div className="tideform-impact pointer-events-none absolute left-1/2 top-[6.35rem] -translate-x-1/2 rounded-full border border-lime-200/30 bg-black/55 px-4 py-2 text-center text-sm text-lime-50 backdrop-blur">
           {toast}
         </div>
       ) : null}
@@ -407,11 +474,12 @@ function DesktopHud() {
             Tideform
           </h1>
           <ObjectiveChip />
+          <StaminaBreath />
         </div>
       </header>
 
       {toast ? (
-        <div className="pointer-events-none absolute left-1/2 top-24 -translate-x-1/2 rounded-full border border-lime-200/30 bg-black/55 px-4 py-2 text-sm text-lime-50 backdrop-blur">
+        <div className="tideform-impact pointer-events-none absolute left-1/2 top-24 -translate-x-1/2 rounded-full border border-lime-200/30 bg-black/55 px-4 py-2 text-sm text-lime-50 backdrop-blur">
           {toast}
         </div>
       ) : null}
@@ -449,9 +517,11 @@ function DesktopHud() {
       </aside>
 
       <footer className="mx-auto mb-1 w-fit max-w-xl rounded-xl border border-white/10 bg-black/35 px-4 py-2 text-xs text-emerald-50/90 backdrop-blur">
-        <span className="font-semibold text-lime-200">WASD</span> walk · fruit
-        grows you · <span className="font-semibold text-lime-200">E</span> nestle
-        · editor mid-run
+        <span className="font-semibold text-lime-200">WASD</span> walk ·{" "}
+        <span className="font-semibold text-lime-200">Shift</span> trot ·{" "}
+        <span className="font-semibold text-lime-200">F</span> or tap the
+        compass to focus · fruit grows you ·{" "}
+        <span className="font-semibold text-lime-200">E</span> nestle
       </footer>
     </div>
   );

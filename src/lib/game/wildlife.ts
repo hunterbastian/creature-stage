@@ -3,10 +3,18 @@ import {
   HERD_GRAZE_RADIUS,
   HERD_LOSE_RADIUS,
   HERD_NEST_LEASH,
-  HERD_SIZE,
+  PLAYER_HERD_MAX,
+  WILD_HERD_MAX,
   WORLD_RADIUS,
 } from "./constants";
-import { respectFor, type RespectTier } from "./progress";
+import {
+  formAt,
+  playerHerdMates,
+  respectFor,
+  wildHerdMates,
+  type FormId,
+  type RespectTier,
+} from "./progress";
 import { SPECIES, speciesDef } from "./species";
 import {
   assertNever,
@@ -30,8 +38,13 @@ export type WildlifeAgent = {
   z: number;
   yaw: number;
   moving: boolean;
+  gait: number;
+  present: boolean;
+  departing: boolean;
   ox: number;
   oz: number;
+  vx: number;
+  vz: number;
 };
 
 export type HerdBrain = {
@@ -94,26 +107,55 @@ function lerpAngle(from: number, to: number, t: number): number {
   return from + wrapAngle(to - from) * t;
 }
 
-function moodSpeed(mood: HerdMood): number {
+function moodSpeed(mood: HerdMood, respect: RespectTier): number {
+  const wary = respect === "wary";
   switch (mood) {
     case "graze":
-      return 1.55;
+      return 1.25;
     case "home":
-      return 1.9;
+      return 1.55;
     case "curious":
-      return 2.35;
+      return 1.95;
+    case "honor":
+      return 0.95;
     case "chase":
-      return 3.35;
+      return wary ? 4.05 : 2.85;
     case "flee":
-      return 4.55;
+      return wary ? 4.85 : 3.9;
     default:
       return assertNever(mood, "Unknown herd mood");
   }
 }
 
-function pickOffset(index: number, salt: number): { ox: number; oz: number } {
-  const angle = (index / HERD_SIZE) * Math.PI * 2 + salt * 0.7;
-  const radius = 0.72 + (index % 2) * 0.22;
+function detectRadius(respect: RespectTier): number {
+  switch (respect) {
+    case "wary":
+      return HERD_DETECT_RADIUS + 0.85;
+    case "known":
+      return HERD_DETECT_RADIUS;
+    case "honored":
+      return HERD_DETECT_RADIUS - 0.55;
+    case "apex":
+      return HERD_DETECT_RADIUS - 0.9;
+    default:
+      return assertNever(respect, "Unknown respect");
+  }
+}
+
+function loseRadius(respect: RespectTier, mood: HerdMood): number {
+  if (mood === "chase" && respect === "wary") return HERD_LOSE_RADIUS + 1.8;
+  if (mood === "honor") return HERD_LOSE_RADIUS - 1.4;
+  return HERD_LOSE_RADIUS;
+}
+
+function pickOffset(
+  index: number,
+  count: number,
+  salt: number,
+): { ox: number; oz: number } {
+  const n = Math.max(1, count);
+  const angle = (index / n) * Math.PI * 2 + salt * 0.7;
+  const radius = n <= 1 ? 1.05 : 0.78 + (index % 2) * 0.24;
   return {
     ox: Math.sin(angle) * radius,
     oz: Math.cos(angle) * radius,
@@ -149,7 +191,7 @@ function herdCentroid(herdId: string): { x: number; z: number } {
   let z = 0;
   let count = 0;
   for (const agent of fauna.agents) {
-    if (agent.herdId !== herdId) continue;
+    if (agent.herdId !== herdId || !agent.present || agent.departing) continue;
     x += agent.x;
     z += agent.z;
     count += 1;
@@ -181,19 +223,23 @@ function temperamentFromRespect(
 function standoffFor(respect: RespectTier): number {
   switch (respect) {
     case "apex":
-      return 1.4;
+      return 2.55;
     case "honored":
-      return 1.85;
-    case "known":
       return 2.2;
+    case "known":
+      return 2.15;
     case "wary":
-      return 2.35;
+      return 2.4;
     default:
       return assertNever(respect, "Unknown respect");
   }
 }
 
-function nextMoodForApproach(temperament: Temperament): HerdMood {
+function nextMoodForApproach(
+  temperament: Temperament,
+  respect: RespectTier,
+): HerdMood {
+  if (respect === "honored" || respect === "apex") return "honor";
   switch (temperament) {
     case "timid":
       return "flee";
@@ -204,6 +250,57 @@ function nextMoodForApproach(temperament: Temperament): HerdMood {
     default:
       return assertNever(temperament, "Unknown temperament");
   }
+}
+
+function isPlayerHerd(herd: HerdBrain, homeNestId: string): boolean {
+  if (herd.nestId === homeNestId) return true;
+  return fauna.agents.some(
+    (agent) => agent.herdId === herd.id && agent.mirrorsPlayer,
+  );
+}
+
+function seedCount(speciesId: SpeciesId): number {
+  return speciesId === "sporling" ? PLAYER_HERD_MAX : WILD_HERD_MAX;
+}
+
+function applyHerdCap(herdId: string, desired: number): number {
+  const members = fauna.agents
+    .filter((agent) => agent.herdId === herdId)
+    .sort((a, b) => a.id.localeCompare(b.id));
+  const active = members.filter((agent) => agent.present && !agent.departing);
+  if (active.length > desired) {
+    const extras = active.slice(desired);
+    for (const extra of extras) extra.departing = true;
+    return extras.length;
+  }
+  if (active.length < desired) {
+    const inactive = members.filter(
+      (agent) => !agent.present || agent.departing,
+    );
+    const need = desired - active.length;
+    for (const agent of inactive.slice(0, need)) {
+      agent.present = true;
+      agent.departing = false;
+    }
+  }
+  return 0;
+}
+
+export function syncHerdToForm(
+  eaten: number,
+  homeNestId: string,
+): { playerThinned: number } {
+  const formId: FormId = formAt(eaten).id;
+  let playerThinned = 0;
+  for (const herd of fauna.herds) {
+    const player = isPlayerHerd(herd, homeNestId);
+    const desired = player
+      ? playerHerdMates(formId)
+      : wildHerdMates(formId);
+    const lost = applyHerdCap(herd.id, desired);
+    if (player) playerThinned += lost;
+  }
+  return { playerThinned };
 }
 
 function steerHerd(
@@ -221,30 +318,36 @@ function steerHerd(
   const distPlayer = Math.hypot(center.x - playerX, center.z - playerZ);
   const respect = respectFor(eaten, herd.nestId === homeNestId);
   const temperament = temperamentFromRespect(herd, respect);
+  const detect = detectRadius(respect);
 
-  if (distPlayer < HERD_DETECT_RADIUS) {
-    const mood = nextMoodForApproach(temperament);
+  if (distPlayer < detect) {
+    const mood = nextMoodForApproach(temperament, respect);
     herd.mood = mood;
-    herd.moodUntil = elapsed + (mood === "flee" ? 2.4 : 1.8);
+    herd.moodUntil = elapsed + (mood === "flee" ? 2.6 : mood === "honor" ? 2.2 : 1.8);
 
     if (mood === "flee") {
       const dx = center.x - playerX;
       const dz = center.z - playerZ;
       const mag = Math.hypot(dx, dz) || 1;
       const away = clampToIsland(
-        center.x + (dx / mag) * 6.2 + (nest.x - center.x) * 0.28,
-        center.z + (dz / mag) * 6.2 + (nest.z - center.z) * 0.28,
+        center.x + (dx / mag) * 6.8 + (nest.x - center.x) * 0.28,
+        center.z + (dz / mag) * 6.8 + (nest.z - center.z) * 0.28,
         1.5,
       );
       herd.targetX = away.x;
       herd.targetZ = away.z;
-    } else if (mood === "curious") {
+    } else if (mood === "curious" || mood === "honor") {
       const dx = playerX - center.x;
       const dz = playerZ - center.z;
       const mag = Math.hypot(dx, dz) || 1;
       const standoff = standoffFor(respect);
-      herd.targetX = playerX - (dx / mag) * standoff;
-      herd.targetZ = playerZ - (dz / mag) * standoff;
+      if (mood === "honor" && distPlayer < standoff + 0.35) {
+        herd.targetX = center.x;
+        herd.targetZ = center.z;
+      } else {
+        herd.targetX = playerX - (dx / mag) * standoff;
+        herd.targetZ = playerZ - (dz / mag) * standoff;
+      }
     } else {
       herd.targetX = playerX;
       herd.targetZ = playerZ;
@@ -252,7 +355,11 @@ function steerHerd(
     return;
   }
 
-  if (distPlayer > HERD_LOSE_RADIUS && herd.mood !== "graze" && herd.mood !== "home") {
+  if (
+    distPlayer > loseRadius(respect, herd.mood) &&
+    herd.mood !== "graze" &&
+    herd.mood !== "home"
+  ) {
     herd.mood = "graze";
     herd.moodUntil = elapsed + 2.5 + Math.random() * 3;
     const graze = pickGraze(nest, HERD_GRAZE_RADIUS);
@@ -334,6 +441,7 @@ export function seedMeadow(): MeadowSeed {
     const species = speciesDef(nest.speciesId);
     const herdId = `herd-${nest.id}`;
     const graze = pickGraze(nest, 3.4);
+    const count = seedCount(species.id);
     fauna.herds.push({
       id: herdId,
       nestId: nest.id,
@@ -347,8 +455,8 @@ export function seedMeadow(): MeadowSeed {
       size: species.size,
     });
 
-    for (let i = 0; i < HERD_SIZE; i += 1) {
-      const offset = pickOffset(i, nest.x + nest.z);
+    for (let i = 0; i < count; i += 1) {
+      const offset = pickOffset(i, count, nest.x + nest.z);
       const start = clampToIsland(
         nest.x + offset.ox * 3.8,
         nest.z + offset.oz * 3.8,
@@ -366,14 +474,24 @@ export function seedMeadow(): MeadowSeed {
         z: start.z,
         yaw: nest.yaw + i * 0.7,
         moving: false,
+        gait: 0,
+        present: true,
+        departing: false,
         ox: offset.ox,
         oz: offset.oz,
+        vx: 0,
+        vz: 0,
       });
     }
   }
 
   const home = fauna.nests[0];
+  syncHerdToForm(0, home.id);
   return { nests: fauna.nests, homeNestId: home.id };
+}
+
+function liveAgent(agent: WildlifeAgent): boolean {
+  return agent.present && !agent.departing;
 }
 
 export function tickWildlife(
@@ -390,6 +508,7 @@ export function tickWildlife(
 
   const byHerd = new Map<string, WildlifeAgent[]>();
   for (const agent of fauna.agents) {
+    if (!liveAgent(agent)) continue;
     const list = byHerd.get(agent.herdId);
     if (list) list.push(agent);
     else byHerd.set(agent.herdId, [agent]);
@@ -400,6 +519,30 @@ export function tickWildlife(
     const nest = nestById(agent.nestId);
     if (!herd || !nest) continue;
 
+    if (agent.departing) {
+      const dx = agent.x - nest.x;
+      const dz = agent.z - nest.z;
+      const dist = Math.hypot(dx, dz) || 1;
+      const step = 2.15 * dt;
+      agent.vx = (dx / dist) * 2.15;
+      agent.vz = (dz / dist) * 2.15;
+      agent.x += (dx / dist) * step;
+      agent.z += (dz / dist) * step;
+      agent.moving = true;
+      agent.gait = 0.72;
+      agent.yaw = lerpAngle(agent.yaw, Math.atan2(dx, dz), 1 - Math.exp(-dt * 4));
+      if (dist > 7.4) {
+        agent.present = false;
+        agent.departing = false;
+        agent.moving = false;
+        agent.gait = 0;
+      }
+      continue;
+    }
+
+    if (!agent.present) continue;
+
+    const respect = respectFor(eaten, herd.nestId === homeNestId);
     let desiredX = herd.targetX + agent.ox;
     let desiredZ = herd.targetZ + agent.oz;
 
@@ -426,22 +569,55 @@ export function tickWildlife(
     const dx = desiredX - agent.x;
     const dz = desiredZ - agent.z;
     const dist = Math.hypot(dx, dz);
-    const speed = moodSpeed(herd.mood);
+    const speed = moodSpeed(herd.mood, respect);
     if (dist < 0.18) {
-      agent.moving = false;
+      agent.vx *= Math.max(0, 1 - dt * 6);
+      agent.vz *= Math.max(0, 1 - dt * 6);
+      agent.moving = Math.hypot(agent.vx, agent.vz) > 0.08;
+      agent.gait = Math.min(1, Math.hypot(agent.vx, agent.vz) / 2.2);
+      if (herd.mood === "honor") {
+        agent.yaw = lerpAngle(
+          agent.yaw,
+          Math.atan2(playerX - agent.x, playerZ - agent.z),
+          1 - Math.exp(-dt * 3.2),
+        );
+      }
       continue;
     }
 
+    const wish = Math.min(speed, dist / Math.max(dt, 1 / 60));
+    const wishX = (dx / dist) * wish;
+    const wishZ = (dz / dist) * wish;
+    const blend = 1 - Math.exp(-dt * 5.2);
+    agent.vx += (wishX - agent.vx) * blend;
+    agent.vz += (wishZ - agent.vz) * blend;
+    agent.x += agent.vx * dt;
+    agent.z += agent.vz * dt;
     agent.moving = true;
-    const step = Math.min(dist, speed * dt);
-    agent.x += (dx / dist) * step;
-    agent.z += (dz / dist) * step;
+    agent.gait = Math.min(1, Math.hypot(agent.vx, agent.vz) / Math.max(1.2, speed));
     const island = clampToIsland(agent.x, agent.z, 1.2 * agent.size);
     agent.x = island.x;
     agent.z = island.z;
     leashToNest(agent, nest);
-    agent.yaw = lerpAngle(agent.yaw, Math.atan2(dx, dz), 1 - Math.exp(-dt * 6));
+    const face =
+      herd.mood === "honor"
+        ? Math.atan2(playerX - agent.x, playerZ - agent.z)
+        : Math.atan2(agent.vx || dx, agent.vz || dz);
+    agent.yaw = lerpAngle(agent.yaw, face, 1 - Math.exp(-dt * 3.8));
   }
+}
+
+export function chaseThreat(playerX: number, playerZ: number): number {
+  let best = 0;
+  for (const herd of fauna.herds) {
+    if (herd.mood !== "chase" && herd.mood !== "flee") continue;
+    const center = herdCentroid(herd.id);
+    const dist = Math.hypot(center.x - playerX, center.z - playerZ);
+    if (dist >= 6.4) continue;
+    const intensity = herd.mood === "chase" ? 1 - dist / 6.4 : (1 - dist / 6.4) * 0.45;
+    if (intensity > best) best = intensity;
+  }
+  return best;
 }
 
 export function homeHerdNear(
@@ -452,6 +628,7 @@ export function homeHerdNear(
 ): boolean {
   return fauna.agents.some(
     (agent) =>
+      liveAgent(agent) &&
       agent.nestId === homeNestId &&
       Math.hypot(agent.x - x, agent.z - z) < radius,
   );
@@ -465,7 +642,7 @@ export function nearestHomeHerd(
   let best: WildlifeAgent | null = null;
   let bestDist = Number.POSITIVE_INFINITY;
   for (const agent of fauna.agents) {
-    if (agent.nestId !== homeNestId) continue;
+    if (!liveAgent(agent) || agent.nestId !== homeNestId) continue;
     const dist = Math.hypot(agent.x - x, agent.z - z);
     if (dist < bestDist) {
       best = agent;

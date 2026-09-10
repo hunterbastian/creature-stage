@@ -3,6 +3,7 @@ export const keys = {
   back: false,
   left: false,
   right: false,
+  sprint: false,
 };
 
 /** Analog stick + eat latch. Written by touch HUD, sampled in the sim loop. */
@@ -11,19 +12,26 @@ export const steer = {
   turn: 0,
   eat: false,
   nestle: false,
+  sprint: false,
+  focusTap: false,
 };
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
 
-export function sampleMove(): { throttle: number; turn: number } {
+export function sampleMove(): {
+  throttle: number;
+  turn: number;
+  sprint: boolean;
+} {
   const throttle =
     steer.throttle + (keys.forward ? 1 : 0) - (keys.back ? 1 : 0);
   const turn = steer.turn + (keys.left ? 1 : 0) - (keys.right ? 1 : 0);
   return {
     throttle: clamp(throttle, -1, 1),
     turn: clamp(turn, -1, 1),
+    sprint: keys.sprint || steer.sprint,
   };
 }
 
@@ -45,8 +53,15 @@ function applyKey(code: string, down: boolean): boolean {
     case "ArrowRight":
       keys.right = down;
       return true;
+    case "ShiftLeft":
+    case "ShiftRight":
+      keys.sprint = down;
+      return true;
     case "KeyE":
       steer.nestle = down;
+      return true;
+    case "KeyF":
+      if (down) steer.focusTap = true;
       return true;
     default:
       return false;
@@ -58,10 +73,12 @@ function releaseAll(): void {
   keys.back = false;
   keys.left = false;
   keys.right = false;
+  keys.sprint = false;
   steer.throttle = 0;
   steer.turn = 0;
   steer.eat = false;
   steer.nestle = false;
+  steer.sprint = false;
 }
 
 export function bindInput(): () => void {
