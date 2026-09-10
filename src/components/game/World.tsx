@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { Sky } from "@react-three/drei";
 import { WORLD_RADIUS } from "@/lib/game/constants";
 import { isCoarsePointer } from "@/lib/game/device";
+import { NEST_LAYOUT } from "@/lib/game/wildlife";
 
 type Clump = {
   x: number;
@@ -28,6 +29,11 @@ function seededClumps(count: number, salt: number): Clump[] {
     const x = Math.sin(angle) * radius;
     const z = Math.cos(angle) * radius;
     if (Math.hypot(x, z) < 2.4) continue;
+    if (
+      NEST_LAYOUT.some((nest) => Math.hypot(nest.x - x, nest.z - z) < 2.5)
+    ) {
+      continue;
+    }
     clumps.push({
       x,
       z,

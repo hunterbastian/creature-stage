@@ -10,6 +10,7 @@ import {
   type AccessoryId,
   type ArmId,
   type BodyId,
+  type EquippedParts,
   type EyeId,
   type LegId,
   type MouthId,
@@ -23,25 +24,29 @@ const LEG_LAYOUT = [
   { name: "br", x: -0.28, z: -0.22, phase: 0 },
 ] as const;
 
-function BodyMesh({ id }: { id: BodyId }) {
+function BodyMesh({ id, castShadow = true }: { id: BodyId; castShadow?: boolean }) {
   switch (id) {
     case "plump":
       return (
-        <mesh position={[0, 0.82, 0]} castShadow>
+        <mesh position={[0, 0.82, 0]} castShadow={castShadow}>
           <sphereGeometry args={[0.56, 18, 14]} />
           <meshStandardMaterial color="#e39b6c" roughness={0.48} />
         </mesh>
       );
     case "sleek":
       return (
-        <mesh position={[0, 0.78, 0.04]} scale={[0.72, 0.82, 1.15]} castShadow>
+        <mesh
+          position={[0, 0.78, 0.04]}
+          scale={[0.72, 0.82, 1.15]}
+          castShadow={castShadow}
+        >
           <sphereGeometry args={[0.52, 16, 12]} />
           <meshStandardMaterial color="#4ecdc4" roughness={0.4} />
         </mesh>
       );
     case "spiky":
       return (
-        <mesh position={[0, 0.84, 0]} castShadow>
+        <mesh position={[0, 0.84, 0]} castShadow={castShadow}>
           <icosahedronGeometry args={[0.58, 0]} />
           <meshStandardMaterial
             color="#9b72cf"
@@ -55,25 +60,25 @@ function BodyMesh({ id }: { id: BodyId }) {
   }
 }
 
-function LegMesh({ id }: { id: LegId }) {
+function LegMesh({ id, castShadow = true }: { id: LegId; castShadow?: boolean }) {
   switch (id) {
     case "stubby":
       return (
-        <mesh position={[0, -0.22, 0]} castShadow>
+        <mesh position={[0, -0.22, 0]} castShadow={castShadow}>
           <cylinderGeometry args={[0.11, 0.13, 0.46, 8]} />
           <meshStandardMaterial color="#c97c5d" roughness={0.7} />
         </mesh>
       );
     case "stilts":
       return (
-        <mesh position={[0, -0.38, 0]} castShadow>
+        <mesh position={[0, -0.38, 0]} castShadow={castShadow}>
           <cylinderGeometry args={[0.06, 0.08, 0.82, 7]} />
           <meshStandardMaterial color="#7d5a44" roughness={0.7} />
         </mesh>
       );
     case "paddles":
       return (
-        <mesh position={[0, -0.2, 0]} castShadow>
+        <mesh position={[0, -0.2, 0]} castShadow={castShadow}>
           <boxGeometry args={[0.2, 0.38, 0.1]} />
           <meshStandardMaterial color="#5b8c5a" roughness={0.65} />
         </mesh>
@@ -340,49 +345,56 @@ function AccessoryMesh({ id }: { id: AccessoryId }) {
   }
 }
 
-export function Creature() {
-  const parts = useGameStore((state) => state.parts);
-  const root = useRef<Group>(null);
+export type GaitDriver = {
+  moving: boolean;
+};
+
+function legLift(id: LegId): number {
+  switch (id) {
+    case "stubby":
+      return 0.46;
+    case "stilts":
+      return 0.78;
+    case "paddles":
+      return 0.4;
+    default:
+      return assertNever(id, "Unknown legs");
+  }
+}
+
+/** Shared critter mesh + walk cycle. Pose (x/z/yaw/scale) belongs on the parent. */
+export function CreatureVisual({
+  parts,
+  locomotion,
+  castShadow = true,
+}: {
+  parts: EquippedParts;
+  locomotion: GaitDriver;
+  castShadow?: boolean;
+}) {
   const body = useRef<Group>(null);
   const legRefs = useRef<(Mesh | Group | null)[]>([]);
-
-  const legHeight = useMemo(() => {
-    switch (parts.legs) {
-      case "stubby":
-        return 0.46;
-      case "stilts":
-        return 0.78;
-      case "paddles":
-        return 0.4;
-      default:
-        return assertNever(parts.legs, "Unknown legs");
-    }
-  }, [parts.legs]);
+  const legHeight = useMemo(() => legLift(parts.legs), [parts.legs]);
 
   useFrame((state) => {
-    const group = root.current;
-    if (!group) return;
-    group.position.set(sim.x, 0, sim.z);
-    group.rotation.y = sim.yaw;
-    group.scale.setScalar(sim.size);
-
     const t = state.clock.elapsedTime;
-    const swing = sim.moving ? Math.sin(t * 10) * 0.5 : 0;
+    const moving = locomotion.moving;
+    const swing = moving ? Math.sin(t * 10) * 0.5 : 0;
     if (body.current) {
-      body.current.position.y = sim.moving ? Math.abs(Math.sin(t * 10)) * 0.05 : 0;
+      body.current.position.y = moving ? Math.abs(Math.sin(t * 10)) * 0.05 : 0;
     }
     for (let i = 0; i < LEG_LAYOUT.length; i += 1) {
       const leg = legRefs.current[i];
       if (!leg) continue;
       const phase = LEG_LAYOUT[i].phase;
-      leg.rotation.x = sim.moving ? Math.sin(t * 10 + phase) * 0.55 : swing * 0.05;
+      leg.rotation.x = moving ? Math.sin(t * 10 + phase) * 0.55 : swing * 0.05;
     }
   });
 
   return (
-    <group ref={root}>
+    <>
       <group ref={body}>
-        <BodyMesh id={parts.body} />
+        <BodyMesh id={parts.body} castShadow={castShadow} />
         <MouthMesh id={parts.mouth} />
         <EyesMesh id={parts.eyes} />
         <ArmsMesh id={parts.arms} />
@@ -397,9 +409,28 @@ export function Creature() {
           }}
           position={[leg.x, legHeight * 0.55, leg.z]}
         >
-          <LegMesh id={parts.legs} />
+          <LegMesh id={parts.legs} castShadow={castShadow} />
         </group>
       ))}
+    </>
+  );
+}
+
+export function Creature() {
+  const parts = useGameStore((state) => state.parts);
+  const root = useRef<Group>(null);
+
+  useFrame(() => {
+    const group = root.current;
+    if (!group) return;
+    group.position.set(sim.x, 0, sim.z);
+    group.rotation.y = sim.yaw;
+    group.scale.setScalar(sim.size);
+  });
+
+  return (
+    <group ref={root}>
+      <CreatureVisual parts={parts} locomotion={sim} />
     </group>
   );
 }
