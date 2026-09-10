@@ -196,8 +196,8 @@ function CompactHud({
         <div
           className="pointer-events-auto absolute bottom-0"
           style={{
-            left: "max(7.35rem, calc(env(safe-area-inset-left) + 6.5rem))",
-            right: "max(5.6rem, calc(env(safe-area-inset-right) + 4.75rem))",
+            left: "max(8.15rem, calc(env(safe-area-inset-left) + 7.25rem))",
+            right: "max(6.9rem, calc(env(safe-area-inset-right) + 6.1rem))",
             paddingBottom: "max(0.45rem, env(safe-area-inset-bottom))",
           }}
         >
