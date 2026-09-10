@@ -36,12 +36,11 @@ export function GameLoop() {
       }
     }
 
-    const reach = sim.bite * sim.size;
-    const mouthX = sim.x + Math.sin(sim.yaw) * 0.58 * sim.size;
-    const mouthZ = sim.z + Math.cos(sim.yaw) * 0.58 * sim.size;
+    // Body-centered nibble so fruit does not require a pixel-perfect mouth poke.
+    const reach = (sim.bite + 0.65) * sim.size;
     const { foods, eat } = useGameStore.getState();
     for (const food of foods) {
-      if (Math.hypot(food.x - mouthX, food.z - mouthZ) < reach) {
+      if (Math.hypot(food.x - sim.x, food.z - sim.z) < reach) {
         eat(food.id);
         break;
       }

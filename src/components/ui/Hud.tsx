@@ -173,7 +173,7 @@ export function Hud() {
         </div>
       </aside>
 
-      <footer className="max-w-xl rounded-xl border border-white/10 bg-black/35 px-3 py-2 text-xs text-emerald-50/90 backdrop-blur">
+      <footer className="mx-auto mb-1 w-fit max-w-xl rounded-xl border border-white/10 bg-black/35 px-4 py-2 text-xs text-emerald-50/90 backdrop-blur">
         <span className="font-semibold text-lime-200">WASD</span> or arrows to
         walk and turn · bump glowing fruit to eat · editor on the right swaps
         parts

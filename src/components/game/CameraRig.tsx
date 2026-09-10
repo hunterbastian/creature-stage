@@ -14,8 +14,8 @@ export function CameraRig() {
   const initialized = useRef(false);
 
   useFrame((_, delta) => {
-    const back = 7.2 + sim.size * 2.1;
-    const height = 4.0 + sim.size * 1.35;
+    const back = 6.4 + sim.size * 1.8;
+    const height = 3.2 + sim.size * 1.05;
     desired.set(
       sim.x - Math.sin(sim.yaw) * back,
       height,

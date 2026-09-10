@@ -30,7 +30,7 @@ function seededClumps(count: number, salt: number): Clump[] {
     clumps.push({
       x,
       z,
-      scale: 0.55 + rand() * 0.9,
+      scale: 0.7 + rand() * 0.6,
       rot: rand() * Math.PI * 2,
       color: rand() > 0.5 ? "#6d8f3e" : "#507a32",
     });
@@ -41,13 +41,13 @@ function seededClumps(count: number, salt: number): Clump[] {
 function GrassTuft({ clump }: { clump: Clump }) {
   return (
     <group position={[clump.x, 0, clump.z]} rotation={[0, clump.rot, 0]}>
-      {[0, 0.12, -0.1].map((offset, index) => (
+      {[0, 0.08, -0.07].map((offset, index) => (
         <mesh
           key={index}
-          position={[offset, 0.22 * clump.scale, index * 0.04]}
+          position={[offset, 0.1 * clump.scale, index * 0.03]}
           castShadow
         >
-          <coneGeometry args={[0.08 * clump.scale, 0.46 * clump.scale, 5]} />
+          <coneGeometry args={[0.045 * clump.scale, 0.2 * clump.scale, 4]} />
           <meshStandardMaterial color={clump.color} roughness={0.9} />
         </mesh>
       ))}
@@ -89,7 +89,7 @@ function Mushroom({ clump }: { clump: Clump }) {
 }
 
 export function World() {
-  const grass = useMemo(() => seededClumps(28, 3), []);
+  const grass = useMemo(() => seededClumps(20, 3), []);
   const rocks = useMemo(() => seededClumps(9, 11), []);
   const shrooms = useMemo(() => seededClumps(6, 19), []);
 
