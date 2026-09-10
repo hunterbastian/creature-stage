@@ -318,7 +318,7 @@ function Chassis({
       />
       {plan.crest.map((pos) => (
         <Crest
-          key={`crest-${pos[1]}-${pos[2]}`}
+          key={`crest-${pos[0]}-${pos[1]}-${pos[2]}`}
           position={pos}
           castShadow={castShadow}
         />
