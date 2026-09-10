@@ -20,7 +20,7 @@ export function CreatureMaterial({
           map={maps.map}
           specularMap={maps.specMap}
           bumpMap={maps.bumpMap}
-          bumpScale={0.26}
+          bumpScale={0.42}
           color="#ffffff"
           specular="#6e6558"
           shininess={9}
@@ -62,7 +62,7 @@ export function CreatureMaterial({
           map={maps.map}
           specularMap={maps.specMap}
           bumpMap={maps.bumpMap}
-          bumpScale={0.32}
+          bumpScale={0.48}
           color="#ffffff"
           specular="#6a6256"
           shininess={7}

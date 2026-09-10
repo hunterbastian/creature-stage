@@ -1,7 +1,6 @@
 import {
   CanvasTexture,
   LinearFilter,
-  LinearMipmapLinearFilter,
   LinearSRGBColorSpace,
   SRGBColorSpace,
   type ColorSpace,
@@ -300,8 +299,8 @@ function paintMaps(hex: string, finish: Finish): CoastalMaps {
   const stain = valueNoise(size, 3, rand);
 
   const contrast =
-    finish === "plate" ? 0.14 : finish === "keratin" ? 0.1 : 0.09;
-  const pitAmt = finish === "wet" ? 0.22 : finish === "plate" ? 0.38 : 0.48;
+    finish === "plate" ? 0.16 : finish === "keratin" ? 0.12 : 0.11;
+  const pitAmt = finish === "wet" ? 0.32 : finish === "plate" ? 0.55 : 0.68;
 
   const aData = a.createImageData(size, size);
   const sData = s.createImageData(size, size);
@@ -316,10 +315,10 @@ function paintMaps(hex: string, finish: Finish): CoastalMaps {
       const pit = poreHint(x, y, size) * pitAmt;
       const dirt = Math.max(0, stain[i] - 0.58) * 0.42;
 
-      const lift = mottle + grit - pit * 0.85;
+      const lift = mottle + grit - pit * 1.15;
       let r = base[0] * (1 + lift);
       let g = base[1] * (1 + lift * 0.94);
-      let bch = base[2] * (1 + lift * 0.82);
+      let bch = base[2] * (1 + lift * 0.78);
       r = r * (1 - dirt) + dirtRgb[0] * dirt;
       g = g * (1 - dirt) + dirtRgb[1] * dirt;
       bch = bch * (1 - dirt) + dirtRgb[2] * dirt;
@@ -338,7 +337,7 @@ function paintMaps(hex: string, finish: Finish): CoastalMaps {
       sData.data[p + 2] = sv;
       sData.data[p + 3] = 255;
 
-      const bumpV = Math.round(clamp01(0.58 + grit * 0.8 - pit * 1.15 + mottle * 0.25) * 255);
+      const bumpV = Math.round(clamp01(0.62 + grit * 0.7 - pit * 1.35 + mottle * 0.2) * 255);
       bData.data[p] = bumpV;
       bData.data[p + 1] = bumpV;
       bData.data[p + 2] = bumpV;
@@ -363,8 +362,8 @@ function eraTexture(canvas: HTMLCanvasElement, space: ColorSpace): CanvasTexture
   const texture = new CanvasTexture(canvas);
   texture.colorSpace = space;
   texture.magFilter = LinearFilter;
-  texture.minFilter = LinearMipmapLinearFilter;
-  texture.generateMipmaps = true;
+  texture.minFilter = LinearFilter;
+  texture.generateMipmaps = false;
   texture.anisotropy = 1;
   texture.needsUpdate = true;
   return texture;
@@ -398,7 +397,7 @@ function blurInPlace(data: Uint8ClampedArray, size: number, radius: number): voi
 }
 
 function poreHint(x: number, y: number, size: number): number {
-  const cells = 16;
+  const cells = 9;
   const u = (x / size) * cells;
   const v = (y / size) * cells;
   const row = Math.floor(v);
@@ -406,7 +405,7 @@ function poreHint(x: number, y: number, size: number): number {
   const cx = hx - Math.floor(hx) - 0.5;
   const cy = v - row - 0.5;
   const d = Math.sqrt(cx * cx + cy * cy);
-  return Math.max(0, 1 - d / 0.2) ** 2;
+  return Math.max(0, 1 - d / 0.28) ** 2;
 }
 
 function valueNoise(

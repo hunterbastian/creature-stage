@@ -163,7 +163,7 @@ export function World() {
   return (
     <>
       <color attach="background" args={["#b4aea4"]} />
-      <fogExp2 attach="fog" args={["#b8b2a6", 0.028]} />
+      <fogExp2 attach="fog" args={["#b8b2a6", 0.018]} />
       <Sky
         sunPosition={[10, 4.2, 8]}
         turbidity={14}
