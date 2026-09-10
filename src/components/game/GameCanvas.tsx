@@ -8,6 +8,7 @@ import {
 } from "@/lib/game/device";
 import { CameraRig } from "./CameraRig";
 import { Creature } from "./Creature";
+import { EraLook } from "./EraLook";
 import { FoodField } from "./Food";
 import { GameLoop } from "./GameLoop";
 import { NestField } from "./Nests";
@@ -24,7 +25,7 @@ export function GameCanvas() {
       style={{ touchAction: "none" }}
       shadows
       dpr={dpr}
-      camera={{ fov: 50, near: 0.1, far: 90, position: [0, 6, -10] }}
+      camera={{ fov: 46, near: 0.12, far: 90, position: [3.2, 2.1, 5.4] }}
       gl={gl}
       onContextMenu={(event) => event.preventDefault()}
     >
@@ -35,6 +36,7 @@ export function GameCanvas() {
       <FoodField />
       <CameraRig />
       <GameLoop />
+      <EraLook />
     </Canvas>
   );
 }

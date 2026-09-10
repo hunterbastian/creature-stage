@@ -356,6 +356,7 @@ function DesktopHud() {
 }
 
 export function Hud() {
+  const starterChosen = useGameStore((state) => state.starterChosen);
   const surface = usePlaySurface();
   const toast = useGameStore((state) => state.toast);
   const clearToast = useGameStore((state) => state.clearToast);
@@ -366,6 +367,8 @@ export function Hud() {
     const timer = window.setTimeout(() => clearToast(), 2600);
     return () => window.clearTimeout(timer);
   }, [toast, clearToast]);
+
+  if (!starterChosen) return null;
 
   if (surface.compact) {
     return <CompactHud open={open} setOpen={setOpen} />;

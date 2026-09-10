@@ -5,6 +5,7 @@ import {
   isUnlocked,
   randomizeUnlocked,
   slotLabel,
+  starterLoadout,
 } from "./catalog";
 import {
   FOOD_RESPAWN_MS,
@@ -19,6 +20,7 @@ import { computeStats } from "./stats";
 import {
   SLOT_IDS,
   assertNever,
+  type BodyId,
   type DerivedStats,
   type EquippedParts,
   type FoodBit,
@@ -41,6 +43,8 @@ export type GameStore = {
   meadowEpoch: number;
   stats: DerivedStats;
   toast: string | null;
+  starterChosen: boolean;
+  chooseStarter: (body: BodyId) => void;
   setPart: (slot: SlotId, id: PartId) => void;
   eat: (foodId: string) => void;
   nestle: (nestId: string) => void;
@@ -129,7 +133,21 @@ export const useGameStore = create<GameStore>((set, get) => ({
   homeNestId: initialMeadow.homeNestId,
   nearbyNest: null,
   meadowEpoch: 0,
-  toast: "Fruit grows you. Herds graze. Walk into a nest to rest.",
+  toast: null,
+  starterChosen: false,
+
+  chooseStarter: (body) => {
+    const nextParts = starterLoadout(body);
+    const { eaten } = get();
+    const stats = computeStats(nextParts, eaten);
+    syncSimStats(stats);
+    set({
+      parts: nextParts,
+      stats,
+      starterChosen: true,
+      toast: "Walk into fruit. Eat to grow. Nests hold herds.",
+    });
+  },
 
   setPart: (slot, id) => {
     const { unlocked, parts, eaten } = get();
@@ -241,7 +259,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
       homeNestId: meadow.homeNestId,
       nearbyNest: null,
       meadowEpoch: get().meadowEpoch + 1,
-      toast: "Back to a fresh sporling and a new meadow flock.",
+      starterChosen: false,
+      toast: null,
     });
   },
 

@@ -66,6 +66,13 @@ export function GameLoop() {
 
   useFrame((state, delta) => {
     const dt = Math.min(delta, 0.05);
+    const { starterChosen, homeNestId } = useGameStore.getState();
+    if (!starterChosen) {
+      sim.moving = false;
+      tickWildlife(dt, state.clock.elapsedTime, sim.x, sim.z, homeNestId);
+      return;
+    }
+
     const { throttle, turn } = sampleMove();
     sim.yaw += turn * TURN_SPEED * dt;
     sim.moving = Math.abs(throttle) > 0.04;
@@ -84,7 +91,6 @@ export function GameLoop() {
       }
     }
 
-    const { homeNestId } = useGameStore.getState();
     tickWildlife(dt, state.clock.elapsedTime, sim.x, sim.z, homeNestId);
     syncNearbyNest();
 

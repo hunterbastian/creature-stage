@@ -39,11 +39,11 @@ function Egg({
     <group ref={group} position={[x, 0.56, z]} scale={[0.82, 1.12, 0.82]}>
       <mesh castShadow>
         <sphereGeometry args={[0.15, 10, 8]} />
-        <meshStandardMaterial color={color} roughness={0.32} />
+        <meshPhongMaterial color={color} shininess={22} specular="#efe4d0" />
       </mesh>
       <mesh position={[0.045, 0.02, 0.04]}>
         <sphereGeometry args={[0.035, 6, 6]} />
-        <meshStandardMaterial color="#fff6e8" roughness={0.45} />
+        <meshPhongMaterial color="#f2eadc" shininess={18} specular="#fff6ea" />
       </mesh>
     </group>
   );
@@ -75,7 +75,7 @@ function NestMesh({
         castShadow
       >
         <sphereGeometry args={[0.7, 12, 8]} />
-        <meshStandardMaterial color="#6b5a3e" roughness={1} />
+        <meshPhongMaterial color="#e2d4b4" shininess={10} specular="#f4ead0" />
       </mesh>
       <mesh
         position={[0, 0.44, 0]}
@@ -83,28 +83,29 @@ function NestMesh({
         castShadow
         receiveShadow
       >
-        <torusGeometry args={[0.68, 0.2, 8, 20]} />
-        <meshStandardMaterial color={species.weave} roughness={0.85} />
+        <torusGeometry args={[0.68, 0.2, 8, 16]} />
+        <meshPhongMaterial color={species.weave} shininess={5} specular="#c4b090" />
       </mesh>
       <mesh
         rotation={[-Math.PI / 2, 0, 0]}
         position={[0, 0.36, 0]}
         receiveShadow
       >
-        <circleGeometry args={[0.56, 18]} />
-        <meshStandardMaterial color="#4a3a28" roughness={0.95} />
+        <circleGeometry args={[0.56, 14]} />
+        <meshPhongMaterial color="#efe4c8" shininess={8} specular="#f8f0dc" />
       </mesh>
       <mesh
         position={[0, 0.6, 0]}
         rotation={[Math.PI / 2, 0, 0]}
         castShadow
       >
-        <torusGeometry args={[0.78, 0.09, 8, 18]} />
-        <meshStandardMaterial
+        <torusGeometry args={[0.78, 0.09, 8, 14]} />
+        <meshPhongMaterial
           color={species.moss}
-          roughness={0.8}
-          emissive={isHome ? "#9be564" : "#000000"}
-          emissiveIntensity={isHome ? 0.22 : 0}
+          shininess={8}
+          specular="#e8f0dc"
+          emissive={isHome ? "#d8c898" : "#000000"}
+          emissiveIntensity={isHome ? 0.05 : 0}
         />
       </mesh>
       {TWIGS.map((twig) => (
@@ -115,7 +116,7 @@ function NestMesh({
           castShadow
         >
           <cylinderGeometry args={[0.03, 0.045, 0.55, 5]} />
-          <meshStandardMaterial color="#7a5a3a" roughness={0.9} />
+          <meshPhongMaterial color="#d4c4a0" shininess={8} specular="#efe4c8" />
         </mesh>
       ))}
       {eggs.map((egg) => (
@@ -131,14 +132,16 @@ function NestMesh({
         <group position={[0.02, 0.92, -0.08]}>
           <mesh position={[0, 0.22, 0]} castShadow>
             <cylinderGeometry args={[0.03, 0.04, 0.55, 5]} />
-            <meshStandardMaterial color="#d7e8a0" />
+            <meshPhongMaterial color="#c8c090" shininess={8} specular="#d8d0a8" />
           </mesh>
           <mesh position={[0, 0.52, 0]} castShadow>
             <sphereGeometry args={[0.12, 10, 8]} />
-            <meshStandardMaterial
-              color="#c6ff7a"
-              emissive="#8dff6b"
-              emissiveIntensity={0.45}
+            <meshPhongMaterial
+              color="#b8a070"
+              emissive="#8a7850"
+              emissiveIntensity={0.08}
+              shininess={8}
+              specular="#a09070"
             />
           </mesh>
         </group>

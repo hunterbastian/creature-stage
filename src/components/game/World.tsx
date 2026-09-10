@@ -14,9 +14,18 @@ type Clump = {
   color: string;
 };
 
-function seededClumps(count: number, salt: number): Clump[] {
+const PUDDLES = [
+  { x: 3.4, z: -2.8, sx: 1.55, sz: 0.52 },
+  { x: -4.6, z: 1.6, sx: 1.15, sz: 0.42 },
+  { x: 5.8, z: 3.4, sx: 0.95, sz: 0.38 },
+] as const;
+
+function seededClumps(
+  count: number,
+  salt: number,
+  colors: [string, string],
+): Clump[] {
   const clumps: Clump[] = [];
-  // Simple LCG so decor is stable across hot reloads in a session.
   let seed = (salt * 9301 + 49297) % 233280;
   const rand = () => {
     seed = (seed * 9301 + 49297) % 233280;
@@ -25,21 +34,22 @@ function seededClumps(count: number, salt: number): Clump[] {
 
   while (clumps.length < count) {
     const angle = rand() * Math.PI * 2;
-    const radius = 3.5 + rand() * (WORLD_RADIUS - 4.5);
+    const radius = 2.8 + rand() * (WORLD_RADIUS - 3.8);
     const x = Math.sin(angle) * radius;
     const z = Math.cos(angle) * radius;
-    if (Math.hypot(x, z) < 2.4) continue;
-    if (
-      NEST_LAYOUT.some((nest) => Math.hypot(nest.x - x, nest.z - z) < 2.5)
-    ) {
+    if (Math.hypot(x, z) < 2.0) continue;
+    if (NEST_LAYOUT.some((nest) => Math.hypot(nest.x - x, nest.z - z) < 2.3)) {
+      continue;
+    }
+    if (PUDDLES.some((puddle) => Math.hypot(puddle.x - x, puddle.z - z) < 1.4)) {
       continue;
     }
     clumps.push({
       x,
       z,
-      scale: 0.7 + rand() * 0.6,
+      scale: 0.55 + rand() * 0.85,
       rot: rand() * Math.PI * 2,
-      color: rand() > 0.5 ? "#6d8f3e" : "#507a32",
+      color: rand() > 0.5 ? colors[0] : colors[1],
     });
   }
   return clumps;
@@ -48,78 +58,141 @@ function seededClumps(count: number, salt: number): Clump[] {
 function GrassTuft({ clump }: { clump: Clump }) {
   return (
     <group position={[clump.x, 0, clump.z]} rotation={[0, clump.rot, 0]}>
-      {[0, 0.08, -0.07].map((offset, index) => (
+      {[0, 0.06, -0.05].map((offset, index) => (
         <mesh
           key={index}
-          position={[offset, 0.1 * clump.scale, index * 0.03]}
+          position={[offset, 0.08 * clump.scale, index * 0.025]}
           castShadow
         >
-          <coneGeometry args={[0.045 * clump.scale, 0.2 * clump.scale, 4]} />
-          <meshStandardMaterial color={clump.color} roughness={0.9} />
+          <coneGeometry args={[0.032 * clump.scale, 0.16 * clump.scale, 5]} />
+          <meshPhongMaterial
+            color={clump.color}
+            shininess={4}
+            specular="#8a9c64"
+          />
         </mesh>
       ))}
     </group>
   );
 }
 
-function Rock({ clump }: { clump: Clump }) {
+function CoastalRock({ clump }: { clump: Clump }) {
   return (
     <mesh
-      position={[clump.x, 0.16 * clump.scale, clump.z]}
-      rotation={[0.2, clump.rot, 0.1]}
-      scale={clump.scale * 0.55}
+      position={[clump.x, 0.1 * clump.scale, clump.z]}
+      rotation={[0.18, clump.rot, 0.1]}
+      scale={clump.scale * 0.42}
       castShadow
       receiveShadow
     >
-      <dodecahedronGeometry args={[0.45, 0]} />
-      <meshStandardMaterial color="#8d8678" roughness={1} />
+      <dodecahedronGeometry args={[0.42, 0]} />
+      <meshPhongMaterial
+        color={clump.color}
+        shininess={6}
+        specular="#9a9488"
+      />
     </mesh>
   );
 }
 
-function Mushroom({ clump }: { clump: Clump }) {
+function Puddle({
+  x,
+  z,
+  sx,
+  sz,
+}: {
+  x: number;
+  z: number;
+  sx: number;
+  sz: number;
+}) {
   return (
-    <group position={[clump.x, 0, clump.z]}>
-      <mesh position={[0, 0.18, 0]} castShadow>
-        <cylinderGeometry args={[0.05, 0.07, 0.36, 6]} />
-        <meshStandardMaterial color="#f3e6c8" />
+    <mesh
+      rotation={[-Math.PI / 2, 0, 0.2]}
+      position={[x, 0.012, z]}
+      scale={[sx, sz, 1]}
+      receiveShadow
+    >
+      <circleGeometry args={[0.55, 16]} />
+      <meshPhongMaterial color="#4a6a68" shininess={36} specular="#9ec4c0" />
+    </mesh>
+  );
+}
+
+function DistantCliff({
+  x,
+  z,
+  scale,
+  rot,
+}: {
+  x: number;
+  z: number;
+  scale: number;
+  rot: number;
+}) {
+  return (
+    <group position={[x, 0, z]} rotation={[0, rot, 0]}>
+      <mesh
+        position={[0, scale * 0.55, 0]}
+        scale={[scale, scale * 1.15, scale * 0.72]}
+        castShadow
+      >
+        <dodecahedronGeometry args={[1.1, 0]} />
+        <meshPhongMaterial color="#8a8478" shininess={5} specular="#b0aaa0" />
       </mesh>
-      <mesh position={[0, 0.38, 0]} castShadow>
-        <sphereGeometry args={[0.16 * clump.scale, 10, 8, 0, Math.PI * 2, 0, 1.3]} />
-        <meshStandardMaterial
-          color={clump.scale > 0.9 ? "#e85d5d" : "#d9a441"}
-          roughness={0.55}
-        />
+      <mesh
+        position={[scale * 0.55, scale * 0.34, -scale * 0.2]}
+        scale={[scale * 0.55, scale * 0.72, scale * 0.45]}
+      >
+        <dodecahedronGeometry args={[1, 0]} />
+        <meshPhongMaterial color="#7a7468" shininess={4} specular="#a8a298" />
       </mesh>
     </group>
   );
 }
 
 export function World() {
-  const grass = useMemo(() => seededClumps(20, 3), []);
-  const rocks = useMemo(() => seededClumps(9, 11), []);
-  const shrooms = useMemo(() => seededClumps(6, 19), []);
+  const grass = useMemo(
+    () => seededClumps(34, 3, ["#5c7a38", "#6a8a40"]),
+    [],
+  );
+  const rocks = useMemo(
+    () => seededClumps(18, 11, ["#7a7468", "#6a6860"]),
+    [],
+  );
   const shadowMap = useMemo(() => (isCoarsePointer() ? 512 : 1024), []);
+  const cliffs = useMemo(
+    () =>
+      [
+        { x: 24, z: -10, scale: 4.4, rot: 0.4 },
+        { x: 20, z: 18, scale: 3.6, rot: -0.55 },
+        { x: -22, z: 16, scale: 4.0, rot: 0.9 },
+        { x: -18, z: -20, scale: 3.2, rot: -0.2 },
+      ] as const,
+    [],
+  );
 
   return (
     <>
-      <color attach="background" args={["#8ec5e8"]} />
-      <fog attach="fog" args={["#b7d4ee", 22, 52]} />
+      <color attach="background" args={["#9bb0b8"]} />
+      <fogExp2 attach="fog" args={["#c5d0c8", 0.018]} />
       <Sky
-        sunPosition={[18, 8, 12]}
-        turbidity={6}
-        rayleigh={1.4}
-        mieCoefficient={0.005}
-        mieDirectionalG={0.8}
+        sunPosition={[18, 9.5, 12]}
+        turbidity={6.5}
+        rayleigh={1.8}
+        mieCoefficient={0.0045}
+        mieDirectionalG={0.78}
       />
-      <hemisphereLight args={["#fff1d6", "#3d6b3a", 0.85]} />
-      <ambientLight intensity={0.28} />
+      <hemisphereLight args={["#d8e4ec", "#5a6a40", 0.88]} />
+      <ambientLight color="#e4d8bc" intensity={0.42} />
       <directionalLight
-        position={[14, 18, 8]}
-        intensity={1.55}
+        color="#ffd4a0"
+        position={[16, 15, 10]}
+        intensity={1.18}
         castShadow
         shadow-mapSize-width={shadowMap}
         shadow-mapSize-height={shadowMap}
+        shadow-bias={-0.00025}
         shadow-camera-near={1}
         shadow-camera-far={50}
         shadow-camera-left={-22}
@@ -127,33 +200,32 @@ export function World() {
         shadow-camera-top={22}
         shadow-camera-bottom={-22}
       />
+      <directionalLight color="#8a9aa0" position={[-10, 7, -8]} intensity={0.28} />
 
-      {/* Surrounding shallows — sells the tiny island read. */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.18, 0]}>
-        <circleGeometry args={[42, 48]} />
-        <meshStandardMaterial color="#3d7ea6" roughness={0.35} />
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.2, 0]}>
+        <circleGeometry args={[48, 48]} />
+        <meshPhongMaterial color="#3a6e84" shininess={30} specular="#8eb4c0" />
       </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.04, 0]}>
-        <ringGeometry args={[WORLD_RADIUS - 0.15, WORLD_RADIUS + 1.4, 64]} />
-        <meshStandardMaterial color="#d7c18a" roughness={0.9} />
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.05, 0]}>
+        <ringGeometry args={[WORLD_RADIUS - 0.18, WORLD_RADIUS + 1.6, 48]} />
+        <meshPhongMaterial color="#c4b48a" shininess={8} specular="#d8c9a4" />
       </mesh>
-      <mesh
-        rotation={[-Math.PI / 2, 0, 0]}
-        position={[0, 0, 0]}
-        receiveShadow
-      >
-        <circleGeometry args={[WORLD_RADIUS, 64]} />
-        <meshStandardMaterial color="#7cae4a" roughness={0.92} />
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
+        <circleGeometry args={[WORLD_RADIUS, 48]} />
+        <meshPhongMaterial color="#6a8a48" shininess={4} specular="#8a9c64" />
       </mesh>
 
+      {PUDDLES.map((puddle) => (
+        <Puddle key={`${puddle.x}-${puddle.z}`} {...puddle} />
+      ))}
       {grass.map((clump, index) => (
         <GrassTuft key={`g-${index}`} clump={clump} />
       ))}
       {rocks.map((clump, index) => (
-        <Rock key={`r-${index}`} clump={clump} />
+        <CoastalRock key={`r-${index}`} clump={clump} />
       ))}
-      {shrooms.map((clump, index) => (
-        <Mushroom key={`m-${index}`} clump={clump} />
+      {cliffs.map((cliff) => (
+        <DistantCliff key={`${cliff.x}-${cliff.z}`} {...cliff} />
       ))}
     </>
   );

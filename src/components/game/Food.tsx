@@ -9,11 +9,11 @@ import { assertNever, type FoodKind } from "@/lib/game/types";
 function foodColor(kind: FoodKind): string {
   switch (kind) {
     case "berry":
-      return "#ff5a7a";
+      return "#d66a68";
     case "plumpfruit":
-      return "#ffd166";
+      return "#e8c86a";
     case "sporepod":
-      return "#c77dff";
+      return "#b8c8c4";
     default:
       return assertNever(kind, "Unknown food");
   }
@@ -44,19 +44,19 @@ function FoodMesh({
   return (
     <group ref={group} position={[x, 0.42, z]}>
       <mesh castShadow>
-        <sphereGeometry args={[0.22, 12, 10]} />
-        <meshStandardMaterial
+        <sphereGeometry args={[0.22, 10, 8]} />
+        <meshPhongMaterial
           color={color}
           emissive={color}
-          emissiveIntensity={0.35}
-          roughness={0.35}
+          emissiveIntensity={0.04}
+          shininess={18}
+          specular="#f0e8d8"
         />
       </mesh>
       <mesh position={[0, 0.22, 0]}>
         <coneGeometry args={[0.05, 0.1, 5]} />
-        <meshStandardMaterial color="#3f6b2a" />
+        <meshPhongMaterial color="#8a9a6a" shininess={8} specular="#c8d4a8" />
       </mesh>
-      <pointLight color={color} intensity={0.45} distance={3.2} />
     </group>
   );
 }
