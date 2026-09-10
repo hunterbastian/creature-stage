@@ -39,6 +39,31 @@ function WildlifeCritter({ agentId }: { agentId: string }) {
   );
 }
 
+function HerdBeacon() {
+  const waypoint = useGameStore((state) => state.waypoint);
+  const ring = useRef<Group>(null);
+
+  useFrame((state) => {
+    if (!ring.current || waypoint?.kind !== "herd") return;
+    const agent = fauna.agents.find((item) => item.id === waypoint.id);
+    if (!agent) return;
+    ring.current.position.set(agent.x, 0.06, agent.z);
+    const pulse = 0.32 + Math.sin(state.clock.elapsedTime * 3) * 0.04;
+    ring.current.scale.setScalar(pulse);
+  });
+
+  if (waypoint?.kind !== "herd") return null;
+
+  return (
+    <group ref={ring} position={[waypoint.x, 0.06, waypoint.z]}>
+      <mesh rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[1.1, 1.35, 18]} />
+        <meshBasicMaterial color="#c8e8a8" transparent opacity={0.45} />
+      </mesh>
+    </group>
+  );
+}
+
 export function WildlifeField() {
   const epoch = useGameStore((state) => state.meadowEpoch);
 
@@ -47,6 +72,7 @@ export function WildlifeField() {
       {fauna.agents.map((agent) => (
         <WildlifeCritter key={`${epoch}-${agent.id}`} agentId={agent.id} />
       ))}
+      <HerdBeacon />
     </>
   );
 }

@@ -1,29 +1,127 @@
 "use client";
 
-import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
 import {
-  nextUnlock,
-  partsForSlot,
-  slotLabel,
-  unlockProgress,
-} from "@/lib/game/catalog";
+  useEffect,
+  useRef,
+  useState,
+  type Dispatch,
+  type SetStateAction,
+} from "react";
+import { partsForSlot, slotLabel } from "@/lib/game/catalog";
 import { SLOT_UNLOCK_AT } from "@/lib/game/constants";
 import { readPlaySurface, usePlaySurface } from "@/lib/game/play-surface";
+import {
+  bearingTo,
+  canMutate,
+  currentObjective,
+  formAt,
+  formProgress,
+  nextForm,
+} from "@/lib/game/progress";
+import { sim } from "@/lib/game/sim";
 import { temperamentLabel } from "@/lib/game/species";
 import { useGameStore } from "@/lib/game/store";
-import { SLOT_IDS, type SlotId } from "@/lib/game/types";
+import { SLOT_IDS, assertNever, type SlotId } from "@/lib/game/types";
+import { fauna } from "@/lib/game/wildlife";
+
+function waypointPos(id: string, kind: "food" | "nest" | "herd") {
+  switch (kind) {
+    case "food": {
+      const food = useGameStore.getState().foods.find((item) => item.id === id);
+      return food ? { x: food.x, z: food.z } : null;
+    }
+    case "nest": {
+      const nest = useGameStore.getState().nests.find((item) => item.id === id);
+      return nest ? { x: nest.x, z: nest.z } : null;
+    }
+    case "herd": {
+      const agent = fauna.agents.find((item) => item.id === id);
+      return agent ? { x: agent.x, z: agent.z } : null;
+    }
+    default:
+      return assertNever(kind, "Unknown waypoint");
+  }
+}
+
+function Compass() {
+  const waypoint = useGameStore((state) => state.waypoint);
+  const needle = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!waypoint) return;
+    let frame = 0;
+    const tick = () => {
+      const pos = waypointPos(waypoint.id, waypoint.kind);
+      if (needle.current && pos) {
+        const bearing = bearingTo(sim.x, sim.z, sim.yaw, pos.x, pos.z);
+        needle.current.style.transform = `rotate(${bearing}rad)`;
+      }
+      frame = window.requestAnimationFrame(tick);
+    };
+    frame = window.requestAnimationFrame(tick);
+    return () => window.cancelAnimationFrame(frame);
+  }, [waypoint]);
+
+  if (!waypoint) return null;
+
+  return (
+    <div
+      className="pointer-events-none flex h-9 w-9 items-center justify-center rounded-full border border-lime-200/30 bg-black/45"
+      aria-hidden
+    >
+      <div
+        ref={needle}
+        className="h-0 w-0 border-x-[5px] border-b-[10px] border-x-transparent border-b-lime-200"
+        style={{ transformOrigin: "50% 70%", marginBottom: "2px" }}
+      />
+    </div>
+  );
+}
+
+function ObjectiveChip({ compact }: { compact?: boolean }) {
+  const eaten = useGameStore((state) => state.eaten);
+  const claimedWild = useGameStore((state) => state.claimedWild);
+  const greetedHerd = useGameStore((state) => state.greetedHerd);
+  const hasMutated = useGameStore((state) => state.hasMutated);
+  const beat = currentObjective({
+    eaten,
+    claimedWild,
+    greetedHerd,
+    hasMutated,
+  });
+
+  return (
+    <div
+      className={`flex items-center gap-2 rounded-full border border-white/12 bg-black/40 px-3 py-1.5 text-lime-50 backdrop-blur ${
+        compact ? "max-w-[16rem]" : "max-w-sm"
+      }`}
+    >
+      <Compass />
+      <div className="min-w-0">
+        <p className={`truncate font-medium ${compact ? "text-xs" : "text-sm"}`}>
+          {beat.label}
+        </p>
+        <p className="truncate text-[11px] text-emerald-100/75">{beat.hint}</p>
+      </div>
+    </div>
+  );
+}
 
 function NestPrompt({ compact }: { compact?: boolean }) {
   const nearby = useGameStore((state) => state.nearbyNest);
   const toast = useGameStore((state) => state.toast);
+  const eaten = useGameStore((state) => state.eaten);
   const { touch } = usePlaySurface();
 
   if (!nearby || toast) return null;
 
   const action = touch ? "Eat" : "E or linger";
+  const claimOpen = formAt(eaten).canClaimNest;
   const line = nearby.isHome
     ? `Home nest · ${action} to rest`
-    : `${nearby.name} · ${action} to claim`;
+    : claimOpen
+      ? `${nearby.name} · ${action} to claim`
+      : `${nearby.name} · grow to claim`;
 
   return (
     <div
@@ -39,13 +137,33 @@ function NestPrompt({ compact }: { compact?: boolean }) {
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function FormBar({ compact }: { compact?: boolean }) {
+  const eaten = useGameStore((state) => state.eaten);
+  const form = formAt(eaten);
+  const upcoming = nextForm(eaten);
+
   return (
-    <div className="flex items-baseline justify-between gap-3">
-      <span className="text-[11px] uppercase tracking-[0.14em] text-emerald-200/70">
-        {label}
-      </span>
-      <span className="font-mono text-sm text-emerald-50">{value}</span>
+    <div className={compact ? "min-w-0" : "space-y-1"}>
+      <div className="flex items-baseline justify-between gap-2">
+        <span
+          className={`font-semibold tracking-tight text-lime-50 ${
+            compact ? "text-xs" : "text-sm"
+          }`}
+        >
+          {form.name}
+        </span>
+        <span className="font-mono text-[11px] text-emerald-100/75">
+          {upcoming
+            ? `${eaten}/${upcoming.meals} · ${upcoming.name}`
+            : `${eaten} meals`}
+        </span>
+      </div>
+      <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
+        <div
+          className="h-full rounded-full bg-lime-300 transition-[width] duration-300"
+          style={{ width: `${Math.min(100, formProgress(eaten) * 100)}%` }}
+        />
+      </div>
     </div>
   );
 }
@@ -118,50 +236,27 @@ function SlotPicker({
   );
 }
 
-function StatsBlock() {
-  const eaten = useGameStore((state) => state.eaten);
-  const stats = useGameStore((state) => state.stats);
-  const homeNestId = useGameStore((state) => state.homeNestId);
-  const nests = useGameStore((state) => state.nests);
-  const upcoming = nextUnlock(eaten);
-  const home = nests.find((nest) => nest.id === homeNestId);
-
-  return (
-    <div className="space-y-2 rounded-xl bg-black/25 p-3">
-      <Stat label="DNA meals" value={String(eaten)} />
-      <Stat label="Size" value={stats.size.toFixed(2)} />
-      <Stat label="Speed" value={stats.speed.toFixed(2)} />
-      <Stat label="Bite" value={stats.bite.toFixed(2)} />
-      <Stat label="Home nest" value={home?.name ?? "—"} />
-      <div className="pt-1">
-        <div className="mb-1 text-[11px] uppercase tracking-[0.14em] text-emerald-200/70">
-          {upcoming ? `Next: ${slotLabel(upcoming.slot)}` : "All slots unlocked"}
-        </div>
-        <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
-          <div
-            className="h-full rounded-full bg-lime-300"
-            style={{
-              width: `${Math.min(100, unlockProgress(eaten) * 100)}%`,
-            }}
-          />
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function EditorActions() {
   const randomize = useGameStore((state) => state.randomize);
   const reset = useGameStore((state) => state.reset);
+  const eaten = useGameStore((state) => state.eaten);
+  const hasMutated = useGameStore((state) => state.hasMutated);
+  const mutateOpen = canMutate(eaten);
 
   return (
     <div className="flex gap-2">
       <button
         type="button"
         onClick={randomize}
-        className="min-h-11 flex-1 touch-manipulation rounded-lg border border-lime-200/30 bg-lime-300/15 px-3 py-2 text-xs font-semibold uppercase tracking-wider text-lime-50 hover:bg-lime-300/25"
+        className={`min-h-11 flex-1 touch-manipulation rounded-lg border px-3 py-2 text-xs font-semibold uppercase tracking-wider ${
+          mutateOpen
+            ? hasMutated
+              ? "border-lime-200/30 bg-lime-300/15 text-lime-50 hover:bg-lime-300/25"
+              : "tideform-pulse border-lime-200/50 bg-lime-300/25 text-lime-50 hover:bg-lime-300/35"
+            : "border-white/10 bg-black/20 text-white/45"
+        }`}
       >
-        Mutate
+        {mutateOpen ? "Mutate" : "Mutate · grow"}
       </button>
       <button
         type="button"
@@ -182,10 +277,12 @@ function CompactHud({
   setOpen: Dispatch<SetStateAction<boolean>>;
 }) {
   const eaten = useGameStore((state) => state.eaten);
-  const stats = useGameStore((state) => state.stats);
   const unlocked = useGameStore((state) => state.unlocked);
   const toast = useGameStore((state) => state.toast);
+  const editorNudge = useGameStore((state) => state.editorNudge);
+  const clearEditorNudge = useGameStore((state) => state.clearEditorNudge);
   const [slot, setSlot] = useState<SlotId>("body");
+  const form = formAt(eaten);
 
   return (
     <div className="pointer-events-none absolute inset-0 z-10 text-white">
@@ -197,25 +294,35 @@ function CompactHud({
           paddingRight: "max(0.85rem, env(safe-area-inset-right))",
         }}
       >
-        <div>
+        <div className="min-w-0">
           <h1 className="text-lg font-semibold tracking-tight text-white">
             Tideform
           </h1>
           <p className="mt-0.5 font-mono text-[11px] text-emerald-100/80">
-            {eaten} meals · size {stats.size.toFixed(2)}
+            {form.name} · {eaten} meals
           </p>
+          <div className="mt-2">
+            <ObjectiveChip compact />
+          </div>
         </div>
         <button
           type="button"
-          className="pointer-events-auto min-h-11 min-w-11 touch-manipulation rounded-full border border-white/15 bg-black/45 px-4 text-xs font-semibold uppercase tracking-widest backdrop-blur"
-          onClick={() => setOpen((value) => !value)}
+          className={`pointer-events-auto min-h-11 min-w-11 touch-manipulation rounded-full border px-4 text-xs font-semibold uppercase tracking-widest backdrop-blur ${
+            editorNudge
+              ? "tideform-pulse border-lime-200/60 bg-lime-300/25"
+              : "border-white/15 bg-black/45"
+          }`}
+          onClick={() => {
+            setOpen((value) => !value);
+            clearEditorNudge();
+          }}
         >
           {open ? "Close" : "Editor"}
         </button>
       </header>
 
       {toast ? (
-        <div className="pointer-events-none absolute left-1/2 top-[4.6rem] -translate-x-1/2 rounded-full border border-lime-200/30 bg-black/55 px-4 py-2 text-sm text-lime-50 backdrop-blur">
+        <div className="pointer-events-none absolute left-1/2 top-[6.35rem] -translate-x-1/2 rounded-full border border-lime-200/30 bg-black/55 px-4 py-2 text-center text-sm text-lime-50 backdrop-blur">
           {toast}
         </div>
       ) : null}
@@ -236,21 +343,9 @@ function CompactHud({
             className="max-h-[min(52dvh,17.5rem)] overflow-y-auto overscroll-contain rounded-2xl border border-white/10 bg-[#102116]/88 p-3 shadow-2xl shadow-black/40 backdrop-blur-md"
             style={{ touchAction: "pan-y" }}
           >
-            <div className="mb-2 flex items-center gap-3 font-mono text-[11px] text-emerald-100/85">
-              <span>DNA {eaten}</span>
-              <span>Spd {stats.speed.toFixed(1)}</span>
-              <span>Bite {stats.bite.toFixed(1)}</span>
-              <span className="ml-auto h-1.5 w-16 overflow-hidden rounded-full bg-white/10">
-                <span
-                  className="block h-full rounded-full bg-lime-300"
-                  style={{
-                    width: `${Math.min(100, unlockProgress(eaten) * 100)}%`,
-                  }}
-                />
-              </span>
-            </div>
+            <FormBar compact />
             <div
-              className="mb-2 flex gap-1 overflow-x-auto pb-1"
+              className="mb-2 mt-2 flex gap-1 overflow-x-auto pb-1"
               style={{ touchAction: "pan-x" }}
             >
               {SLOT_IDS.map((id) => {
@@ -292,6 +387,9 @@ function CompactHud({
 function DesktopHud() {
   const unlocked = useGameStore((state) => state.unlocked);
   const toast = useGameStore((state) => state.toast);
+  const eaten = useGameStore((state) => state.eaten);
+  const stats = useGameStore((state) => state.stats);
+  const form = formAt(eaten);
 
   return (
     <div
@@ -304,14 +402,11 @@ function DesktopHud() {
       }}
     >
       <header className="flex items-start justify-between gap-4">
-        <div>
+        <div className="space-y-2">
           <h1 className="font-sans text-2xl font-semibold tracking-tight text-white">
             Tideform
           </h1>
-          <p className="mt-1 max-w-sm text-sm text-emerald-100/80">
-            Build a critter, graze with meadow herds, and nestle at a hollow to
-            rest.
-          </p>
+          <ObjectiveChip />
         </div>
       </header>
 
@@ -324,14 +419,21 @@ function DesktopHud() {
       <NestPrompt />
 
       <aside
-        className="pointer-events-auto absolute flex w-[min(100%,20rem)] flex-col gap-4 overflow-y-auto rounded-2xl border border-white/10 bg-[#102116]/78 p-4 shadow-2xl shadow-black/40 backdrop-blur-md"
+        className="pointer-events-auto absolute flex w-[min(100%,20rem)] flex-col gap-3 overflow-y-auto rounded-2xl border border-white/10 bg-[#102116]/78 p-4 shadow-2xl shadow-black/40 backdrop-blur-md"
         style={{
           top: "max(1rem, env(safe-area-inset-top))",
           right: "max(1rem, env(safe-area-inset-right))",
           bottom: "max(5.5rem, calc(env(safe-area-inset-bottom) + 4.5rem))",
         }}
       >
-        <StatsBlock />
+        <FormBar />
+        <p className="font-mono text-[11px] text-emerald-100/75">
+          Size {stats.size.toFixed(2)} · Spd {stats.speed.toFixed(1)} · Bite{" "}
+          {stats.bite.toFixed(1)}
+        </p>
+        <p className="text-[11px] leading-snug text-emerald-100/65">
+          {form.blurb}
+        </p>
 
         {SLOT_IDS.map((slot) => (
           <SlotPicker
@@ -347,9 +449,9 @@ function DesktopHud() {
       </aside>
 
       <footer className="mx-auto mb-1 w-fit max-w-xl rounded-xl border border-white/10 bg-black/35 px-4 py-2 text-xs text-emerald-50/90 backdrop-blur">
-        <span className="font-semibold text-lime-200">WASD</span> to walk · bump
-        fruit to eat · <span className="font-semibold text-lime-200">E</span> or
-        linger in a nest to nestle · editor swaps parts
+        <span className="font-semibold text-lime-200">WASD</span> walk · fruit
+        grows you · <span className="font-semibold text-lime-200">E</span> nestle
+        · editor mid-run
       </footer>
     </div>
   );
@@ -364,7 +466,8 @@ export function Hud() {
 
   useEffect(() => {
     if (!toast) return;
-    const timer = window.setTimeout(() => clearToast(), 2600);
+    const linger = toast.length > 42 ? 3800 : 2600;
+    const timer = window.setTimeout(() => clearToast(), linger);
     return () => window.clearTimeout(timer);
   }, [toast, clearToast]);
 

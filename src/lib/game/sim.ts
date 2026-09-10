@@ -11,6 +11,10 @@ export const sim = {
   speed: 4.6,
   bite: 0.85,
   size: 1,
+  /** 1 → 0 nibble squash, written by the store and decayed in Creature. */
+  eatFlash: 0,
+  /** 1 → 0 form-up swell. */
+  formFlash: 0,
 };
 
 export function resetSim(x = 0, z = 0, yaw = 0): void {
@@ -18,6 +22,13 @@ export function resetSim(x = 0, z = 0, yaw = 0): void {
   sim.z = z;
   sim.yaw = yaw;
   sim.moving = false;
+  sim.eatFlash = 0;
+  sim.formFlash = 0;
+}
+
+export function pulseEat(formUp = false): void {
+  sim.eatFlash = 1;
+  if (formUp) sim.formFlash = 1;
 }
 
 export function syncSimStats(stats: {

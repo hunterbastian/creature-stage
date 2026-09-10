@@ -1,5 +1,6 @@
 import { BASE_BITE, BASE_SPEED, MAX_SIZE, SIZE_PER_MEAL } from "./constants";
 import { findPart } from "./catalog";
+import { formAt } from "./progress";
 import { SLOT_IDS, type DerivedStats, type EquippedParts } from "./types";
 
 export function computeStats(
@@ -15,7 +16,11 @@ export function computeStats(
     bite += part.bite;
   }
 
-  const size = Math.min(MAX_SIZE, 1 + eaten * SIZE_PER_MEAL);
+  const form = formAt(eaten);
+  const size = Math.min(
+    MAX_SIZE,
+    1 + eaten * SIZE_PER_MEAL + form.sizeBonus,
+  );
   // Bigger critters lumber a little unless their parts pay for it.
   speed = Math.max(2.15, speed - (size - 1) * 1.15);
 

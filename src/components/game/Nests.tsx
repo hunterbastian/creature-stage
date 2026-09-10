@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import type { Group } from "three";
+import { formAt } from "@/lib/game/progress";
 import { speciesDef } from "@/lib/game/species";
 import { useGameStore } from "@/lib/game/store";
 import type { NestSite } from "@/lib/game/types";
@@ -52,9 +53,13 @@ function Egg({
 function NestMesh({
   nest,
   isHome,
+  claimable,
+  aimed,
 }: {
   nest: NestSite;
   isHome: boolean;
+  claimable: boolean;
+  aimed: boolean;
 }) {
   const species = speciesDef(nest.speciesId);
   const eggs = Array.from({ length: nest.eggs }, (_, index) => {
@@ -104,8 +109,10 @@ function NestMesh({
           color={species.moss}
           shininess={8}
           specular="#e8f0dc"
-          emissive={isHome ? "#d8c898" : "#000000"}
-          emissiveIntensity={isHome ? 0.05 : 0}
+          emissive={
+            isHome ? "#d8c898" : claimable || aimed ? "#9ec8b0" : "#000000"
+          }
+          emissiveIntensity={isHome ? 0.05 : aimed ? 0.14 : claimable ? 0.07 : 0}
         />
       </mesh>
       {TWIGS.map((twig) => (
@@ -128,6 +135,16 @@ function NestMesh({
           phase={egg.phase}
         />
       ))}
+      {aimed || claimable ? (
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.08, 0]}>
+          <ringGeometry args={[1.05, 1.18, 22]} />
+          <meshBasicMaterial
+            color={aimed ? "#c8e8a8" : "#9ec8b0"}
+            transparent
+            opacity={aimed ? 0.5 : 0.28}
+          />
+        </mesh>
+      ) : null}
       {isHome ? (
         <group position={[0.02, 0.92, -0.08]}>
           <mesh position={[0, 0.22, 0]} castShadow>
@@ -153,6 +170,9 @@ function NestMesh({
 export function NestField() {
   const nests = useGameStore((state) => state.nests);
   const homeNestId = useGameStore((state) => state.homeNestId);
+  const eaten = useGameStore((state) => state.eaten);
+  const waypoint = useGameStore((state) => state.waypoint);
+  const claimOpen = formAt(eaten).canClaimNest;
 
   return (
     <>
@@ -161,6 +181,8 @@ export function NestField() {
           key={nest.id}
           nest={nest}
           isHome={nest.id === homeNestId}
+          claimable={claimOpen && nest.id !== homeNestId}
+          aimed={waypoint?.kind === "nest" && waypoint.id === nest.id}
         />
       ))}
     </>

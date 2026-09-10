@@ -7,7 +7,7 @@ export const BASE_BITE = 0.85;
 export const MAX_SIZE = 2.35;
 export const SIZE_PER_MEAL = 0.07;
 
-/** Bites required before each slot becomes editable. */
+/** Bites required before each slot becomes editable. Aligned with forms. */
 export const SLOT_UNLOCK_AT = {
   body: 0,
   legs: 0,
