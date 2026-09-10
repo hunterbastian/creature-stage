@@ -273,11 +273,17 @@ export function playerSpawnAt(nest: NestSite): { x: number; z: number; yaw: numb
   const outward = Math.hypot(nest.x, nest.z) || 1;
   const nx = nest.x / outward;
   const nz = nest.z / outward;
-  const spawn = clampToIsland(nest.x + nx * 1.85, nest.z + nz * 1.85, 1.3);
+  const tx = -nz;
+  const tz = nx;
+  const spawn = clampToIsland(
+    nest.x + nx * 1.35 + tx * 2.35,
+    nest.z + nz * 1.35 + tz * 2.35,
+    1.3,
+  );
   return {
     x: spawn.x,
     z: spawn.z,
-    yaw: Math.atan2(-nx, -nz),
+    yaw: Math.atan2(tx, tz),
   };
 }
 

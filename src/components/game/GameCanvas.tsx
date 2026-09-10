@@ -23,9 +23,9 @@ export function GameCanvas() {
     <Canvas
       className="h-full w-full touch-none"
       style={{ touchAction: "none" }}
-      shadows="soft"
+      shadows
       dpr={dpr}
-      camera={{ fov: 52, near: 0.1, far: 90, position: [0, 6, -10] }}
+      camera={{ fov: 46, near: 0.12, far: 90, position: [3.2, 2.1, 5.4] }}
       gl={gl}
       onContextMenu={(event) => event.preventDefault()}
     >
