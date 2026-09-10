@@ -11,12 +11,12 @@ export type Finish = "skin" | "keratin" | "wet" | "plate";
 
 export type Vec3 = [number, number, number];
 
-/** Pale mint / ivory from the locked clean-beach saurian keyart. */
-export const SHELL_CREAM = "#f3eee4";
-export const BELLY_CREAM = "#f6f2ea";
-export const FACE_CREAM = "#e8f0ea";
-export const CLAW_GREY = "#e4dcc8";
-export const EYE_GLASS = "#6a9088";
+/** Ivory modules + gold eye from the new Skyrim coastal Spore targets. */
+export const SHELL_CREAM = "#eee4d0";
+export const BELLY_CREAM = "#eadfca";
+export const FACE_CREAM = "#e6dcc6";
+export const CLAW_GREY = "#3f3c38";
+export const EYE_GLASS = "#c4a24a";
 
 export type SpiralSpec = {
   position: Vec3;
@@ -86,47 +86,54 @@ export function bodyPlan(id: BodyId): BodyPlan {
   }
 }
 
-/** Bipedal hunter — locked clean-beach theropod. Mint body, back shells. */
+/** Target A — cream-faced cliff theropod with face spirals and osteoderms. */
 function theropodPlan(): BodyPlan {
   return {
     stance: "biped",
-    pitch: -0.06,
+    pitch: -0.08,
     hip: { x: 0.2, z: -0.02 },
     shoulder: { x: 0.28, z: 0.48 },
-    torso: { position: [0, 0.08, -0.1], scale: [0.62, 0.72, 0.9] },
-    chest: { position: [0, 0.16, 0.34], scale: [0.7, 0.84, 1.04] },
-    belly: { position: [0, -0.02, 0.14], scale: [0.6, 0.48, 0.92] },
-    neckJoints: [{ position: [0, 0.32, 0.78], scale: [0.4, 0.42, 0.5] }],
-    neckCream: [{ position: [0, 0.2, 0.8], scale: [0.32, 0.26, 0.44] }],
-    head: { position: [0, 0.48, 1.06], scale: [0.5, 0.46, 0.72] },
-    face: { position: [0, 0.46, 1.2], scale: [0.48, 0.4, 0.48] },
-    snout: { position: [0, 0.42, 1.34], scale: [0.3, 0.24, 0.3] },
-    jaw: [0, 0.36, 1.46],
-    eye: { x: 0.18, y: 0.52, z: 1.16 },
-    brow: { x: 0.12, y: 0.64, z: 1.02 },
-    faceSpiralScale: 0,
+    torso: { position: [0, 0.08, -0.1], scale: [0.64, 0.74, 0.9] },
+    chest: { position: [0, 0.18, 0.36], scale: [0.74, 0.88, 1.1] },
+    belly: { position: [0, -0.02, 0.16], scale: [0.64, 0.5, 0.96] },
+    neckJoints: [{ position: [0, 0.3, 0.82], scale: [0.42, 0.44, 0.54] }],
+    neckCream: [{ position: [0, 0.18, 0.84], scale: [0.34, 0.28, 0.48] }],
+    head: { position: [0, 0.44, 1.14], scale: [0.56, 0.48, 0.98] },
+    face: { position: [0, 0.42, 1.28], scale: [0.58, 0.46, 0.64] },
+    snout: { position: [0, 0.38, 1.46], scale: [0.36, 0.26, 0.42] },
+    jaw: [0, 0.3, 1.6],
+    eye: { x: 0.2, y: 0.5, z: 1.26 },
+    brow: { x: 0.14, y: 0.62, z: 1.1 },
+    faceSpiralScale: 1.02,
     arm: { position: [0.28, 0.14, 0.48], rotation: [0.82, 0, 0.92] },
-    tailRoot: { position: [0, 0.16, -0.5], rotation: [-0.16, 0, 0] },
-    tailLength: 1.42,
+    tailRoot: { position: [0, 0.16, -0.5], rotation: [-0.18, 0, 0] },
+    tailLength: 1.4,
     spirals: [
-      { position: [0.1, 0.52, 0.4], rotation: [-0.55, 0.4, 0], scale: 0.78 },
-      { position: [-0.08, 0.5, 0.34], rotation: [-0.5, -0.42, 0], scale: 0.68 },
-      { position: [0.12, 0.5, 0.2], rotation: [-0.42, 0.48, 0], scale: 0.86 },
-      { position: [-0.1, 0.48, 0.12], rotation: [-0.36, -0.5, 0], scale: 0.74 },
-      { position: [0.06, 0.46, -0.02], rotation: [-0.28, 0.22, 0], scale: 0.6 },
-      { position: [-0.06, 0.42, -0.14], rotation: [-0.2, -0.28, 0], scale: 0.5 },
+      { position: [0, 0.54, 0.88], rotation: [-0.55, 0, 0], scale: 0.7 },
+      { position: [0.1, 0.5, 0.7], rotation: [-0.48, 0.42, 0], scale: 0.78 },
+      { position: [-0.1, 0.5, 0.7], rotation: [-0.48, -0.42, 0], scale: 0.78 },
+      { position: [0.12, 0.5, 0.5], rotation: [-0.4, 0.48, 0], scale: 0.92 },
+      { position: [-0.12, 0.5, 0.5], rotation: [-0.4, -0.48, 0], scale: 0.92 },
+      { position: [0.1, 0.48, 0.3], rotation: [-0.32, 0.4, 0], scale: 0.8 },
+      { position: [-0.1, 0.48, 0.3], rotation: [-0.32, -0.4, 0], scale: 0.8 },
+      { position: [0, 0.46, 0.12], rotation: [-0.22, 0, 0], scale: 0.7 },
+      { position: [0, 0.4, -0.08], rotation: [-0.14, 0, 0], scale: 0.56 },
     ],
     nubs: [
-      [0, 0.44, 0.28],
-      [0, 0.4, 0.06],
-      [0, 0.34, -0.16],
+      [0, 0.52, 0.62],
+      [0, 0.5, 0.42],
+      [0, 0.48, 0.24],
+      [0, 0.44, 0.06],
+      [0, 0.38, -0.14],
+      [0, 0.32, -0.3],
     ],
     crest: [
-      [0.06, 0.66, 1.0],
-      [-0.06, 0.66, 1.0],
+      [0.07, 0.64, 1.06],
+      [-0.07, 0.64, 1.06],
+      [0, 0.62, 0.94],
     ],
     sails: [],
-    creamFace: false,
+    creamFace: true,
   };
 }
 
@@ -160,7 +167,7 @@ function sauropodPlan(): BodyPlan {
     jaw: [0, 0.5, 2.82],
     eye: { x: 0.13, y: 0.66, z: 2.56 },
     brow: { x: 0.1, y: 0.72, z: 2.42 },
-    faceSpiralScale: 0,
+    faceSpiralScale: 0.72,
     arm: { position: [0.5, 0.2, 0.44], rotation: [0.18, 0, 0.38] },
     tailRoot: { position: [0, 0.16, -0.72], rotation: [-0.26, 0, 0] },
     tailLength: 1.58,
@@ -193,49 +200,59 @@ function sauropodPlan(): BodyPlan {
   };
 }
 
-/** Locked Stego (head E) — small beaked herbivore, cream spiral plates. */
+/** Target B — bone-plated quad: sails plus flank spiral shells. */
 function stegosaurPlan(): BodyPlan {
   return {
     stance: "quad",
-    pitch: 0.02,
-    hip: { x: 0.32, z: -0.44 },
-    shoulder: { x: 0.28, z: 0.54 },
-    torso: { position: [0, 0.1, -0.1], scale: [0.9, 0.68, 1.52] },
-    chest: { position: [0, 0.12, 0.44], scale: [0.78, 0.6, 1.08] },
-    belly: { position: [0, -0.06, 0.08], scale: [0.76, 0.44, 1.32] },
+    pitch: 0.04,
+    hip: { x: 0.34, z: -0.4 },
+    shoulder: { x: 0.3, z: 0.5 },
+    torso: { position: [0, 0.12, -0.08], scale: [1.02, 0.78, 1.42] },
+    chest: { position: [0, 0.14, 0.42], scale: [0.88, 0.68, 1.06] },
+    belly: { position: [0, -0.04, 0.1], scale: [0.86, 0.5, 1.24] },
     neckJoints: [
-      { position: [0, 0.16, 0.84], scale: [0.32, 0.28, 0.5] },
-      { position: [0, 0.18, 1.16], scale: [0.24, 0.22, 0.44] },
-      { position: [0, 0.18, 1.44], scale: [0.2, 0.18, 0.36] },
+      { position: [0, 0.2, 0.82], scale: [0.36, 0.32, 0.48] },
+      { position: [0, 0.26, 1.1], scale: [0.28, 0.26, 0.4] },
+      { position: [0, 0.32, 1.34], scale: [0.24, 0.22, 0.34] },
     ],
-    neckCream: [{ position: [0, 0.08, 1.04], scale: [0.22, 0.14, 0.52] }],
-    head: { position: [0, 0.22, 1.64], scale: [0.34, 0.28, 0.56] },
-    face: { position: [0, 0.2, 1.78], scale: [0.28, 0.22, 0.4] },
-    snout: { position: [0, 0.16, 1.92], scale: [0.18, 0.14, 0.28] },
-    jaw: [0, 0.12, 2.02],
-    eye: { x: 0.11, y: 0.28, z: 1.68 },
-    brow: { x: 0.08, y: 0.32, z: 1.54 },
+    neckCream: [{ position: [0, 0.12, 1.0], scale: [0.24, 0.16, 0.46] }],
+    head: { position: [0, 0.36, 1.54], scale: [0.32, 0.28, 0.5] },
+    face: { position: [0, 0.34, 1.66], scale: [0.28, 0.24, 0.36] },
+    snout: { position: [0, 0.3, 1.78], scale: [0.2, 0.16, 0.26] },
+    jaw: [0, 0.26, 1.88],
+    eye: { x: 0.11, y: 0.4, z: 1.58 },
+    brow: { x: 0.08, y: 0.46, z: 1.44 },
     faceSpiralScale: 0,
-    arm: { position: [0.42, 0.12, 0.42], rotation: [0.1, 0, 0.26] },
-    tailRoot: { position: [0, 0.12, -0.82], rotation: [-0.1, 0, 0] },
-    tailLength: 1.66,
-    spirals: [],
-    nubs: [],
-    crest: [],
+    arm: { position: [0.46, 0.14, 0.4], rotation: [0.1, 0, 0.26] },
+    tailRoot: { position: [0, 0.14, -0.76], rotation: [-0.12, 0, 0] },
+    tailLength: 1.48,
+    spirals: [
+      { position: [0.28, 0.4, 0.28], rotation: [-0.2, 1.05, 0.15], scale: 1.15 },
+      { position: [-0.28, 0.4, 0.28], rotation: [-0.2, -1.05, -0.15], scale: 1.15 },
+      { position: [0.24, 0.38, 0.06], rotation: [-0.12, 1.0, 0.1], scale: 0.95 },
+      { position: [-0.24, 0.38, 0.06], rotation: [-0.12, -1.0, -0.1], scale: 0.95 },
+      { position: [0.2, 0.34, -0.16], rotation: [-0.08, 0.95, 0.08], scale: 0.78 },
+      { position: [-0.2, 0.34, -0.16], rotation: [-0.08, -0.95, -0.08], scale: 0.78 },
+    ],
+    nubs: [
+      [0, 0.48, 0.36],
+      [0, 0.46, 0.16],
+      [0, 0.42, -0.04],
+      [0, 0.36, -0.24],
+    ],
+    crest: [
+      [0.06, 0.5, 1.42],
+      [-0.06, 0.5, 1.42],
+    ],
     sails: [
-      { position: [0, 0.38, 0.72], rotation: [0.16, 0, 0], scale: 0.28 },
-      { position: [0, 0.48, 0.54], rotation: [0.12, 0, 0], scale: 0.46 },
-      { position: [0, 0.6, 0.36], rotation: [0.08, 0, 0], scale: 0.68 },
-      { position: [0, 0.74, 0.18], rotation: [0.05, 0, 0], scale: 0.92 },
-      { position: [0, 0.86, 0.02], rotation: [0.02, 0, 0], scale: 1.16 },
-      { position: [0, 0.94, -0.14], rotation: [0, 0, 0], scale: 1.34 },
-      { position: [0, 0.96, -0.3], rotation: [-0.02, 0, 0], scale: 1.4 },
-      { position: [0, 0.9, -0.46], rotation: [-0.05, 0, 0], scale: 1.22 },
-      { position: [0, 0.78, -0.62], rotation: [-0.08, 0, 0], scale: 0.98 },
-      { position: [0, 0.62, -0.76], rotation: [-0.12, 0, 0], scale: 0.74 },
-      { position: [0, 0.46, -0.9], rotation: [-0.16, 0, 0], scale: 0.52 },
-      { position: [0, 0.34, -1.04], rotation: [-0.2, 0, 0], scale: 0.36 },
-      { position: [0, 0.24, -1.16], rotation: [-0.24, 0, 0], scale: 0.24 },
+      { position: [0, 0.5, 0.52], rotation: [0.12, 0, 0], scale: 0.42 },
+      { position: [0, 0.64, 0.32], rotation: [0.08, 0, 0], scale: 0.7 },
+      { position: [0, 0.78, 0.12], rotation: [0.04, 0, 0], scale: 0.98 },
+      { position: [0, 0.86, -0.08], rotation: [0, 0, 0], scale: 1.18 },
+      { position: [0, 0.84, -0.28], rotation: [-0.04, 0, 0], scale: 1.08 },
+      { position: [0, 0.7, -0.48], rotation: [-0.1, 0, 0], scale: 0.82 },
+      { position: [0, 0.52, -0.66], rotation: [-0.16, 0, 0], scale: 0.54 },
+      { position: [0, 0.36, -0.84], rotation: [-0.22, 0, 0], scale: 0.34 },
     ],
     creamFace: false,
   };

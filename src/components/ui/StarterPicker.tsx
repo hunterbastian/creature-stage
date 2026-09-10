@@ -7,11 +7,11 @@ import { assertNever, type BodyId } from "@/lib/game/types";
 function swatch(id: BodyId): string {
   switch (id) {
     case "sleek":
-      return "#b4d0c6";
+      return "#6e9a88";
     case "plump":
-      return "#b8d4cc";
+      return "#7a9e90";
     case "spiky":
-      return "#f3eee4";
+      return "#eee4d0";
     default:
       return assertNever(id, "Unknown body");
   }
