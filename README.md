@@ -29,6 +29,7 @@ npm start          # production server after build
 
 | Input | Action |
 | --- | --- |
+| Start picker | Choose **Theropod**, **Sauropod**, or **Stegosaur** |
 | `W` / `↑` | Walk forward |
 | `S` / `↓` | Walk backward |
 | `A` / `←` | Turn left |
@@ -37,7 +38,7 @@ npm start          # production server after build
 | `E` or linger in a nest | Nestle: rest at home, or claim a wild nest as your landmark |
 | Editor (right) | Swap body / legs / mouth / eyes / later arms, tail, accessory |
 | **Mutate** | Randomize every unlocked slot |
-| **Reset** | Fresh sporling and a new fruit scatter |
+| **Reset** | Pick a new starter and a new fruit scatter |
 
 The camera is a third-person chase cam behind whatever you built.
 
@@ -54,19 +55,20 @@ Add the page to your Home Screen if you want a more app-like fullscreen, then ke
 
 ## What shipped (v0)
 
-- Full-screen meadow island with lighting, sky, grass tufts, rocks, and mushrooms — all primitive meshes, no heavy assets.
-- A modular creature: **body, legs, mouth, eyes**, plus unlockable **arms, tail, and accessory**. Each slot has a few visually distinct parts that also tweak speed and bite radius.
+- Full-screen meadow island with Skyrim-PS3 era lighting (warm sun, soft bloom, fog).
+- Three locked starters: **Theropod** (biped hunter), **Sauropod** (long-neck), **Stegosaur** (spiral plates). Seafoam/cream + spiral-shell accents.
+- A modular creature: **body, legs, mouth, eyes**, plus unlockable **arms, tail, and accessory**.
 - Live editor: swapping a part updates the 3D mesh immediately.
 - Survival nibble loop: 8 fruits in the world, they respawn after you eat them. Meals increase size, shift speed, and unlock slots at 3 / 6 / 9 bites.
 - Landscape-first mobile HUD with a virtual stick, eat button, and compact part editor.
-- **Nests & herds** — three woven nest bowls with eggs; same-morph flocks graze, peek, scatter, or trot after you.
+- **Nests & herds** — three woven nest bowls with eggs; sauropod and stegosaur flocks graze nearby, and nestmates wear your morph.
 
 ## Nests & herds
 
 The meadow keeps living nests, Spore creature-stage style: soft woven bowls, a few eggs, and a flock that treats that hollow as home.
 
-- You spawn at **Home hollow** with Sporling nestmates. They wear your current parts when you mutate.
-- **Tidegliders** (shy) and **Bramblebacks** (plucky) keep their own nests. Walk up for a prompt; press **E**, **Eat**, or stand still a beat to nestle.
+- You spawn at **Home hollow**. Nestmates wear your current parts when you mutate.
+- **Sauropods** (shy) and **Stegosaurs** (plucky) keep their own nests. Walk up for a prompt; press **E**, **Eat**, or stand still a beat to nestle.
 - Nestling at a wild nest **claims** it as your rest landmark (lime spore-cap). That herd turns curious instead of fleeing or chasing.
 - Herds wander as a group near their nest, separate so they do not stack, and react lightly — not a combat sim.
 
@@ -76,7 +78,7 @@ The meadow keeps living nests, Spore creature-stage style: soft woven bowls, a f
 | --- | --- |
 | `src/app/` | App Router layout + page |
 | `src/components/game/` | R3F canvas, world, nests, wildlife herds, creature, food, camera, movement loop |
-| `src/components/ui/` | Overlay editor, touch stick, rotate hint, stats, toasts |
+| `src/components/ui/` | Overlay editor, starter picker, touch stick, rotate hint, stats, toasts |
 | `src/lib/game/` | Part catalog, species, wildlife sim, derived stats, zustand store, input |
 
 Locomotion (`x`, `z`, `yaw`) lives in `src/lib/game/sim.ts` instead of React state so the HUD does not rerender every frame. Wildlife poses live in `src/lib/game/wildlife.ts` for the same reason.

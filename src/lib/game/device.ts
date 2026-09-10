@@ -1,3 +1,5 @@
+import { ReinhardToneMapping } from "three";
+
 /** True for phones / tablets where a landscape play layout should win. */
 export function isCoarsePointer(): boolean {
   if (typeof window === "undefined") return false;
@@ -21,6 +23,8 @@ export function canvasGlOptions(): {
   alpha: boolean;
   stencil: boolean;
   powerPreference: "high-performance";
+  toneMapping: typeof ReinhardToneMapping;
+  toneMappingExposure: number;
 } {
   const coarse = isCoarsePointer();
   return {
@@ -28,5 +32,8 @@ export function canvasGlOptions(): {
     alpha: false,
     stencil: false,
     powerPreference: "high-performance",
+    // Washed early-2010s tonemap — not ACES/UE5.
+    toneMapping: ReinhardToneMapping,
+    toneMappingExposure: 1.12,
   };
 }

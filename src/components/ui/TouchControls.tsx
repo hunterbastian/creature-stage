@@ -3,6 +3,7 @@
 import { useCallback, useRef, useState } from "react";
 import { steer } from "@/lib/game/input";
 import { usePlaySurface } from "@/lib/game/play-surface";
+import { useGameStore } from "@/lib/game/store";
 
 const RADIUS = 48;
 const DEADZONE = 10;
@@ -16,6 +17,7 @@ function clampStick(dx: number, dy: number): { x: number; y: number } {
 
 export function TouchControls() {
   const { touch } = usePlaySurface();
+  const starterChosen = useGameStore((state) => state.starterChosen);
   const padRef = useRef<HTMLDivElement>(null);
   const [knob, setKnob] = useState({ x: 0, y: 0 });
   const [held, setHeld] = useState(false);
@@ -50,7 +52,7 @@ export function TouchControls() {
     steer.turn = 0;
   }, []);
 
-  if (!touch) return null;
+  if (!touch || !starterChosen) return null;
 
   return (
     <div className="pointer-events-none absolute inset-0 z-20">

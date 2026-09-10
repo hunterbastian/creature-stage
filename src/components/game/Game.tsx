@@ -31,6 +31,12 @@ const RotateHint = dynamic(
   { ssr: false },
 );
 
+const StarterPicker = dynamic(
+  () =>
+    import("@/components/ui/StarterPicker").then((mod) => mod.StarterPicker),
+  { ssr: false },
+);
+
 export function Game() {
   const shellRef = useRef<HTMLDivElement>(null);
 
@@ -67,6 +73,7 @@ export function Game() {
       <Hud />
       <TouchControls />
       <RotateHint />
+      <StarterPicker />
     </div>
   );
 }
