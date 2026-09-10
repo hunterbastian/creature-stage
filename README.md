@@ -29,7 +29,7 @@ npm start          # production server after build
 
 | Input | Action |
 | --- | --- |
-| Start picker | Choose **Theropod**, **Sauropod**, or **Stegosaur** |
+| Start picker | Choose **Theropod**, **Sauropod**, or **Stego** |
 | `W` / `↑` | Walk forward |
 | `S` / `↓` | Walk backward |
 | `A` / `←` | Turn left |
@@ -55,20 +55,20 @@ Add the page to your Home Screen if you want a more app-like fullscreen, then ke
 
 ## What shipped (v0)
 
-- Full-screen tidal flat with overcast coastal light, puddles, moss, and muted scrub.
-- Three locked starters: **Theropod** (biped hunter), **Sauropod** (long-neck), **Stegosaur** (spiral plates). Spore-modular parts with porous grit skin — olive, sand, dusty rose. Not candy pastel.
+- Full-screen coastal meadow with Skyrim-PS3 lighting (warm sun, grass, sea).
+- Three locked starters: **Theropod** (biped hunter), **Sauropod** (long-neck), **Stego** (beaked herbivore, cream spiral plates). Seafoam/cream + modular accents.
 - A modular creature: **body, legs, mouth, eyes**, plus unlockable **arms, tail, and accessory**.
 - Live editor: swapping a part updates the 3D mesh immediately.
 - Survival nibble loop: 8 fruits in the world, they respawn after you eat them. Meals increase size, shift speed, and unlock slots at 3 / 6 / 9 bites.
 - Landscape-first mobile HUD with a virtual stick, eat button, and compact part editor.
-- **Nests & herds** — three woven nest bowls with eggs; sauropod and stegosaur flocks graze nearby, and nestmates wear your morph.
+- **Nests & herds** — three woven nest bowls with eggs; sauropod and stego flocks graze nearby, and nestmates wear your morph.
 
 ## Nests & herds
 
 The meadow keeps living nests, Spore creature-stage style: soft woven bowls, a few eggs, and a flock that treats that hollow as home.
 
 - You spawn at **Home hollow**. Nestmates wear your current parts when you mutate.
-- **Sauropods** (shy) and **Stegosaurs** (plucky) keep their own nests. Walk up for a prompt; press **E**, **Eat**, or stand still a beat to nestle.
+- **Sauropods** (shy) and **Stegos** (plucky) keep their own nests. Walk up for a prompt; press **E**, **Eat**, or stand still a beat to nestle.
 - Nestling at a wild nest **claims** it as your rest landmark (dull sand cap). That herd turns curious instead of fleeing or chasing.
 - Herds wander as a group near their nest, separate so they do not stack, and react lightly — not a combat sim.
 

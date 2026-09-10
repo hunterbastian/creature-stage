@@ -7,11 +7,11 @@ import { assertNever, type BodyId } from "@/lib/game/types";
 function swatch(id: BodyId): string {
   switch (id) {
     case "sleek":
-      return "#6a6e58";
+      return "#6a9a8c";
     case "plump":
-      return "#7a7660";
+      return "#7a9e90";
     case "spiky":
-      return "#c4a090";
+      return "#e8dcc4";
     default:
       return assertNever(id, "Unknown body");
   }
@@ -36,7 +36,7 @@ export function StarterPicker() {
           Choose your Tideform
         </h2>
         <p className="mt-1 text-center text-sm text-emerald-100/80">
-          Three coastal saurians. Porous skin, muted grit. Swap parts later.
+          Three coastal saurians. Seafoam, cream plates. Swap parts later.
         </p>
         <div className="mt-4 grid gap-2 sm:grid-cols-3">
           {STARTER_CHOICES.map((choice) => (

@@ -11,12 +11,12 @@ export type Finish = "skin" | "keratin" | "wet" | "plate";
 
 export type Vec3 = [number, number, number];
 
-/** Muted coastal modules — sand, olive, dusty rose. Not ivory candy. */
-export const SHELL_CREAM = "#c4a090";
-export const BELLY_CREAM = "#8a8670";
-export const FACE_CREAM = "#c8bba0";
-export const CLAW_GREY = "#2a2a28";
-export const EYE_AMBER = "#1c1c1a";
+/** Seafoam / ivory from the locked coastal saurian keyart. */
+export const SHELL_CREAM = "#e8dcc4";
+export const BELLY_CREAM = "#eadfc8";
+export const FACE_CREAM = "#e6d4b8";
+export const CLAW_GREY = "#5a5650";
+export const EYE_AMBER = "#8a6a38";
 
 export type SpiralSpec = {
   position: Vec3;
@@ -48,6 +48,7 @@ export type BodyPlan = {
   nubs: Vec3[];
   crest: Vec3[];
   sails: SpiralSpec[];
+  creamFace: boolean;
 };
 
 export type CoastalMaps = {
@@ -130,6 +131,7 @@ function theropodPlan(): BodyPlan {
       [0, 0.56, 0.94],
     ],
     sails: [],
+    creamFace: true,
   };
 }
 
@@ -192,66 +194,51 @@ function sauropodPlan(): BodyPlan {
       [0, 0.68, 2.28],
     ],
     sails: [],
+    creamFace: true,
   };
 }
 
-/** Plated quad — locked stegosaur with tall spiral sails. */
+/** Locked Stego (head E) — small beaked herbivore, cream spiral plates. */
 function stegosaurPlan(): BodyPlan {
   return {
     stance: "quad",
-    pitch: 0.04,
-    hip: { x: 0.34, z: -0.34 },
-    shoulder: { x: 0.32, z: 0.5 },
-    torso: { position: [0, 0.12, -0.04], scale: [1.02, 0.78, 1.34] },
-    chest: { position: [0, 0.16, 0.42], scale: [0.92, 0.74, 1.08] },
-    belly: { position: [0, -0.04, 0.12], scale: [0.9, 0.56, 1.24] },
+    pitch: 0.05,
+    hip: { x: 0.34, z: -0.36 },
+    shoulder: { x: 0.3, z: 0.48 },
+    torso: { position: [0, 0.14, -0.06], scale: [1.0, 0.8, 1.36] },
+    chest: { position: [0, 0.16, 0.4], scale: [0.88, 0.7, 1.02] },
+    belly: { position: [0, -0.02, 0.1], scale: [0.86, 0.52, 1.2] },
     neckJoints: [
-      { position: [0, 0.26, 0.8], scale: [0.42, 0.38, 0.52] },
-      { position: [0, 0.34, 1.1], scale: [0.36, 0.32, 0.46] },
+      { position: [0, 0.22, 0.78], scale: [0.36, 0.32, 0.46] },
+      { position: [0, 0.28, 1.04], scale: [0.28, 0.26, 0.4] },
     ],
-    neckCream: [
-      { position: [0, 0.16, 0.84], scale: [0.34, 0.24, 0.48] },
-      { position: [0, 0.24, 1.12], scale: [0.28, 0.2, 0.42] },
-    ],
-    head: { position: [0, 0.38, 1.4], scale: [0.52, 0.44, 0.8] },
-    face: { position: [0, 0.36, 1.52], scale: [0.6, 0.42, 0.66] },
-    snout: { position: [0, 0.32, 1.66], scale: [0.48, 0.32, 0.5] },
-    jaw: [0, 0.26, 1.76],
-    eye: { x: 0.18, y: 0.46, z: 1.48 },
-    brow: { x: 0.14, y: 0.56, z: 1.32 },
-    faceSpiralScale: 1.0,
-    arm: { position: [0.5, 0.16, 0.4], rotation: [0.14, 0, 0.34] },
-    tailRoot: { position: [0, 0.14, -0.68], rotation: [-0.18, 0, 0] },
-    tailLength: 1.32,
-    spirals: [
-      { position: [0, 0.46, 1.08], rotation: [-0.4, 0, 0], scale: 0.58 },
-      { position: [0, 0.48, 0.88], rotation: [-0.32, 0, 0], scale: 0.66 },
-      { position: [0.24, 0.24, 0.38], rotation: [0.08, 1.15, 0], scale: 0.74 },
-      { position: [-0.24, 0.24, 0.38], rotation: [0.08, -1.15, 0], scale: 0.74 },
-      { position: [0.22, 0.22, 0.14], rotation: [0.08, 1.15, 0], scale: 0.66 },
-      { position: [-0.22, 0.22, 0.14], rotation: [0.08, -1.15, 0], scale: 0.66 },
-      { position: [0.2, 0.2, -0.08], rotation: [0.08, 1.15, 0], scale: 0.58 },
-      { position: [-0.2, 0.2, -0.08], rotation: [0.08, -1.15, 0], scale: 0.58 },
-    ],
-    nubs: [
-      [0, 0.22, -0.48],
-      [0, 0.18, -0.66],
-    ],
-    crest: [
-      [0, 0.56, 1.32],
-      [0, 0.52, 1.18],
-    ],
+    neckCream: [{ position: [0, 0.14, 0.92], scale: [0.26, 0.18, 0.42] }],
+    head: { position: [0, 0.3, 1.26], scale: [0.32, 0.28, 0.5] },
+    face: { position: [0, 0.28, 1.36], scale: [0.3, 0.24, 0.36] },
+    snout: { position: [0, 0.26, 1.46], scale: [0.22, 0.16, 0.26] },
+    jaw: [0, 0.22, 1.52],
+    eye: { x: 0.11, y: 0.34, z: 1.3 },
+    brow: { x: 0.08, y: 0.4, z: 1.18 },
+    faceSpiralScale: 0,
+    arm: { position: [0.48, 0.16, 0.38], rotation: [0.12, 0, 0.3] },
+    tailRoot: { position: [0, 0.16, -0.7], rotation: [-0.16, 0, 0] },
+    tailLength: 1.38,
+    spirals: [],
+    nubs: [],
+    crest: [],
     sails: [
-      { position: [0, 0.5, 0.62], rotation: [0.12, 0, 0], scale: 0.52 },
-      { position: [0, 0.62, 0.4], rotation: [0.08, 0, 0], scale: 0.82 },
-      { position: [0, 0.78, 0.18], rotation: [0.04, 0, 0], scale: 1.12 },
-      { position: [0, 0.88, -0.04], rotation: [0, 0, 0], scale: 1.38 },
-      { position: [0, 0.82, -0.26], rotation: [-0.05, 0, 0], scale: 1.28 },
-      { position: [0, 0.66, -0.46], rotation: [-0.1, 0, 0], scale: 0.98 },
-      { position: [0, 0.48, -0.66], rotation: [-0.16, 0, 0], scale: 0.7 },
-      { position: [0, 0.34, -0.86], rotation: [-0.22, 0, 0], scale: 0.5 },
-      { position: [0, 0.24, -1.04], rotation: [-0.28, 0, 0], scale: 0.36 },
+      { position: [0, 0.46, 0.58], rotation: [0.14, 0, 0], scale: 0.42 },
+      { position: [0, 0.58, 0.38], rotation: [0.1, 0, 0], scale: 0.68 },
+      { position: [0, 0.74, 0.18], rotation: [0.06, 0, 0], scale: 0.98 },
+      { position: [0, 0.88, 0.0], rotation: [0.02, 0, 0], scale: 1.28 },
+      { position: [0, 0.92, -0.2], rotation: [-0.02, 0, 0], scale: 1.42 },
+      { position: [0, 0.84, -0.4], rotation: [-0.06, 0, 0], scale: 1.22 },
+      { position: [0, 0.66, -0.58], rotation: [-0.12, 0, 0], scale: 0.88 },
+      { position: [0, 0.46, -0.76], rotation: [-0.18, 0, 0], scale: 0.58 },
+      { position: [0, 0.32, -0.94], rotation: [-0.24, 0, 0], scale: 0.4 },
+      { position: [0, 0.22, -1.1], rotation: [-0.3, 0, 0], scale: 0.28 },
     ],
+    creamFace: false,
   };
 }
 
@@ -279,8 +266,8 @@ export function getCoastalMaps(hex: string, finish: Finish): CoastalMaps {
 }
 
 function paintMaps(hex: string, finish: Finish): CoastalMaps {
-  // Porous sponge skin from the locked grit keyart — dense pits, dirt, no candy.
-  const size = 128;
+  // Skyrim-coastal hides: mild scale, light salt, no sponge-crab grit.
+  const size = 64;
   const albedo = makeCanvas(size);
   const spec = makeCanvas(size);
   const bump = makeCanvas(size);
@@ -299,8 +286,8 @@ function paintMaps(hex: string, finish: Finish): CoastalMaps {
   const stain = valueNoise(size, 3, rand);
 
   const contrast =
-    finish === "plate" ? 0.16 : finish === "keratin" ? 0.12 : 0.11;
-  const pitAmt = finish === "wet" ? 0.32 : finish === "plate" ? 0.55 : 0.68;
+    finish === "plate" ? 0.1 : finish === "keratin" ? 0.07 : 0.06;
+  const pitAmt = finish === "wet" ? 0.08 : finish === "plate" ? 0.12 : 0.1;
 
   const aData = a.createImageData(size, size);
   const sData = s.createImageData(size, size);
@@ -313,9 +300,10 @@ function paintMaps(hex: string, finish: Finish): CoastalMaps {
       const mottle = (blotch[i] - 0.5) * contrast;
       const grit = (grain[i] - 0.5) * 0.07;
       const pit = poreHint(x, y, size) * pitAmt;
-      const dirt = Math.max(0, stain[i] - 0.58) * 0.42;
+      const dirt = Math.max(0, stain[i] - 0.72) * 0.12;
+      const scales = poreHint(x, y, size) * (finish === "wet" ? 0 : 0.08);
 
-      const lift = mottle + grit - pit * 1.15;
+      const lift = mottle + grit - pit * 0.45 + scales * 0.25;
       let r = base[0] * (1 + lift);
       let g = base[1] * (1 + lift * 0.94);
       let bch = base[2] * (1 + lift * 0.78);
@@ -329,7 +317,7 @@ function paintMaps(hex: string, finish: Finish): CoastalMaps {
       aData.data[p + 3] = 255;
 
       const gloss =
-        finish === "wet" ? 0.42 : finish === "keratin" ? 0.22 : 0.14;
+        finish === "wet" ? 0.55 : finish === "keratin" ? 0.36 : 0.28;
       const specV = clamp01(gloss - pit * 0.35 - dirt * 0.2 + mottle * 0.12);
       const sv = Math.round(specV * 255);
       sData.data[p] = sv;
@@ -337,7 +325,9 @@ function paintMaps(hex: string, finish: Finish): CoastalMaps {
       sData.data[p + 2] = sv;
       sData.data[p + 3] = 255;
 
-      const bumpV = Math.round(clamp01(0.62 + grit * 0.7 - pit * 1.35 + mottle * 0.2) * 255);
+      const bumpV = Math.round(
+        clamp01(0.52 + grit * 0.5 - pit * 0.45 + scales * 0.7 + mottle * 0.25) * 255,
+      );
       bData.data[p] = bumpV;
       bData.data[p + 1] = bumpV;
       bData.data[p + 2] = bumpV;

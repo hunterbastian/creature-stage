@@ -220,6 +220,7 @@ function FaceSpirals({
   plan: BodyPlan;
   castShadow: boolean;
 }) {
+  if (plan.faceSpiralScale <= 0) return null;
   return (
     <>
       {[-1, 1].map((side) => (
@@ -252,6 +253,7 @@ function Chassis({
   castShadow: boolean;
 }) {
   const plan = bodyPlan(id);
+  const faceColor = plan.creamFace ? FACE_CREAM : color;
   return (
     <>
       <Ball
@@ -311,8 +313,8 @@ function Chassis({
         position={plan.face.position}
         scale={plan.face.scale}
         radius={0.28}
-        color={FACE_CREAM}
-        finish="plate"
+        color={faceColor}
+        finish={plan.creamFace ? "plate" : "skin"}
         castShadow={castShadow}
         segments={12}
       />
@@ -320,8 +322,8 @@ function Chassis({
         position={plan.snout.position}
         scale={plan.snout.scale}
         radius={0.22}
-        color={FACE_CREAM}
-        finish="plate"
+        color={faceColor}
+        finish={plan.creamFace ? "plate" : "skin"}
         castShadow={castShadow}
         segments={10}
       />
@@ -382,21 +384,22 @@ function MouthMesh({
       return (
         <group position={[x, y, z]}>
           <Capsule
-            position={[0, 0.02, 0.08]}
-            rotation={[Math.PI / 2.2, 0, 0]}
-            radius={0.07}
-            length={0.16}
-            color={color}
+            position={[0, 0.01, 0.05]}
+            rotation={[Math.PI / 2.15, 0, 0]}
+            radius={0.042}
+            length={0.08}
+            color={SHELL_CREAM}
             finish="keratin"
             castShadow={castShadow}
           />
           <Ball
-            position={[0, -0.01, 0.14]}
-            radius={0.055}
-            color={FACE_CREAM}
+            position={[0, 0, 0.1]}
+            scale={[0.85, 0.55, 1.1]}
+            radius={0.038}
+            color={shadeHex(SHELL_CREAM, 0.06)}
             finish="keratin"
             castShadow={castShadow}
-            segments={10}
+            segments={8}
           />
         </group>
       );
@@ -735,7 +738,17 @@ function TailMesh({
               segments={8}
             />
           ))
-        : null}
+        : [0.72, 0.84, 0.94].map((t) => (
+            <mesh
+              key={`thorn-${t}`}
+              position={[0, 0.05 - t * 0.05, -plan.tailLength * t]}
+              rotation={[0.35, 0, 0]}
+              castShadow={castShadow}
+            >
+              <coneGeometry args={[0.028 * (1.1 - t), 0.1 * (1.15 - t), 5]} />
+              <CreatureMaterial color={SHELL_CREAM} finish="keratin" />
+            </mesh>
+          ))}
       {id === "club" ? (
         <Ball
           position={[0, -0.08, -plan.tailLength * 1.02]}
