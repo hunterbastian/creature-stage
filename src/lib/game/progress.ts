@@ -58,6 +58,8 @@ export type FormDef = {
   blurb: string;
   sizeBonus: number;
   respect: RespectTier;
+  /** Other creatures in the player's flock (not counting the player). */
+  herdMates: number;
   canClaimNest: boolean;
   canMutate: boolean;
   unlockSlot: SlotId | null;
@@ -69,9 +71,10 @@ export const FORMS: Record<FormId, FormDef> = {
     id: "hatchling",
     name: "Hatchling",
     meals: 0,
-    blurb: "Small, hungry, and new to the tide.",
+    blurb: "Small, hungry, and new to the tide. The hollow is crowded.",
     sizeBonus: 0,
     respect: "wary",
+    herdMates: 5,
     canClaimNest: false,
     canMutate: false,
     unlockSlot: null,
@@ -81,9 +84,10 @@ export const FORMS: Record<FormId, FormDef> = {
     id: "fledgling",
     name: "Fledgling",
     meals: SLOT_UNLOCK_AT.arms,
-    blurb: "First new limbs. Wild nests will have you now.",
+    blurb: "First new limbs. A nestmate has already drifted off.",
     sizeBonus: 0.1,
     respect: "known",
+    herdMates: 4,
     canClaimNest: true,
     canMutate: true,
     unlockSlot: "arms",
@@ -93,9 +97,10 @@ export const FORMS: Record<FormId, FormDef> = {
     id: "wanderer",
     name: "Wanderer",
     meals: SLOT_UNLOCK_AT.tail,
-    blurb: "A counterweight tail and a longer stride.",
+    blurb: "A counterweight tail, a longer stride, a quieter flock.",
     sizeBonus: 0.16,
     respect: "known",
+    herdMates: 3,
     canClaimNest: true,
     canMutate: true,
     unlockSlot: "tail",
@@ -105,9 +110,10 @@ export const FORMS: Record<FormId, FormDef> = {
     id: "tideborn",
     name: "Tideborn",
     meals: SLOT_UNLOCK_AT.accessory,
-    blurb: "Fully dressed in modular crest and kit.",
+    blurb: "Fully dressed. The flock is thinning on purpose.",
     sizeBonus: 0.22,
     respect: "known",
+    herdMates: 2,
     canClaimNest: true,
     canMutate: true,
     unlockSlot: "accessory",
@@ -117,25 +123,27 @@ export const FORMS: Record<FormId, FormDef> = {
     id: "elder",
     name: "Elder",
     meals: 12,
-    blurb: "The meadow herds treat you as one of their own.",
+    blurb: "Honored by the meadow. Two nestmates still walk with you.",
     sizeBonus: 0.28,
     respect: "honored",
+    herdMates: 2,
     canClaimNest: true,
     canMutate: true,
     unlockSlot: null,
-    levelToast: "Elder. Every herd turns curious — they know you now.",
+    levelToast: "Elder. The meadow honors you — the flock stays thin.",
   },
   apex: {
     id: "apex",
     name: "Apex",
     meals: 16,
-    blurb: "Session peak: large, decorated, and welcome.",
+    blurb: "Session peak: large, decorated — and nearly alone.",
     sizeBonus: 0.36,
     respect: "apex",
+    herdMates: 1,
     canClaimNest: true,
     canMutate: true,
     unlockSlot: null,
-    levelToast: "Apex Tideform. Wander, nestle, or mutate — the tide is yours.",
+    levelToast: "Apex. One nestmate remains. The tide is yours.",
   },
 };
 
@@ -190,6 +198,45 @@ export function canClaimNest(eaten: number): boolean {
 
 export function canMutate(eaten: number): boolean {
   return formAt(eaten).canMutate;
+}
+
+export function playerHerdMates(formId: FormId): number {
+  return FORMS[formId].herdMates;
+}
+
+/** Wild flocks echo solitude lightly — never as sparse as Apex nestmates. */
+export function wildHerdMates(formId: FormId): number {
+  switch (formId) {
+    case "hatchling":
+    case "fledgling":
+    case "wanderer":
+      return 3;
+    case "tideborn":
+      return 3;
+    case "elder":
+    case "apex":
+      return 2;
+    default:
+      return assertNever(formId, "Unknown form");
+  }
+}
+
+export function herdThinLine(form: FormDef): string {
+  switch (form.id) {
+    case "apex":
+      return "One nestmate remains.";
+    case "elder":
+      return "The flock thins. Solitude suits an Elder.";
+    case "tideborn":
+      return "Another nestmate drifted toward the tide.";
+    case "wanderer":
+    case "fledgling":
+      return "A nestmate drifted toward the tide.";
+    case "hatchling":
+      return "";
+    default:
+      return assertNever(form.id, "Unknown form");
+  }
 }
 
 export function respectFor(eaten: number, isHomeHerd: boolean): RespectTier {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
+import { SPRINT_STICK } from "@/lib/game/constants";
 import { steer } from "@/lib/game/input";
 import { usePlaySurface } from "@/lib/game/play-surface";
 import { canClaimNest } from "@/lib/game/progress";
@@ -46,6 +47,7 @@ export function TouchControls() {
     if (mag < DEADZONE) {
       steer.throttle = 0;
       steer.turn = 0;
+      steer.sprint = false;
       return;
     }
     const strength = Math.min(1, (mag - DEADZONE) / (RADIUS - DEADZONE));
@@ -53,6 +55,7 @@ export function TouchControls() {
     const ny = next.y / mag;
     steer.throttle = -ny * strength;
     steer.turn = -nx * strength;
+    steer.sprint = strength > SPRINT_STICK && -ny > 0.28;
   }, []);
 
   const releaseStick = useCallback(() => {
@@ -60,6 +63,7 @@ export function TouchControls() {
     setHeld(false);
     steer.throttle = 0;
     steer.turn = 0;
+    steer.sprint = false;
   }, []);
 
   if (!touch || !starterChosen) return null;

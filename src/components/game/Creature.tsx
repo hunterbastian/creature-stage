@@ -1025,6 +1025,8 @@ function legSlots(plan: BodyPlan): {
 
 export type GaitDriver = {
   moving: boolean;
+  /** 0–1 stride intensity. Heavier forms walk slower when omitted. */
+  gait?: number;
 };
 
 /** Shared saurian mesh + walk cycle. Pose (x/z/yaw/scale) belongs on the parent. */
@@ -1047,13 +1049,16 @@ export function CreatureVisual({
 
   useFrame((state) => {
     const t = state.clock.elapsedTime;
-    const moving = locomotion.moving;
-    const tempo = plan.stance === "biped" ? 8.4 : 7.2;
-    const swing = moving ? (plan.stance === "biped" ? 0.58 : 0.4) : 0;
+    const gait = locomotion.gait ?? (locomotion.moving ? 1 : 0);
+    const moving = gait > 0.05;
+    const tempo = (plan.stance === "biped" ? 6.4 : 5.5) * (0.62 + 0.38 * gait);
+    const swing = moving
+      ? (plan.stance === "biped" ? 0.52 : 0.36) * (0.72 + 0.28 * gait)
+      : 0;
     if (body.current) {
       body.current.position.y = moving
-        ? Math.abs(Math.sin(t * tempo)) * 0.04
-        : Math.sin(t * 1.5) * 0.01;
+        ? Math.abs(Math.sin(t * tempo)) * (0.026 + gait * 0.028)
+        : Math.sin(t * 1.35) * 0.01;
     }
     for (let i = 0; i < slots.length; i += 1) {
       const leg = legRefs.current[i];
@@ -1112,19 +1117,14 @@ export function Creature() {
   const parts = useGameStore((state) => state.parts);
   const root = useRef<Group>(null);
 
-  useFrame((_, delta) => {
+  useFrame(() => {
     const group = root.current;
     if (!group) return;
-    if (sim.eatFlash > 0) {
-      sim.eatFlash = Math.max(0, sim.eatFlash - delta * 3.4);
-    }
-    if (sim.formFlash > 0) {
-      sim.formFlash = Math.max(0, sim.formFlash - delta * 1.6);
-    }
     group.position.set(sim.x, 0, sim.z);
     group.rotation.y = sim.yaw;
-    const pulse = 1 + sim.eatFlash * 0.11 + sim.formFlash * 0.2;
-    group.scale.setScalar(sim.size * pulse);
+    const squash = 1 + sim.eatFlash * 0.16 - sim.eatFlash * sim.eatFlash * 0.05;
+    const swell = 1 + sim.formFlash * 0.22 + sim.claimFlash * 0.08;
+    group.scale.setScalar(sim.size * squash * swell);
   });
 
   return (

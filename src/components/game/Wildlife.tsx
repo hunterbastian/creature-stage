@@ -19,9 +19,13 @@ function WildlifeCritter({ agentId }: { agentId: string }) {
 
   useFrame(() => {
     if (!root.current || !agent) return;
+    const show = agent.present || agent.departing;
+    root.current.visible = show;
+    if (!show) return;
     root.current.position.set(agent.x, 0, agent.z);
     root.current.rotation.y = agent.yaw;
-    root.current.scale.setScalar(agent.size);
+    const fade = agent.departing ? 0.82 : 1;
+    root.current.scale.setScalar(agent.size * fade);
   });
 
   if (!agent) return null;
@@ -46,7 +50,11 @@ function HerdBeacon() {
   useFrame((state) => {
     if (!ring.current || waypoint?.kind !== "herd") return;
     const agent = fauna.agents.find((item) => item.id === waypoint.id);
-    if (!agent) return;
+    if (!agent || (!agent.present && !agent.departing)) {
+      ring.current.visible = false;
+      return;
+    }
+    ring.current.visible = true;
     ring.current.position.set(agent.x, 0.06, agent.z);
     const pulse = 0.32 + Math.sin(state.clock.elapsedTime * 3) * 0.04;
     ring.current.scale.setScalar(pulse);

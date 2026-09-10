@@ -52,7 +52,7 @@ function FoodMesh({
         <meshPhongMaterial
           color={color}
           emissive={color}
-          emissiveIntensity={aimed ? 0.18 : 0.04}
+          emissiveIntensity={aimed ? 0.1 : 0.035}
           shininess={18}
           specular="#f0e8d8"
         />
@@ -64,7 +64,7 @@ function FoodMesh({
       {aimed ? (
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.38, 0]}>
           <ringGeometry args={[0.34, 0.42, 18]} />
-          <meshBasicMaterial color="#e8c86a" transparent opacity={0.55} />
+          <meshBasicMaterial color="#e8c86a" transparent opacity={0.32} />
         </mesh>
       ) : null}
     </group>

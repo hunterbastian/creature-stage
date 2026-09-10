@@ -84,6 +84,7 @@ export const HERD_MOODS = [
   "flee",
   "chase",
   "home",
+  "honor",
 ] as const;
 export type HerdMood = (typeof HERD_MOODS)[number];
 

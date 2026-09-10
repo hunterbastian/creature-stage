@@ -152,13 +152,14 @@ function DistantCliff({
 }
 
 export function World() {
+  const coarse = useMemo(() => isCoarsePointer(), []);
   const grass = useMemo(
-    () => seededClumps(34, 3, ["#5c7a38", "#6a8a40"]),
-    [],
+    () => seededClumps(coarse ? 20 : 34, 3, ["#5c7a38", "#6a8a40"]),
+    [coarse],
   );
   const rocks = useMemo(
-    () => seededClumps(18, 11, ["#7a7468", "#6a6860"]),
-    [],
+    () => seededClumps(coarse ? 11 : 18, 11, ["#7a7468", "#6a6860"]),
+    [coarse],
   );
   const shadowMap = useMemo(() => (isCoarsePointer() ? 512 : 1024), []);
   const cliffs = useMemo(

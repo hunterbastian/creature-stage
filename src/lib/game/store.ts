@@ -20,13 +20,14 @@ import {
   formAt,
   formUpToast,
   hasLesson,
+  herdThinLine,
   lessonLine,
   nearestFood,
   withLesson,
   type LessonId,
   type Waypoint,
 } from "./progress";
-import { pulseEat, resetSim, sim, syncSimStats } from "./sim";
+import { pulseClaim, pulseEat, pulseEncounter, resetSim, sim, syncSimStats } from "./sim";
 import { speciesDef } from "./species";
 import { computeStats } from "./stats";
 import {
@@ -42,7 +43,7 @@ import {
   type PartId,
   type SlotId,
 } from "./types";
-import { playerSpawnAt, seedMeadow } from "./wildlife";
+import { playerSpawnAt, seedMeadow, syncHerdToForm } from "./wildlife";
 
 export type GameStore = {
   parts: EquippedParts;
@@ -307,7 +308,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
     let editorNudge = get().editorNudge;
 
     if (formedUp) {
-      toast = formUpToast(nextFormDef);
+      const { homeNestId } = get();
+      const { playerThinned } = syncHerdToForm(nextEaten, homeNestId);
+      const thin = playerThinned > 0 ? herdThinLine(nextFormDef) : "";
+      toast = thin ? `${formUpToast(nextFormDef)} ${thin}` : formUpToast(nextFormDef);
       if (newly.length) {
         const edit = teach(nextLessons, "edit");
         nextLessons = edit.lessonsSeen;
@@ -350,6 +354,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const species = speciesDef(nest.speciesId);
 
     if (homeNestId === nestId) {
+      pulseClaim(false);
       const rest = teach(lessonsSeen, "herd");
       set({
         lessonsSeen: rest.lessonsSeen,
@@ -373,6 +378,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     const herd = teach(lessonsSeen, "herd");
     const firstWild = nestId !== originNestId;
+    pulseClaim(true);
+    syncHerdToForm(eaten, nestId);
     set({
       homeNestId: nestId,
       claimedWild: get().claimedWild || firstWild,
@@ -384,6 +391,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   greetHerd: () => {
     const { greetedHerd, lessonsSeen } = get();
     if (greetedHerd) return;
+    pulseEncounter("greet");
     const herd = teach(lessonsSeen, "herd");
     set({
       greetedHerd: true,
@@ -434,6 +442,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const stats = computeStats(nextParts, eaten);
     syncSimStats(stats);
     const first = !get().hasMutated;
+    pulseClaim(false);
     set({
       parts: nextParts,
       stats,
