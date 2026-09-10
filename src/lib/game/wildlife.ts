@@ -121,7 +121,17 @@ function pickOffset(index: number, salt: number): { ox: number; oz: number } {
 
 function pickGraze(nest: NestSite, leash: number): { x: number; z: number } {
   const angle = Math.random() * Math.PI * 2;
-  const radius = 1.8 + Math.random() * Math.max(1.2, leash - 1.8);
+  const radius = 2.6 + Math.random() * Math.max(1.2, leash - 2.6);
+  return clampToIsland(
+    nest.x + Math.sin(angle) * radius,
+    nest.z + Math.cos(angle) * radius,
+    1.45,
+  );
+}
+
+function pickNestRing(nest: NestSite): { x: number; z: number } {
+  const angle = Math.random() * Math.PI * 2;
+  const radius = 2.35 + Math.random() * 0.7;
   return clampToIsland(
     nest.x + Math.sin(angle) * radius,
     nest.z + Math.cos(angle) * radius,
@@ -238,8 +248,9 @@ function steerHerd(
     }
     herd.mood = "home";
     herd.moodUntil = elapsed + 3.2;
-    herd.targetX = nest.x;
-    herd.targetZ = nest.z;
+    const ring = pickNestRing(nest);
+    herd.targetX = ring.x;
+    herd.targetZ = ring.z;
     return;
   }
 
@@ -307,8 +318,8 @@ export function seedMeadow(): MeadowSeed {
     for (let i = 0; i < HERD_SIZE; i += 1) {
       const offset = pickOffset(i, nest.x + nest.z);
       const start = clampToIsland(
-        nest.x + offset.ox * 2.1,
-        nest.z + offset.oz * 2.1,
+        nest.x + offset.ox * 3.8,
+        nest.z + offset.oz * 3.8,
         1.4,
       );
       fauna.agents.push({
@@ -374,9 +385,9 @@ export function tickWildlife(
     const nestDx = agent.x - nest.x;
     const nestDz = agent.z - nest.z;
     const nestDist = Math.hypot(nestDx, nestDz);
-    if (herd.mood !== "home" && nestDist < 1.15 && nestDist > 0.02) {
-      desiredX += (nestDx / nestDist) * 0.6;
-      desiredZ += (nestDz / nestDist) * 0.6;
+    if (nestDist < 1.75 && nestDist > 0.02) {
+      desiredX += (nestDx / nestDist) * 1.15;
+      desiredZ += (nestDz / nestDist) * 1.15;
     }
 
     const dx = desiredX - agent.x;

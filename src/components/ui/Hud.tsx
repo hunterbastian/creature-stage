@@ -15,9 +15,10 @@ import { SLOT_IDS, type SlotId } from "@/lib/game/types";
 
 function NestPrompt({ compact }: { compact?: boolean }) {
   const nearby = useGameStore((state) => state.nearbyNest);
+  const toast = useGameStore((state) => state.toast);
   const { touch } = usePlaySurface();
 
-  if (!nearby) return null;
+  if (!nearby || toast) return null;
 
   const action = touch ? "Eat" : "E or linger";
   const line = nearby.isHome

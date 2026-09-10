@@ -31,19 +31,19 @@ function Egg({
   useFrame((state) => {
     if (!group.current) return;
     const t = state.clock.elapsedTime + phase;
-    group.current.position.y = 0.42 + Math.sin(t * 1.6) * 0.03;
+    group.current.position.y = 0.56 + Math.sin(t * 1.6) * 0.025;
     group.current.rotation.y = Math.sin(t * 0.35) * 0.12;
   });
 
   return (
-    <group ref={group} position={[x, 0.42, z]} scale={[0.78, 1, 0.78]}>
+    <group ref={group} position={[x, 0.56, z]} scale={[0.82, 1.12, 0.82]}>
       <mesh castShadow>
-        <sphereGeometry args={[0.16, 10, 8]} />
-        <meshStandardMaterial color={color} roughness={0.4} />
+        <sphereGeometry args={[0.15, 10, 8]} />
+        <meshStandardMaterial color={color} roughness={0.32} />
       </mesh>
-      <mesh position={[0.04, 0.02, 0.05]} scale={0.35}>
-        <sphereGeometry args={[0.08, 6, 6]} />
-        <meshStandardMaterial color="#d9b48c" roughness={0.55} />
+      <mesh position={[0.045, 0.02, 0.04]}>
+        <sphereGeometry args={[0.035, 6, 6]} />
+        <meshStandardMaterial color="#fff6e8" roughness={0.45} />
       </mesh>
     </group>
   );
@@ -60,8 +60,8 @@ function NestMesh({
   const eggs = Array.from({ length: nest.eggs }, (_, index) => {
     const angle = (index / nest.eggs) * Math.PI * 2 + 0.4;
     return {
-      x: Math.sin(angle) * 0.28,
-      z: Math.cos(angle) * 0.28,
+      x: Math.sin(angle) * 0.22,
+      z: Math.cos(angle) * 0.22,
       phase: nest.x + index * 1.7,
     };
   });
@@ -69,8 +69,8 @@ function NestMesh({
   return (
     <group position={[nest.x, 0, nest.z]} rotation={[0, nest.yaw, 0]}>
       <mesh
-        position={[0, 0.08, 0]}
-        scale={[1.55, 0.28, 1.55]}
+        position={[0, 0.1, 0]}
+        scale={[1.65, 0.3, 1.65]}
         receiveShadow
         castShadow
       >
@@ -78,24 +78,28 @@ function NestMesh({
         <meshStandardMaterial color="#6b5a3e" roughness={1} />
       </mesh>
       <mesh
-        position={[0, 0.34, 0]}
-        scale={[1.15, 0.55, 1.15]}
+        position={[0, 0.44, 0]}
+        rotation={[Math.PI / 2, 0, 0]}
         castShadow
         receiveShadow
       >
-        <sphereGeometry args={[0.72, 14, 10]} />
+        <torusGeometry args={[0.68, 0.2, 8, 20]} />
         <meshStandardMaterial color={species.weave} roughness={0.85} />
       </mesh>
-      <mesh position={[0, 0.52, 0]} scale={[0.72, 0.22, 0.72]}>
-        <sphereGeometry args={[0.7, 12, 8]} />
+      <mesh
+        rotation={[-Math.PI / 2, 0, 0]}
+        position={[0, 0.36, 0]}
+        receiveShadow
+      >
+        <circleGeometry args={[0.56, 18]} />
         <meshStandardMaterial color="#4a3a28" roughness={0.95} />
       </mesh>
       <mesh
-        position={[0, 0.58, 0]}
+        position={[0, 0.6, 0]}
         rotation={[Math.PI / 2, 0, 0]}
         castShadow
       >
-        <torusGeometry args={[0.72, 0.11, 8, 18]} />
+        <torusGeometry args={[0.78, 0.09, 8, 18]} />
         <meshStandardMaterial
           color={species.moss}
           roughness={0.8}

@@ -30,7 +30,7 @@ export const SPECIES: Record<SpeciesId, SpeciesDef> = {
     parts: DEFAULT_PARTS,
     weave: "#c4a07a",
     moss: "#6f9a45",
-    egg: "#f3e0c8",
+    egg: "#ffe7c2",
   },
   tideglider: {
     id: "tideglider",
@@ -50,7 +50,7 @@ export const SPECIES: Record<SpeciesId, SpeciesDef> = {
     },
     weave: "#7eb8b0",
     moss: "#4f8f6e",
-    egg: "#d7f4e8",
+    egg: "#c5ffe6",
   },
   brambleback: {
     id: "brambleback",
@@ -70,7 +70,7 @@ export const SPECIES: Record<SpeciesId, SpeciesDef> = {
     },
     weave: "#8b6b8f",
     moss: "#5d7a3a",
-    egg: "#e6d0f2",
+    egg: "#f3d4ff",
   },
 };
 
