@@ -299,7 +299,7 @@ function CompactHud({
             Tideform
           </h1>
           <p className="mt-0.5 font-mono text-[11px] text-emerald-100/80">
-            {form.name} · {eaten} meals
+            {form.name} · {eaten} {eaten === 1 ? "meal" : "meals"}
           </p>
           <div className="mt-2">
             <ObjectiveChip compact />
