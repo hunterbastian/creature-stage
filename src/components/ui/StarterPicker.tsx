@@ -36,7 +36,7 @@ export function StarterPicker() {
           Choose your Tideform
         </h2>
         <p className="mt-1 text-center text-sm text-emerald-100/80">
-          Three coastal saurians. Seafoam, cream plates. Swap parts later.
+          Pick a coastal saurian. Eat to grow, claim a nest, then mutate.
         </p>
         <div className="mt-4 grid gap-2 sm:grid-cols-3">
           {STARTER_CHOICES.map((choice) => (
@@ -57,6 +57,9 @@ export function StarterPicker() {
               </span>
               <span className="mt-1 block text-[12px] leading-snug text-emerald-100/75">
                 {choice.blurb}
+              </span>
+              <span className="mt-1.5 block text-[11px] font-medium text-lime-100/85">
+                {choice.purpose}
               </span>
             </button>
           ))}

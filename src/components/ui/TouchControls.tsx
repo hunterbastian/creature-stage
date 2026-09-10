@@ -3,6 +3,7 @@
 import { useCallback, useRef, useState } from "react";
 import { steer } from "@/lib/game/input";
 import { usePlaySurface } from "@/lib/game/play-surface";
+import { canClaimNest } from "@/lib/game/progress";
 import { useGameStore } from "@/lib/game/store";
 
 const RADIUS = 48;
@@ -18,6 +19,15 @@ function clampStick(dx: number, dy: number): { x: number; y: number } {
 export function TouchControls() {
   const { touch } = usePlaySurface();
   const starterChosen = useGameStore((state) => state.starterChosen);
+  const nearby = useGameStore((state) => state.nearbyNest);
+  const eaten = useGameStore((state) => state.eaten);
+  const eatLabel = nearby
+    ? nearby.isHome
+      ? "Rest"
+      : canClaimNest(eaten)
+        ? "Claim"
+        : "Eat"
+    : "Eat";
   const padRef = useRef<HTMLDivElement>(null);
   const [knob, setKnob] = useState({ x: 0, y: 0 });
   const [held, setHeld] = useState(false);
@@ -96,7 +106,7 @@ export function TouchControls() {
       <div className="absolute bottom-[max(0.85rem,env(safe-area-inset-bottom))] right-[max(0.85rem,env(safe-area-inset-right))] flex flex-col items-center">
         <button
           type="button"
-          aria-label="Eat"
+          aria-label={eatLabel}
           className={`pointer-events-auto flex h-[4.35rem] w-[4.35rem] touch-manipulation select-none items-center justify-center rounded-full border text-sm font-semibold uppercase tracking-[0.14em] shadow-lg shadow-black/30 backdrop-blur-sm ${
             eating
               ? "border-lime-200 bg-lime-300/45 text-lime-50"
@@ -118,7 +128,7 @@ export function TouchControls() {
             steer.eat = false;
           }}
         >
-          Eat
+          {eatLabel}
         </button>
       </div>
     </div>

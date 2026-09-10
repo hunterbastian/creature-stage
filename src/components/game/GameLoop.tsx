@@ -9,10 +9,22 @@ import {
   WORLD_RADIUS,
 } from "@/lib/game/constants";
 import { bindInput, sampleMove, steer } from "@/lib/game/input";
+import {
+  currentObjective,
+  nearestFood,
+  nearestWildNest,
+  type Waypoint,
+} from "@/lib/game/progress";
 import { sim } from "@/lib/game/sim";
 import { speciesDef } from "@/lib/game/species";
 import { useGameStore } from "@/lib/game/store";
-import { nestNear, tickWildlife } from "@/lib/game/wildlife";
+import { assertNever } from "@/lib/game/types";
+import {
+  homeHerdNear,
+  nearestHomeHerd,
+  nestNear,
+  tickWildlife,
+} from "@/lib/game/wildlife";
 
 function tryEat(reachBoost = 1): boolean {
   const reach = (sim.bite + 0.65) * sim.size * reachBoost;
@@ -40,15 +52,57 @@ function syncNearbyNest(): void {
     setNearbyNest(null);
     return;
   }
-    const species = speciesDef(nest.speciesId);
-    setNearbyNest({
-      id: nest.id,
-      name: nest.name,
-      speciesName: species.name,
-      isHome: nest.id === homeNestId,
-      temperament:
-        nest.id === homeNestId ? "curious" : species.temperament,
-    });
+  const species = speciesDef(nest.speciesId);
+  setNearbyNest({
+    id: nest.id,
+    name: nest.name,
+    speciesName: species.name,
+    isHome: nest.id === homeNestId,
+    temperament:
+      nest.id === homeNestId ? "curious" : species.temperament,
+  });
+}
+
+function syncWaypoint(): void {
+  const state = useGameStore.getState();
+  const beat = currentObjective({
+    eaten: state.eaten,
+    claimedWild: state.claimedWild,
+    greetedHerd: state.greetedHerd,
+    hasMutated: state.hasMutated,
+  });
+
+  let next: Waypoint | null = null;
+  switch (beat.id) {
+    case "eat":
+    case "grow":
+      next = nearestFood(sim.x, sim.z, state.foods);
+      break;
+    case "claim":
+      next = nearestWildNest(sim.x, sim.z, state.nests, state.homeNestId);
+      break;
+    case "greet": {
+      const herd = nearestHomeHerd(sim.x, sim.z, state.homeNestId);
+      next = herd
+        ? { kind: "herd", id: herd.id, x: herd.x, z: herd.z }
+        : null;
+      break;
+    }
+    case "mutate":
+    case "roam":
+      next = null;
+      break;
+    default:
+      assertNever(beat.id, "Unknown objective");
+  }
+  state.setWaypoint(next);
+}
+
+function maybeGreet(): void {
+  const { claimedWild, greetedHerd, homeNestId, greetHerd } =
+    useGameStore.getState();
+  if (!claimedWild || greetedHerd) return;
+  if (homeHerdNear(sim.x, sim.z, homeNestId, 3.4)) greetHerd();
 }
 
 /**
@@ -66,10 +120,17 @@ export function GameLoop() {
 
   useFrame((state, delta) => {
     const dt = Math.min(delta, 0.05);
-    const { starterChosen, homeNestId } = useGameStore.getState();
+    const { starterChosen, homeNestId, eaten } = useGameStore.getState();
     if (!starterChosen) {
       sim.moving = false;
-      tickWildlife(dt, state.clock.elapsedTime, sim.x, sim.z, homeNestId);
+      tickWildlife(
+        dt,
+        state.clock.elapsedTime,
+        sim.x,
+        sim.z,
+        homeNestId,
+        eaten,
+      );
       return;
     }
 
@@ -91,8 +152,17 @@ export function GameLoop() {
       }
     }
 
-    tickWildlife(dt, state.clock.elapsedTime, sim.x, sim.z, homeNestId);
+    tickWildlife(
+      dt,
+      state.clock.elapsedTime,
+      sim.x,
+      sim.z,
+      homeNestId,
+      eaten,
+    );
     syncNearbyNest();
+    syncWaypoint();
+    maybeGreet();
 
     if (steer.eat) {
       if (!eatLatch.current) {

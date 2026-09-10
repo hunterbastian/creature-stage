@@ -245,21 +245,25 @@ export const STARTER_CHOICES: {
   id: BodyId;
   title: string;
   blurb: string;
+  purpose: string;
 }[] = [
   {
     id: "sleek",
     title: "Theropod",
     blurb: "Bipedal hunter. Fast on the rocks.",
+    purpose: "Sprint to fruit, then claim a nest.",
   },
   {
     id: "plump",
     title: "Sauropod",
     blurb: "Long-neck grazer. Steady stride.",
+    purpose: "Graze the glow, then rest a hollow.",
   },
   {
     id: "spiky",
     title: "Stego",
     blurb: "Bone plates and spiral shells.",
+    purpose: "Eat to grow, then greet the herds.",
   },
 ];
 

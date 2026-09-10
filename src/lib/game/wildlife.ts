@@ -6,6 +6,7 @@ import {
   HERD_SIZE,
   WORLD_RADIUS,
 } from "./constants";
+import { respectFor, type RespectTier } from "./progress";
 import { SPECIES, speciesDef } from "./species";
 import {
   assertNever,
@@ -161,12 +162,35 @@ function arrived(x: number, z: number, tx: number, tz: number, slack: number): b
   return Math.hypot(tx - x, tz - z) < slack;
 }
 
-function effectiveTemperament(
+function temperamentFromRespect(
   herd: HerdBrain,
-  homeNestId: string,
+  respect: RespectTier,
 ): Temperament {
-  if (herd.nestId === homeNestId) return "curious";
-  return herd.temperament;
+  switch (respect) {
+    case "apex":
+    case "honored":
+    case "known":
+      return "curious";
+    case "wary":
+      return herd.temperament;
+    default:
+      return assertNever(respect, "Unknown respect");
+  }
+}
+
+function standoffFor(respect: RespectTier): number {
+  switch (respect) {
+    case "apex":
+      return 1.4;
+    case "honored":
+      return 1.85;
+    case "known":
+      return 2.2;
+    case "wary":
+      return 2.35;
+    default:
+      return assertNever(respect, "Unknown respect");
+  }
 }
 
 function nextMoodForApproach(temperament: Temperament): HerdMood {
@@ -188,13 +212,15 @@ function steerHerd(
   playerX: number,
   playerZ: number,
   homeNestId: string,
+  eaten: number,
 ): void {
   const nest = nestById(herd.nestId);
   if (!nest) return;
 
   const center = herdCentroid(herd.id);
   const distPlayer = Math.hypot(center.x - playerX, center.z - playerZ);
-  const temperament = effectiveTemperament(herd, homeNestId);
+  const respect = respectFor(eaten, herd.nestId === homeNestId);
+  const temperament = temperamentFromRespect(herd, respect);
 
   if (distPlayer < HERD_DETECT_RADIUS) {
     const mood = nextMoodForApproach(temperament);
@@ -216,7 +242,7 @@ function steerHerd(
       const dx = playerX - center.x;
       const dz = playerZ - center.z;
       const mag = Math.hypot(dx, dz) || 1;
-      const standoff = 2.35;
+      const standoff = standoffFor(respect);
       herd.targetX = playerX - (dx / mag) * standoff;
       herd.targetZ = playerZ - (dz / mag) * standoff;
     } else {
@@ -356,9 +382,10 @@ export function tickWildlife(
   playerX: number,
   playerZ: number,
   homeNestId: string,
+  eaten = 0,
 ): void {
   for (const herd of fauna.herds) {
-    steerHerd(herd, elapsed, playerX, playerZ, homeNestId);
+    steerHerd(herd, elapsed, playerX, playerZ, homeNestId, eaten);
   }
 
   const byHerd = new Map<string, WildlifeAgent[]>();
@@ -415,6 +442,38 @@ export function tickWildlife(
     leashToNest(agent, nest);
     agent.yaw = lerpAngle(agent.yaw, Math.atan2(dx, dz), 1 - Math.exp(-dt * 6));
   }
+}
+
+export function homeHerdNear(
+  x: number,
+  z: number,
+  homeNestId: string,
+  radius: number,
+): boolean {
+  return fauna.agents.some(
+    (agent) =>
+      agent.nestId === homeNestId &&
+      Math.hypot(agent.x - x, agent.z - z) < radius,
+  );
+}
+
+export function nearestHomeHerd(
+  x: number,
+  z: number,
+  homeNestId: string,
+): { id: string; x: number; z: number } | null {
+  let best: WildlifeAgent | null = null;
+  let bestDist = Number.POSITIVE_INFINITY;
+  for (const agent of fauna.agents) {
+    if (agent.nestId !== homeNestId) continue;
+    const dist = Math.hypot(agent.x - x, agent.z - z);
+    if (dist < bestDist) {
+      best = agent;
+      bestDist = dist;
+    }
+  }
+  if (!best) return null;
+  return { id: best.id, x: best.x, z: best.z };
 }
 
 export function nestNear(

@@ -1112,12 +1112,19 @@ export function Creature() {
   const parts = useGameStore((state) => state.parts);
   const root = useRef<Group>(null);
 
-  useFrame(() => {
+  useFrame((_, delta) => {
     const group = root.current;
     if (!group) return;
+    if (sim.eatFlash > 0) {
+      sim.eatFlash = Math.max(0, sim.eatFlash - delta * 3.4);
+    }
+    if (sim.formFlash > 0) {
+      sim.formFlash = Math.max(0, sim.formFlash - delta * 1.6);
+    }
     group.position.set(sim.x, 0, sim.z);
     group.rotation.y = sim.yaw;
-    group.scale.setScalar(sim.size);
+    const pulse = 1 + sim.eatFlash * 0.11 + sim.formFlash * 0.2;
+    group.scale.setScalar(sim.size * pulse);
   });
 
   return (

@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Tideform",
   description:
-    "Tideform — a Spore-inspired creature stage: build a modular critter, walk it around, and eat to evolve.",
+    "Tideform — a Spore-inspired creature stage: pick a starter, eat to grow through named forms, claim nests, and mutate.",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
