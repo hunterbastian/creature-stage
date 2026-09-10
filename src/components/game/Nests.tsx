@@ -75,7 +75,7 @@ function NestMesh({
         castShadow
       >
         <sphereGeometry args={[0.7, 12, 8]} />
-        <meshPhongMaterial color="#6a5a40" shininess={6} specular="#a09070" />
+        <meshPhongMaterial color="#e2d4b4" shininess={10} specular="#f4ead0" />
       </mesh>
       <mesh
         position={[0, 0.44, 0]}
@@ -92,7 +92,7 @@ function NestMesh({
         receiveShadow
       >
         <circleGeometry args={[0.56, 14]} />
-        <meshPhongMaterial color="#5a4a34" shininess={4} specular="#8a7a60" />
+        <meshPhongMaterial color="#efe4c8" shininess={8} specular="#f8f0dc" />
       </mesh>
       <mesh
         position={[0, 0.6, 0]}
@@ -102,10 +102,10 @@ function NestMesh({
         <torusGeometry args={[0.78, 0.09, 8, 14]} />
         <meshPhongMaterial
           color={species.moss}
-          shininess={4}
-          specular="#6a6a50"
-          emissive={isHome ? "#8a7a50" : "#000000"}
-          emissiveIntensity={isHome ? 0.06 : 0}
+          shininess={8}
+          specular="#e8f0dc"
+          emissive={isHome ? "#d8c898" : "#000000"}
+          emissiveIntensity={isHome ? 0.05 : 0}
         />
       </mesh>
       {TWIGS.map((twig) => (
@@ -116,7 +116,7 @@ function NestMesh({
           castShadow
         >
           <cylinderGeometry args={[0.03, 0.045, 0.55, 5]} />
-          <meshPhongMaterial color="#7a5c3e" shininess={4} specular="#a08060" />
+          <meshPhongMaterial color="#d4c4a0" shininess={8} specular="#efe4c8" />
         </mesh>
       ))}
       {eggs.map((egg) => (

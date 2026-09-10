@@ -7,7 +7,7 @@ import { findPart } from "@/lib/game/catalog";
 import {
   BELLY_CREAM,
   CLAW_GREY,
-  EYE_AMBER,
+  EYE_GLASS,
   FACE_CREAM,
   SHELL_CREAM,
   bodyPlan,
@@ -196,8 +196,8 @@ function Crest({
 }) {
   return (
     <mesh position={position} rotation={[0.2, 0, 0]} castShadow={castShadow}>
-      <coneGeometry args={[0.042, 0.1, 6]} />
-      <CreatureMaterial color={SHELL_CREAM} finish="keratin" />
+      <coneGeometry args={[0.036, 0.11, 6]} />
+      <CreatureMaterial color={FACE_CREAM} finish="keratin" />
     </mesh>
   );
 }
@@ -376,7 +376,7 @@ function MouthMesh({
             rotation={[Math.PI / 2.02, 0, 0]}
             radius={0.034}
             length={0.1}
-            color={shadeHex(SHELL_CREAM, 0.24)}
+            color={shadeHex(SHELL_CREAM, 0.1)}
             finish="keratin"
             castShadow={castShadow}
           />
@@ -384,7 +384,7 @@ function MouthMesh({
             position={[0, -0.018, 0.12]}
             scale={[0.72, 0.42, 1.2]}
             radius={0.032}
-            color={shadeHex(SHELL_CREAM, 0.32)}
+            color={shadeHex(SHELL_CREAM, 0.16)}
             finish="keratin"
             castShadow={castShadow}
             segments={8}
@@ -395,18 +395,18 @@ function MouthMesh({
       return (
         <group position={[x, y, z]}>
           <Ball
-            position={[0, 0.04, 0.08]}
-            scale={[1.05, 0.5, 1.2]}
-            radius={0.14}
+            position={[0, 0.02, 0.05]}
+            scale={[0.85, 0.42, 1.05]}
+            radius={0.09}
             color={FACE_CREAM}
-            finish="plate"
+            finish="skin"
             castShadow={castShadow}
           />
           <Ball
-            position={[0, -0.04, 0.06]}
-            scale={[0.95, 0.38, 1.05]}
-            radius={0.12}
-            color={shadeHex(color, 0.08)}
+            position={[0, -0.03, 0.04]}
+            scale={[0.78, 0.32, 0.9]}
+            radius={0.075}
+            color={shadeHex(FACE_CREAM, 0.04)}
             castShadow={castShadow}
           />
         </group>
@@ -451,25 +451,29 @@ function EyesMesh({
               key={side}
               position={[plan.eye.x * side, plan.eye.y, plan.eye.z]}
             >
+              <mesh rotation={[0, 0, 0]} position={[0, 0, 0.01]}>
+                <torusGeometry args={[0.058, 0.016, 8, 14]} />
+                <CreatureMaterial color={SHELL_CREAM} finish="plate" />
+              </mesh>
               <Ball
-                radius={0.055}
-                color={EYE_AMBER}
+                radius={0.05}
+                color={EYE_GLASS}
                 finish="wet"
                 castShadow={false}
                 segments={10}
               />
               <Ball
-                position={[0, 0, 0.028]}
-                radius={0.028}
-                color="#2a241c"
+                position={[0, 0, 0.026]}
+                radius={0.024}
+                color="#2a3430"
                 finish="wet"
                 castShadow={false}
                 segments={8}
               />
               <Ball
-                position={[0.012, 0.014, 0.048]}
-                radius={0.012}
-                color="#c8bba0"
+                position={[0.01, 0.012, 0.044]}
+                radius={0.01}
+                color="#e8f2ee"
                 finish="wet"
                 castShadow={false}
                 segments={8}
@@ -501,7 +505,7 @@ function EyesMesh({
               <Ball
                 position={[0, 0.3, 0.02]}
                 radius={0.08}
-                color={EYE_AMBER}
+                color={EYE_GLASS}
                 finish="wet"
                 segments={10}
               />
@@ -528,7 +532,7 @@ function EyesMesh({
               <Ball
                 scale={[1.25, 1, 0.7]}
                 radius={0.1}
-                color={EYE_AMBER}
+                color={EYE_GLASS}
                 finish="wet"
                 segments={10}
               />

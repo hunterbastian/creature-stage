@@ -19,9 +19,9 @@ declare module "@react-three/fiber" {
 export function EraLook() {
   const coarse = useMemo(() => isCoarsePointer(), []);
   const resolution = useMemo(() => new Vector2(256, 256), []);
-  const strength = coarse ? 0.14 : 0.22;
-  const radius = coarse ? 0.48 : 0.58;
-  const threshold = 0.78;
+  const strength = coarse ? 0.12 : 0.18;
+  const radius = coarse ? 0.42 : 0.52;
+  const threshold = 0.82;
 
   return (
     <Effects disableGamma multisamping={0} type={UnsignedByteType}>
