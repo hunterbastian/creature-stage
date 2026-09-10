@@ -1,11 +1,10 @@
 "use client";
 
 import { useLayoutEffect, useMemo, useRef, type ReactNode } from "react";
-import { DoubleSide, InstancedMesh, Object3D } from "three";
+import { InstancedMesh, Object3D } from "three";
 import { assertNever } from "@/lib/game/types";
 import {
   seedWorldDress,
-  type FogCardSpec,
   type LandformSpec,
   type PropPose,
   type TidePoolSpec,
@@ -40,7 +39,7 @@ function InstancedField({
     instanced.computeBoundingSphere();
   }, [poses]);
 
-  if (poses.length === 0) return null;
+  if (!poses || poses.length === 0) return null;
 
   return (
     <instancedMesh
@@ -73,7 +72,7 @@ function TidePool({ pool }: { pool: TidePoolSpec }) {
         receiveShadow
       >
         <circleGeometry args={[0.55, 16]} />
-        <meshPhongMaterial color="#3a646c" shininess={52} specular="#c4e4e0" />
+        <meshPhongMaterial color="#2f565e" shininess={58} specular="#c8ece8" />
       </mesh>
     </group>
   );
@@ -167,25 +166,6 @@ function Landform({ spec }: { spec: LandformSpec }) {
   }
 }
 
-function FogCard({ card }: { card: FogCardSpec }) {
-  return (
-    <mesh
-      position={[card.x, card.y, card.z]}
-      rotation={[0, card.yaw, 0]}
-      renderOrder={-1}
-    >
-      <planeGeometry args={[card.sx, card.sy]} />
-      <meshBasicMaterial
-        color="#d4ddd8"
-        transparent
-        opacity={0.11}
-        depthWrite={false}
-        side={DoubleSide}
-      />
-    </mesh>
-  );
-}
-
 export function CoastalDress({ coarse }: { coarse: boolean }) {
   const dress = useMemo(() => seedWorldDress(coarse), [coarse]);
   const shade = !coarse;
@@ -228,12 +208,16 @@ export function CoastalDress({ coarse }: { coarse: boolean }) {
         <meshPhongMaterial color="#8a7a64" shininess={7} specular="#c4b49a" />
       </InstancedField>
       <InstancedField poses={dress.trunks} castShadow={shade}>
-        <cylinderGeometry args={[1, 1.15, 1, 5]} />
+        <cylinderGeometry args={[1, 1.2, 1, 5]} />
         <meshPhongMaterial color="#6a5a44" shininess={6} specular="#a09078" />
+      </InstancedField>
+      <InstancedField poses={dress.crowns} castShadow={shade}>
+        <icosahedronGeometry args={[1, 0]} />
+        <meshPhongMaterial color="#4c5a38" shininess={8} specular="#a8b090" />
       </InstancedField>
       <InstancedField poses={dress.canopies} castShadow={shade}>
         <coneGeometry args={[1, 1, 6]} />
-        <meshPhongMaterial color="#4f5e3a" shininess={8} specular="#a8b090" />
+        <meshPhongMaterial color="#556644" shininess={8} specular="#b0b894" />
       </InstancedField>
       <InstancedField poses={dress.scrub}>
         <icosahedronGeometry args={[1, 0]} />
@@ -242,9 +226,6 @@ export function CoastalDress({ coarse }: { coarse: boolean }) {
 
       {dress.landforms.map((spec) => (
         <Landform key={`${spec.kind}-${spec.x}-${spec.z}`} spec={spec} />
-      ))}
-      {dress.fogCards.map((card) => (
-        <FogCard key={`${card.x}-${card.z}`} card={card} />
       ))}
     </>
   );

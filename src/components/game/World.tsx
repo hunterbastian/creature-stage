@@ -13,7 +13,7 @@ export function World() {
   return (
     <>
       <color attach="background" args={["#9bb0b8"]} />
-      <fogExp2 attach="fog" args={["#c5d0c8", 0.019]} />
+      <fogExp2 attach="fog" args={["#c5d0c8", 0.018]} />
       <Sky
         sunPosition={[18, 9.5, 12]}
         turbidity={6.5}
@@ -54,7 +54,7 @@ export function World() {
       </mesh>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.003, 0]} receiveShadow>
         <ringGeometry args={[WORLD_RADIUS - 2.35, WORLD_RADIUS + 0.02, 48]} />
-        <meshPhongMaterial color="#a89870" shininess={10} specular="#c8b890" />
+        <meshPhongMaterial color="#c2b080" shininess={12} specular="#d8c9a4" />
       </mesh>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
         <circleGeometry args={[WORLD_RADIUS, 48]} />

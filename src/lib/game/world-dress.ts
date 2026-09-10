@@ -38,15 +38,6 @@ export type LandformSpec = {
   kind: LandformKind;
 };
 
-export type FogCardSpec = {
-  x: number;
-  y: number;
-  z: number;
-  sx: number;
-  sy: number;
-  yaw: number;
-};
-
 export type GroveSpec = {
   x: number;
   z: number;
@@ -63,12 +54,12 @@ export type WorldDress = {
   kelp: PropPose[];
   driftwood: PropPose[];
   trunks: PropPose[];
+  crowns: PropPose[];
   canopies: PropPose[];
   scrub: PropPose[];
   tidePools: TidePoolSpec[];
   clearings: ClearingSpec[];
   landforms: LandformSpec[];
-  fogCards: FogCardSpec[];
 };
 
 /** Shore pockets — kept off nest bowls so herds still have a clearing. */
@@ -91,6 +82,7 @@ const GROVES: GroveSpec[] = [
   { x: -12.4, z: -6.6, count: 6, salt: 4 },
   { x: 12.4, z: -8.4, count: 6, salt: 5 },
   { x: 2.2, z: -13.2, count: 6, salt: 6 },
+  { x: -11.2, z: 1.6, count: 5, salt: 7 },
 ];
 
 const LANDFORMS: LandformSpec[] = [
@@ -102,14 +94,6 @@ const LANDFORMS: LandformSpec[] = [
   { x: -29, z: -8, scale: 3.1, rot: -0.9, kind: "isle" },
   { x: 16.9, z: -18.2, scale: 1.55, rot: 0.3, kind: "stack" },
   { x: -17.6, z: 14.4, scale: 1.35, rot: 1.1, kind: "stack" },
-];
-
-const FOG_CARDS: FogCardSpec[] = [
-  { x: 18.5, y: 1.55, z: -6.2, sx: 9.2, sy: 2.5, yaw: 0.42 },
-  { x: -16.4, y: 1.7, z: 10.2, sx: 8.4, sy: 2.35, yaw: -0.82 },
-  { x: 7.6, y: 1.45, z: 20.4, sx: 10.0, sy: 2.7, yaw: 0.08 },
-  { x: -14.2, y: 1.65, z: -18.6, sx: 8.8, sy: 2.4, yaw: 1.12 },
-  { x: 22.4, y: 1.9, z: 12.0, sx: 8.0, sy: 2.2, yaw: -0.28 },
 ];
 
 function makeRng(salt: number): () => number {
@@ -279,9 +263,15 @@ function nestDress(): {
 
 function groveTrees(
   groves: GroveSpec[],
-  canopyLayers: number,
-): { trunks: PropPose[]; canopies: PropPose[]; scrub: PropPose[] } {
+  withTips: boolean,
+): {
+  trunks: PropPose[];
+  crowns: PropPose[];
+  canopies: PropPose[];
+  scrub: PropPose[];
+} {
   const trunks: PropPose[] = [];
+  const crowns: PropPose[] = [];
   const canopies: PropPose[] = [];
   const scrub: PropPose[] = [];
 
@@ -289,64 +279,74 @@ function groveTrees(
     const rand = makeRng(40 + grove.salt * 17);
     let placed = 0;
     let guard = 0;
-    while (placed < grove.count && guard < grove.count * 14) {
+    while (placed < grove.count && guard < grove.count * 16) {
       guard += 1;
       const angle = rand() * Math.PI * 2;
-      const spread = 0.4 + rand() * 2.15;
+      const spread = 0.35 + rand() * 2.35;
       const x = grove.x + Math.sin(angle) * spread;
       const z = grove.z + Math.cos(angle) * spread;
       const radial = Math.hypot(x, z);
-      if (radial < 10.1 || radial > 15.05) continue;
+      if (radial < 9.7 || radial > 15.25) continue;
       if (blocked(x, z, 2.55)) continue;
-      if (trunks.some((tree) => Math.hypot(tree.x - x, tree.z - z) < 0.82)) {
+      if (trunks.some((tree) => Math.hypot(tree.x - x, tree.z - z) < 0.78)) {
         continue;
       }
 
-      const s = 0.92 + rand() * 0.58;
+      const s = 0.88 + rand() * 0.52;
       const inlandX = radial > 0.001 ? -x / radial : 0;
       const inlandZ = radial > 0.001 ? -z / radial : 0;
-      const lean = 0.1 + rand() * 0.14;
+      const outward = Math.atan2(x, z);
+      const lean = 0.16 + rand() * 0.14;
       const yaw = rand() * Math.PI * 2;
       trunks.push(
         pose(
           x,
-          0.62 * s,
+          0.42 * s,
           z,
-          lean * Math.sin(Math.atan2(x, z)),
+          lean * Math.sin(outward),
           yaw,
-          lean * Math.cos(Math.atan2(x, z)) * 0.35,
-          0.055 * s,
-          1.28 * s,
-          0.055 * s,
+          lean * Math.cos(outward) * 0.4,
+          0.1 * s,
+          0.88 * s,
+          0.1 * s,
         ),
       );
-
-      for (let layer = 0; layer < canopyLayers; layer += 1) {
-        const lift = layer === 0 ? 1.22 * s : 1.62 * s;
-        const sweep = (0.1 + layer * 0.08) * s;
-        const wide = layer === 0 ? 0.52 * s : 0.34 * s;
+      crowns.push(
+        pose(
+          x + inlandX * 0.22 * s,
+          1.02 * s,
+          z + inlandZ * 0.22 * s,
+          0.28 + rand() * 0.12,
+          yaw,
+          0.14,
+          0.78 * s,
+          0.52 * s,
+          0.58 * s,
+        ),
+      );
+      if (withTips) {
         canopies.push(
           pose(
-            x + inlandX * sweep,
-            lift,
-            z + inlandZ * sweep,
-            0.18 + layer * 0.06,
-            yaw + layer * 0.4,
-            0.08,
-            wide,
-            0.62 * s * (layer === 0 ? 1 : 0.78),
-            wide * 0.72,
+            x + inlandX * 0.34 * s,
+            1.42 * s,
+            z + inlandZ * 0.34 * s,
+            0.22,
+            yaw + 0.5,
+            0.1,
+            0.42 * s,
+            0.55 * s,
+            0.32 * s,
           ),
         );
       }
 
-      if (rand() > 0.45) {
-        const bx = x + inlandX * (0.55 + rand() * 0.4);
-        const bz = z + inlandZ * (0.55 + rand() * 0.4);
+      if (rand() > 0.32) {
+        const bx = x + inlandX * (0.62 + rand() * 0.45);
+        const bz = z + inlandZ * (0.62 + rand() * 0.45);
         if (!blocked(bx, bz, 2.4)) {
-          const bs = 0.55 + rand() * 0.35;
+          const bs = 0.62 + rand() * 0.4;
           scrub.push(
-            pose(bx, 0.2 * bs, bz, 0.15, yaw, 0.1, 0.26 * bs, 0.22 * bs, 0.22 * bs),
+            pose(bx, 0.22 * bs, bz, 0.18, yaw, 0.12, 0.32 * bs, 0.24 * bs, 0.26 * bs),
           );
         }
       }
@@ -355,7 +355,7 @@ function groveTrees(
     }
   }
 
-  return { trunks, canopies, scrub };
+  return { trunks, crowns, canopies, scrub };
 }
 
 function poolRocks(mobile: boolean): PropPose[] {
@@ -380,7 +380,7 @@ export function seedWorldDress(mobile: boolean): WorldDress {
   const groves = mobile
     ? GROVES.filter((grove) => grove.salt !== 2 && grove.salt !== 6)
     : GROVES;
-  const trees = groveTrees(groves, mobile ? 1 : 2);
+  const trees = groveTrees(groves, !mobile);
   const dressed = nestDress();
 
   const grass = scatter(
@@ -389,8 +389,8 @@ export function seedWorldDress(mobile: boolean): WorldDress {
     2.35,
     (rand) => ringPick(rand, 2.6, WORLD_RADIUS - 2.4),
     (x, z, rand) => {
-      const s = 0.12 + rand() * 0.16;
-      return pose(x, s * 0.5, z, 0.04, rand() * Math.PI * 2, 0.03, s * 0.22, s, s * 0.22);
+      const s = 0.2 + rand() * 0.2;
+      return pose(x, s * 0.5, z, 0.04, rand() * Math.PI * 2, 0.03, s * 0.24, s, s * 0.24);
     },
   );
 
@@ -400,7 +400,7 @@ export function seedWorldDress(mobile: boolean): WorldDress {
     2.2,
     (rand) => ringPick(rand, WORLD_RADIUS - 4.6, WORLD_RADIUS - 1.15),
     (x, z, rand) => {
-      const s = 0.22 + rand() * 0.16;
+      const s = 0.3 + rand() * 0.2;
       return pose(
         x,
         s * 0.52,
@@ -549,11 +549,11 @@ export function seedWorldDress(mobile: boolean): WorldDress {
     kelp,
     driftwood,
     trunks: trees.trunks,
+    crowns: trees.crowns,
     canopies: trees.canopies,
     scrub: trees.scrub.concat(duneScrub),
     tidePools: TIDE_POOLS,
     clearings: nestClearings(),
     landforms: LANDFORMS,
-    fogCards: mobile ? FOG_CARDS.slice(0, 4) : FOG_CARDS,
   };
 }
