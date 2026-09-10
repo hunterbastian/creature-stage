@@ -15,10 +15,30 @@
 html,
 body {
   height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+}
+
+@keyframes creature-rotate-hint {
+  0%,
+  18% {
+    transform: rotate(0deg);
+  }
+  42%,
+  68% {
+    transform: rotate(90deg);
+  }
+  88%,
+  100% {
+    transform: rotate(0deg);
+  }
 }

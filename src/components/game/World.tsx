@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { Sky } from "@react-three/drei";
 import { WORLD_RADIUS } from "@/lib/game/constants";
+import { isCoarsePointer } from "@/lib/game/device";
 
 type Clump = {
   x: number;
@@ -92,6 +93,7 @@ export function World() {
   const grass = useMemo(() => seededClumps(20, 3), []);
   const rocks = useMemo(() => seededClumps(9, 11), []);
   const shrooms = useMemo(() => seededClumps(6, 19), []);
+  const shadowMap = useMemo(() => (isCoarsePointer() ? 512 : 1024), []);
 
   return (
     <>
@@ -110,8 +112,8 @@ export function World() {
         position={[14, 18, 8]}
         intensity={1.55}
         castShadow
-        shadow-mapSize-width={1024}
-        shadow-mapSize-height={1024}
+        shadow-mapSize-width={shadowMap}
+        shadow-mapSize-height={shadowMap}
         shadow-camera-near={1}
         shadow-camera-far={50}
         shadow-camera-left={-22}
