@@ -255,7 +255,7 @@ export function hipHeight(id: LegId): number {
 }
 
 export function getCoastalMaps(hex: string, finish: Finish): CoastalMaps {
-  const key = `clean:${finish}:${hex}`;
+  const key = `skyrim:${finish}:${hex}`;
   const hit = MAP_CACHE.get(key);
   if (hit) return hit;
 
@@ -265,7 +265,7 @@ export function getCoastalMaps(hex: string, finish: Finish): CoastalMaps {
 }
 
 function paintMaps(hex: string, finish: Finish): CoastalMaps {
-  // Clean beach porcelain: soft scale, no dirt, no sponge grit.
+  // PS3 Skyrim coastal hide: readable scale, no dirt, no sponge grit.
   const size = 64;
   const albedo = makeCanvas(size);
   const spec = makeCanvas(size);
@@ -278,13 +278,13 @@ function paintMaps(hex: string, finish: Finish): CoastalMaps {
   }
 
   const base = hexToRgb(hex);
-  const rand = mulberry32(hashSeed(`clean:${finish}:${hex}`));
-  const blotch = valueNoise(size, 4, rand);
-  const grain = valueNoise(size, 10, rand);
+  const rand = mulberry32(hashSeed(`skyrim:${finish}:${hex}`));
+  const blotch = valueNoise(size, 5, rand);
+  const grain = valueNoise(size, 11, rand);
 
   const contrast =
-    finish === "plate" ? 0.05 : finish === "keratin" ? 0.04 : 0.035;
-  const pitAmt = finish === "wet" ? 0.04 : finish === "plate" ? 0.05 : 0.045;
+    finish === "plate" ? 0.07 : finish === "keratin" ? 0.055 : 0.05;
+  const pitAmt = finish === "wet" ? 0.05 : finish === "plate" ? 0.07 : 0.06;
 
   const aData = a.createImageData(size, size);
   const sData = s.createImageData(size, size);
@@ -295,9 +295,9 @@ function paintMaps(hex: string, finish: Finish): CoastalMaps {
       const i = y * size + x;
       const p = i * 4;
       const mottle = (blotch[i] - 0.5) * contrast;
-      const grainN = (grain[i] - 0.5) * 0.03;
+      const grainN = (grain[i] - 0.5) * 0.045;
       const pit = poreHint(x, y, size) * pitAmt;
-      const scales = poreHint(x, y, size) * (finish === "wet" ? 0 : 0.05);
+      const scales = poreHint(x, y, size) * (finish === "wet" ? 0 : 0.07);
 
       const lift = mottle + grainN - pit * 0.25 + scales * 0.18;
       const r = base[0] * (1 + lift);

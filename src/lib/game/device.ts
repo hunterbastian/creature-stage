@@ -15,7 +15,7 @@ export function isCoarsePointer(): boolean {
  * fillrate for a full-screen shadow-mapped meadow.
  */
 export function canvasPixelRatio(): [number, number] {
-  return isCoarsePointer() ? [1, 1.25] : [1, 1.75];
+  return isCoarsePointer() ? [1, 1.2] : [1, 1.5];
 }
 
 export function canvasGlOptions(): {
@@ -34,6 +34,6 @@ export function canvasGlOptions(): {
     powerPreference: "high-performance",
     // Washed early-2010s tonemap — not ACES/UE5.
     toneMapping: ReinhardToneMapping,
-    toneMappingExposure: 1.08,
+    toneMappingExposure: 0.98,
   };
 }
