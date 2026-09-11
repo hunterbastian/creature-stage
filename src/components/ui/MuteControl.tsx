@@ -22,7 +22,10 @@ function SpeakerIcon({ muted }: { muted: boolean }) {
     >
       <path d="M4.5 10.2v3.6h3.1L12 17.8V6.2L7.6 10.2H4.5z" fill="currentColor" stroke="none" />
       {muted ? (
-        <path d="M15.2 9.2 19.4 15" />
+        <>
+          <path d="M14.8 8.6 19.4 15.2" />
+          <path d="M19.4 8.6 14.8 15.2" />
+        </>
       ) : (
         <>
           <path d="M15.1 9.4a3.2 3.2 0 0 1 0 5.2" />
@@ -47,8 +50,12 @@ export function MuteControl({ compact }: { compact?: boolean }) {
       aria-pressed={snap.muted}
       title={snap.muted ? "Unmute (M)" : "Mute (M)"}
       onClick={() => toggleMuted()}
-      className={`pointer-events-auto touch-manipulation rounded-full border border-white/15 bg-black/45 text-lime-50 backdrop-blur hover:border-lime-200/40 hover:bg-black/55 ${
+      className={`pointer-events-auto touch-manipulation rounded-full border backdrop-blur hover:border-lime-200/40 hover:bg-black/55 ${
         compact ? "grid min-h-11 min-w-11 place-items-center" : "grid h-9 w-9 place-items-center"
+      } ${
+        snap.muted
+          ? "border-amber-200/45 bg-black/55 text-amber-100"
+          : "border-white/15 bg-black/45 text-lime-50"
       }`}
     >
       <SpeakerIcon muted={snap.muted} />
