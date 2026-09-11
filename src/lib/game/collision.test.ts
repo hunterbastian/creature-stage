@@ -3,6 +3,7 @@ import { test } from "node:test";
 import {
   BEACH_INNER_RADIUS,
   WATER_Y,
+  buildPropColliders,
   clampToShore,
   collidePlayer,
   groundHeight,
@@ -12,7 +13,7 @@ import {
   surfaceHeight,
   type PropCollider,
 } from "./collision";
-import { sampleGroundY } from "./worldgen";
+import { DENSITY, sampleGroundY, seedWorldDress } from "./worldgen";
 import { BEACH_INNER_RADIUS as CONST_BEACH, MAX_SIZE, NEST_INTERACT_RADIUS } from "./constants";
 import { SHORE_DANGER_RADIUS, SHORE_SAFE_RADIUS, playerOnShore, playerInlandSafe } from "./offshore";
 import { NEST_LAYOUT } from "./wildlife";
@@ -102,4 +103,34 @@ test("full collide step keeps the body on the meadow", () => {
 test("worldgen sampleGroundY is bound to the collision height field", () => {
   assert.equal(sampleGroundY(0, 0), surfaceHeight(0, 0));
   assert.equal(sampleGroundY(0, 15.2), surfaceHeight(0, 15.2));
+});
+
+test("rock and wood colliders use pose scale, not mesh bounds", () => {
+  const dress = seedWorldDress(false);
+  const colliders = buildPropColliders(dress);
+  const rock = dress.dryRocks[0];
+  const hit = colliders.find((item) => item.x === rock.x && item.z === rock.z);
+  assert.ok(hit);
+  assert.equal(hit.kind, "rock");
+  assert.equal(hit.radius, Math.max(rock.sx, rock.sz) * 0.78);
+
+  const wood = dress.driftwood[0];
+  const log = colliders.find((item) => item.x === wood.x && item.z === wood.z);
+  assert.ok(log);
+  assert.equal(log.kind, "wood");
+  assert.equal(log.radius, Math.max(wood.sy * 0.38, wood.sx * 2.4));
+});
+
+test("mobile density caps stay below desktop for iOS", () => {
+  assert.ok(DENSITY.mobile.dryRocks < DENSITY.desktop.dryRocks);
+  assert.ok(DENSITY.mobile.kelp < DENSITY.desktop.kelp);
+  assert.ok(DENSITY.mobile.driftwood < DENSITY.desktop.driftwood);
+  assert.ok(DENSITY.mobile.shells < DENSITY.desktop.shells);
+  assert.ok(DENSITY.mobile.groveTrees <= DENSITY.desktop.groveTrees);
+  const mobile = seedWorldDress(true);
+  const desktop = seedWorldDress(false);
+  assert.ok(mobile.dryRocks.length <= desktop.dryRocks.length);
+  assert.ok(mobile.kelp.length <= desktop.kelp.length);
+  assert.ok(mobile.canopies.length === 0);
+  assert.ok(desktop.canopies.length > 0);
 });

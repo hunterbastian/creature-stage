@@ -3,7 +3,9 @@
  * materials) stays in `CoastalDress` so this catalog can stay Three-free.
  *
  * `instance` means one shared mesh + material; keep new kinds on that path
- * for iOS. Landforms stay unique meshes because they are few and offshore.
+ * for iOS. Hero kinds load unit meshes from `coastal-props.glb` (see
+ * `props-kit.ts`). Landforms stay unique meshes because they are few and
+ * offshore. Collision cylinders still use pose scale, not mesh bounds.
  */
 export const PROP_CATALOG = {
   grass: { band: "meadow", instance: true, shadows: false },

@@ -93,6 +93,7 @@ Add the page to your Home Screen if you want a more app-like fullscreen, then ke
 ## What shipped
 
 - Full-screen coastal meadow with Skyrim-PS3 lighting (warm sun, grass, sea).
+- Authored coastal props from a Blender/Node glTF kit (`public/models/coastal-props.glb`) — rocks, driftwood, kelp, shells, and wind-bent grove trees instance as mid-fi meshes, not primitive blobs.
 - Three locked starters: **Theropod** (biped hunter), **Sauropod** (long-neck), **Stego** (beaked herbivore, cream spiral plates). Seafoam/cream + modular accents, loaded from a Blender glTF kit (`public/models/saurian-kit.glb`).
 - A modular creature: **body, legs, mouth, eyes**, plus unlockable **arms, tail, and accessory** (named glTF nodes, live editor swaps).
 - Live editor: swapping a part updates the 3D mesh immediately.
@@ -156,7 +157,7 @@ Mechanical nods to Skyrim / Elden Ring, not their art:
 | `src/components/game/` | R3F canvas, world, coastal dress, nests, wildlife herds, offshore fauna, creature, food, camera, movement loop |
 | `src/components/ui/` | Overlay editor, starter picker, touch stick, rotate hint, stats, toasts |
 | `src/lib/game/worldgen/` | Seeded coastal set dressing (biomes, density knobs, ground-Y hook) |
-| `scripts/blender/` | Headless bpy generator for the saurian glTF kit; re-export notes in `scripts/blender/README.md` |
+| `scripts/blender/` | Headless bpy / Node generators for the saurian + coastal-prop glTF kits; re-export notes in `scripts/blender/README.md` |
 
 Locomotion (`x`, `y`, `z`, `yaw`, stamina, vitality, feel pulses) lives in `src/lib/game/sim.ts` and `src/lib/game/locomotion.ts` so the HUD does not rerender every frame. Visual walk/idle/trot/eat poses live in `src/lib/game/anim.ts` (applied in `useCreatureAnim.ts`). World collision (height field, shore lip, nest bowls, prop capsules) lives in `src/lib/game/collision.ts`. Wildlife x/z lives in `src/lib/game/wildlife.ts`. Leviathan moods live in `src/lib/game/offshore-ai.ts`. Form thresholds, herd-mate curve, and the current objective live in `src/lib/game/progress.ts`. Coastal set dressing is seeded in `src/lib/game/worldgen/` and drawn by `CoastalDress`. Creature roots follow collision footing (`sim.y` / `groundHeight`); props use `sampleGroundY` (collision binds that hook to `surfaceHeight`).
 
@@ -170,9 +171,13 @@ The island is **seeded set dressing** on collision’s height field. Same seed �
 | `DENSITY.desktop` / `DENSITY.mobile` | same file | Per-prop instance caps. Mobile is roughly half. |
 | `BAND` | same file | Meadow / grove / shore / waterline radii. Groves stay on the beach–meadow edge (no forest wall). |
 | `PROP_CATALOG` | `src/lib/game/worldgen/catalog.ts` | Which props instance, which band they belong to. |
+| `coastal-props.glb` | `public/models/coastal-props.glb` | Unit hero meshes (rocks, wood, kelp, shells, grove trees). Rebuild with `npm run props:build`. |
 | `sampleGroundY` / `setGroundSampler` | `src/lib/game/worldgen/ground.ts` | Pose `y` is local lift. Collision binds `setGroundSampler(surfaceHeight)` so props sit on the meadow→beach field. |
+| `COASTAL_PROP_NODES` | `src/lib/game/worldgen/props-kit.ts` | Named glTF nodes swapped into `CoastalDress` instanced fields. |
 
-Shore micro-biomes (tide terraces, kelp wrack, rock shelves, shell fans) are authored arcs in `layout.ts`, then filled with instanced props. Nest bowls keep a clearing; `isWorldgenOccupied` is the fruit keep-out. Walkable height, shore lip, and nest rims stay in `collision.ts`.
+Shore micro-biomes (tide terraces, kelp wrack, rock shelves, shell fans) are authored arcs in `layout.ts`, then filled with instanced props. Nest bowls keep a clearing; `isWorldgenOccupied` is the fruit keep-out. Walkable height, shore lip, and nest rims stay in `collision.ts`. Prop collision cylinders use **pose scale**, not kit mesh bounds — keep unit-space meshes aligned with the old primitives.
+
+**Density / iOS:** `DENSITY.mobile` is roughly half of desktop (rocks 14 vs 26, kelp 12 vs 22, shells 26 vs 54, driftwood 7 vs 13, one fewer grove). One draw call per prop kind. Kit is untextured Phong, ~70–320 tris per hero mesh, no extra shadow casters on mobile. Grass / foam / haze stay primitive discs and cones.
 
 ## Creature animation
 

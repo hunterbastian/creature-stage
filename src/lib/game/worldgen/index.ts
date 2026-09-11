@@ -21,6 +21,11 @@ export {
   type WorldLayout,
 } from "./layout";
 export { isWorldgenOccupied, worldgenKeepOut } from "./occupancy";
+export {
+  COASTAL_PROPS_URL,
+  COASTAL_PROP_NODES,
+  type CoastalPropNode,
+} from "./props-kit";
 export { seedWorldDress } from "./seed";
 export type {
   ClearingSpec,

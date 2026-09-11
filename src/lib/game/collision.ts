@@ -7,6 +7,8 @@
  * - `SHORE_LIP_RADIUS` / `SHORE_BODY_PAD` — solid playable edge
  * - `NEST_*` — walkable bowl floor + rim (claim radius is unchanged)
  * - `PROP_ROCK_MIN` / `capsuleRadius` — major rocks & driftwood only
+ *   (kit meshes in `coastal-props.glb` stay unit-primitive aligned; radii
+ *   come from pose scale, never mesh bounds)
  * - `SETTLE_*` / `GRAVITY` — stick uphill, fall off rims
  *
  * Shore-danger radii stay in `offshore.ts`. `SHORE_DANGER_RADIUS` equals
