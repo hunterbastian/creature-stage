@@ -34,6 +34,7 @@ import {
   chaseThreat,
   homeHerdNear,
   nearestHomeHerd,
+  NEST_LAYOUT,
   nestNear,
   tickWildlife,
 } from "@/lib/game/wildlife";
@@ -189,6 +190,7 @@ export function GameLoop() {
   const graceUntil = useRef(2.5);
   const threatArmed = useRef(false);
   const huntStaged = useRef(false);
+  const nestLookStaged = useRef(false);
 
   useEffect(() => bindInput(), []);
 
@@ -220,6 +222,30 @@ export function GameLoop() {
       sim.vy = 0;
       sim.vz = 0;
       huntStaged.current = true;
+    }
+
+    if (!nestLookStaged.current) {
+      const nestIndex =
+        window.location.hash === "#hollow" || window.location.hash === "#home"
+          ? 0
+          : window.location.hash === "#warren"
+            ? 1
+            : window.location.hash === "#croft"
+              ? 2
+              : -1;
+      if (nestIndex >= 0) {
+        const nest = NEST_LAYOUT[nestIndex];
+        // Per-nest yaw keeps the chase cam off nearby groves.
+        const lookYaw = [0, Math.PI, 0] as const;
+        sim.x = nest.x;
+        sim.z = nest.z;
+        sim.y = groundHeight(sim.x, sim.z);
+        sim.yaw = lookYaw[nestIndex];
+        sim.vx = 0;
+        sim.vy = 0;
+        sim.vz = 0;
+      }
+      nestLookStaged.current = true;
     }
 
     const waypoint = liveWaypoint();
