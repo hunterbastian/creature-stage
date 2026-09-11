@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import type { Group } from "three";
+import { surfaceHeight } from "@/lib/game/collision";
 import { formAt } from "@/lib/game/progress";
 import { speciesDef } from "@/lib/game/species";
 import { useGameStore } from "@/lib/game/store";
@@ -72,7 +73,10 @@ function NestMesh({
   });
 
   return (
-    <group position={[nest.x, 0, nest.z]} rotation={[0, nest.yaw, 0]}>
+    <group
+      position={[nest.x, surfaceHeight(nest.x, nest.z), nest.z]}
+      rotation={[0, nest.yaw, 0]}
+    >
       <mesh
         position={[0, 0.1, 0]}
         scale={[1.65, 0.3, 1.65]}

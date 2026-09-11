@@ -229,6 +229,13 @@ export function sectorsOf(
   return layout.sectors.filter((sector) => sector.kind === kind);
 }
 
+export function getTidePools(mobile = false): TidePoolSpec[] {
+  return seedLayout(mobile).tidePools;
+}
+
+/** Desktop pool snapshot for `import { TIDE_POOLS }` (collision / tests). */
+export const TIDE_POOLS: TidePoolSpec[] = seedLayout(false).tidePools;
+
 export function sectorSitsOnWaterline(kind: ShoreSector["kind"]): boolean {
   switch (kind) {
     case "kelpWrack":

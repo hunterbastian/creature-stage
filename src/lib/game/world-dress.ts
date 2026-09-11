@@ -1,10 +1,14 @@
 /**
- * Compatibility shim. New dressing lives in `src/lib/game/worldgen/`.
- * Collision work should hook `sampleGroundY` rather than rewrite scatter here.
+ * Compatibility shim. Dressing lives in `src/lib/game/worldgen/`.
+ * Collision binds `setGroundSampler(surfaceHeight)` so props sit on terrain.
  */
 export {
+  TIDE_POOLS,
+  getTidePools,
   sampleGroundY,
+  seedLayout,
   seedWorldDress,
+  setGroundSampler,
   WORLDGEN_SEED,
 } from "./worldgen";
 export type {

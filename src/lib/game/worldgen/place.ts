@@ -1,5 +1,4 @@
 import { WORLD_RADIUS } from "../constants";
-import { sampleGroundY } from "./ground";
 import type { PropPose, TidePoolSpec } from "./types";
 import { nearNest, nearPool } from "./layout";
 
@@ -28,7 +27,7 @@ export function grounded(
   sy: number,
   sz: number,
 ): PropPose {
-  return pose(x, sampleGroundY(x, z) + lift, z, rx, ry, rz, sx, sy, sz);
+  return pose(x, lift, z, rx, ry, rz, sx, sy, sz);
 }
 
 export function blocked(

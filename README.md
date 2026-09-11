@@ -21,6 +21,7 @@ Useful scripts:
 
 ```bash
 npm run lint
+npm run test          # height field / shore / nest / prop collision
 npm run build
 npm start          # production server after build
 ```
@@ -97,9 +98,10 @@ Add the page to your Home Screen if you want a more app-like fullscreen, then ke
 - Live editor: swapping a part updates the 3D mesh immediately.
 - Survival nibble loop: 8 fruits in the world (one waits in front of you), they respawn after you eat them.
 - Named form progression from Hatchling to Apex, with herd-respect tiers and a shrinking flock (5 → 1 nestmate).
-- Weightier locomotion (inertia, stamina trot, hitstop) and a soft-lock focus toward objectives.
+- Weightier locomotion (inertia, stamina trot, hitstop, **grounded collision**) and a soft-lock focus toward objectives.
 - Landscape-first mobile HUD with a virtual stick, contextual eat/claim, and compact part editor.
 - **Nests & herds** — three woven nest bowls with eggs; sauropod and stego flocks graze nearby, and nestmates wear your morph.
+- **World collision** — meadow→beach height field, solid shore lip, walkable nest rims, light rock/driftwood slide-off. No physics engine.
 - **Offshore leviathans** — Coil, Veil, Keel (and Rift on desktop) loop the far ocean. Walk the beach and one may surge, telegraph, and slam. Bite the recover window for deep marrow (2 meals). The meadow is never a death zone.
 
 ## Nests & herds
@@ -127,11 +129,19 @@ Knobs live in `src/lib/game/offshore.ts`. The brain is `src/lib/game/offshore-ai
 
 Reviewer warp: open `/#hunt`, pick a starter, and Coil stages on the +Z beach so you do not wait a full orbit. `?starter=theropod|sauropod|stego` (or `sleek|plump|spiky`) auto-picks a chassis.
 
+## World collision
+
+The island is no longer a flat disc with a radius clamp. Feet sample a cheap height field (meadow plateau → beach slope → waterline), then a capsule slides off major rocks/driftwood and a solid lip at the sand shelf. Nest bowls have a walkable floor and rim so the camera does not clip through the weave. Foliage is visual-only.
+
+Aggro is still **xz radial**: `SHORE_DANGER_RADIUS` === `BEACH_INNER_RADIUS` (dry-sand start). The playable lip sits *outside* that band so you can still stand on the beach and draw a leviathan. Height is not part of the notice test.
+
+Knobs live in `src/lib/game/collision.ts` (`MEADOW_HEIGHT`, `WATER_Y`, `SHORE_LIP_RADIUS`, `NEST_*`, `PROP_*`, settle/gravity). The displaced dirt mesh is `src/lib/game/island-mesh.ts`.
+
 ## How it should feel
 
 Mechanical nods to Skyrim / Elden Ring, not their art:
 
-- **Weight** — walk accelerates and coasts; the camera lags and settles instead of snapping.
+- **Weight** — walk accelerates and coasts; feet settle onto terrain instead of hovering; the camera lags and settles instead of snapping.
 - **Rhythm** — Shift / full-stick trot spends a thin breath meter, then you are winded.
 - **Tension** — Hatchling vs a plucky herd is a chase; Elder/Apex is an honor stop. The deep does not honor you — the far shore is the weighty fight.
 - **Discovery** — compass + a soft yaw pull; hold **F** or tap the needle to glance at the objective.
@@ -148,11 +158,11 @@ Mechanical nods to Skyrim / Elden Ring, not their art:
 | `src/lib/game/worldgen/` | Seeded coastal set dressing (biomes, density knobs, ground-Y hook) |
 | `scripts/blender/` | Headless bpy generator for the saurian glTF kit; re-export notes in `scripts/blender/README.md` |
 
-Locomotion (`x`, `z`, `yaw`, stamina, vitality, feel pulses) lives in `src/lib/game/sim.ts` and `src/lib/game/locomotion.ts` so the HUD does not rerender every frame. Wildlife poses live in `src/lib/game/wildlife.ts`. Leviathan moods live in `src/lib/game/offshore-ai.ts`. Form thresholds, herd-mate curve, and the current objective live in `src/lib/game/progress.ts`. Coastal set dressing is seeded in `src/lib/game/worldgen/` and drawn by `CoastalDress`.
+Locomotion (`x`, `y`, `z`, `yaw`, stamina, vitality, feel pulses) lives in `src/lib/game/sim.ts` and `src/lib/game/locomotion.ts` so the HUD does not rerender every frame. World collision (height field, shore lip, nest bowls, prop capsules) lives in `src/lib/game/collision.ts`. Wildlife poses live in `src/lib/game/wildlife.ts`. Leviathan moods live in `src/lib/game/offshore-ai.ts`. Form thresholds, herd-mate curve, and the current objective live in `src/lib/game/progress.ts`. Coastal set dressing is seeded in `src/lib/game/worldgen/` and drawn by `CoastalDress`.
 
 ## World generation
 
-The island is **seeded set dressing**, not a heightmap. Same seed → same groves, tide pools, and wrack every reload. Fruit still randomizes, but it refuses pools and rock shelves so objectives stay walkable.
+The island is **seeded set dressing** on collision’s height field. Same seed → same groves, tide pools, and wrack every reload. Fruit still randomizes, but it refuses pools and rock shelves so objectives stay walkable.
 
 | Knob | Where | Notes |
 | --- | --- | --- |
@@ -160,11 +170,9 @@ The island is **seeded set dressing**, not a heightmap. Same seed → same grove
 | `DENSITY.desktop` / `DENSITY.mobile` | same file | Per-prop instance caps. Mobile is roughly half. |
 | `BAND` | same file | Meadow / grove / shore / waterline radii. Groves stay on the beach–meadow edge (no forest wall). |
 | `PROP_CATALOG` | `src/lib/game/worldgen/catalog.ts` | Which props instance, which band they belong to. |
-| `sampleGroundY(x, z)` | `src/lib/game/worldgen/ground.ts` | Props sit on the current flat meadow / sand ring. **Collision merge hook:** rebind this when a heightmap API lands. Do not rewrite locomotion clamps here. |
+| `sampleGroundY` / `setGroundSampler` | `src/lib/game/worldgen/ground.ts` | Pose `y` is local lift. Collision binds `setGroundSampler(surfaceHeight)` so props sit on the meadow→beach field. |
 
-Shore micro-biomes (tide terraces, kelp wrack, rock shelves, shell fans) are authored arcs in `layout.ts`, then filled with instanced props. Nest bowls keep a clearing; `isWorldgenOccupied` is the fruit keep-out.
-
-**Likely merge conflicts with collision:** `World.tsx` ground meshes, `locomotion.ts` island clamp, and any new height sampler. Dressing should keep sampling Y through `sampleGroundY` and stay out of `Creature.tsx` / offshore AI. `src/lib/game/world-dress.ts` is a thin re-export of the worldgen module.
+Shore micro-biomes (tide terraces, kelp wrack, rock shelves, shell fans) are authored arcs in `layout.ts`, then filled with instanced props. Nest bowls keep a clearing; `isWorldgenOccupied` is the fruit keep-out. Walkable height, shore lip, and nest rims stay in `collision.ts`.
 
 ## What's next
 

@@ -4,6 +4,7 @@ import { useLayoutEffect, useMemo, useRef, type ReactNode } from "react";
 import { InstancedMesh, Object3D } from "three";
 import { assertNever } from "@/lib/game/types";
 import {
+  sampleGroundY,
   seedWorldDress,
   type HazeSpec,
   type LandformSpec,
@@ -12,6 +13,10 @@ import {
 } from "@/lib/game/worldgen";
 
 const dummy = new Object3D();
+
+function propY(item: PropPose): number {
+  return item.y + sampleGroundY(item.x, item.z);
+}
 
 function InstancedField({
   poses,
@@ -31,7 +36,7 @@ function InstancedField({
     if (!instanced) return;
     poses.forEach((item, index) => {
       dummy.rotation.order = "XYZ";
-      dummy.position.set(item.x, item.y, item.z);
+      dummy.position.set(item.x, propY(item), item.z);
       dummy.rotation.set(item.rx, item.ry, item.rz);
       dummy.scale.set(item.sx, item.sy, item.sz);
       dummy.updateMatrix();
@@ -60,11 +65,13 @@ function InstancedDecals({
   poses,
   renderOrder,
   receiveShadow = false,
+  followGround = true,
   children,
 }: {
   poses: PropPose[];
   renderOrder?: number;
   receiveShadow?: boolean;
+  followGround?: boolean;
   children: ReactNode;
 }) {
   const mesh = useRef<InstancedMesh>(null);
@@ -73,7 +80,11 @@ function InstancedDecals({
     const instanced = mesh.current;
     if (!instanced) return;
     poses.forEach((item, index) => {
-      dummy.position.set(item.x, item.y, item.z);
+      dummy.position.set(
+        item.x,
+        followGround ? propY(item) : item.y,
+        item.z,
+      );
       dummy.rotation.order = "YXZ";
       dummy.rotation.set(-Math.PI / 2, item.ry, 0);
       dummy.scale.set(item.sx, item.sz, 1);
@@ -82,7 +93,7 @@ function InstancedDecals({
     });
     instanced.instanceMatrix.needsUpdate = true;
     instanced.computeBoundingSphere();
-  }, [poses]);
+  }, [poses, followGround]);
 
   if (!poses || poses.length === 0) return null;
 
@@ -152,7 +163,11 @@ function NestClearing({
   color: string;
 }) {
   return (
-    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[x, 0.006, z]} receiveShadow>
+    <mesh
+      rotation={[-Math.PI / 2, 0, 0]}
+      position={[x, sampleGroundY(x, z) + 0.006, z]}
+      receiveShadow
+    >
       <circleGeometry args={[radius, 16]} />
       <meshPhongMaterial color={color} shininess={5} specular="#9aaa70" />
     </mesh>
@@ -312,7 +327,7 @@ export function CoastalDress({ coarse }: { coarse: boolean }) {
           depthWrite={false}
         />
       </InstancedDecals>
-      <InstancedDecals poses={mist} renderOrder={-1}>
+      <InstancedDecals poses={mist} renderOrder={-1} followGround={false}>
         <circleGeometry args={[1, 12]} />
         <meshBasicMaterial
           color="#c8d4cc"

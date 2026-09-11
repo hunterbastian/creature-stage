@@ -6,6 +6,7 @@ import {
   randomizeUnlocked,
   starterLoadout,
 } from "./catalog";
+import { groundHeight } from "./collision";
 import {
   FOOD_RESPAWN_MS,
   NEST_CLEARING,
@@ -224,13 +225,17 @@ function wakeAtHome(homeNestId: string): void {
     sim.hp = sim.maxHp;
     sim.x = 0;
     sim.z = 0;
+    sim.y = groundHeight(0, 0);
+    sim.vy = 0;
     return;
   }
   const spawn = playerSpawnAt(nest);
   sim.x = spawn.x;
   sim.z = spawn.z;
+  sim.y = groundHeight(spawn.x, spawn.z);
   sim.yaw = spawn.yaw;
   sim.vx = 0;
+  sim.vy = 0;
   sim.vz = 0;
   sim.hp = sim.maxHp;
   sim.hurtFlash = 0;

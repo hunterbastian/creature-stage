@@ -1,9 +1,8 @@
 /**
  * Coastal world generation / set dressing.
  *
- * Layout is seeded (`WORLDGEN_SEED`) and stable across reloads. Collision is a
- * parallel track — sample ground Y through `sampleGroundY` so a later heightmap
- * can hook in without rewriting scatter.
+ * Layout is seeded (`WORLDGEN_SEED`) and stable across reloads. Collision
+ * binds `sampleGroundY` to `surfaceHeight` via `setGroundSampler`.
  */
 export { PROP_CATALOG } from "./catalog";
 export {
@@ -14,8 +13,13 @@ export {
   type DensityKnobs,
   type DensityTier,
 } from "./density";
-export { isWaterline, sampleGroundY } from "./ground";
-export { seedLayout, type WorldLayout } from "./layout";
+export { isWaterline, sampleGroundY, setGroundSampler } from "./ground";
+export {
+  TIDE_POOLS,
+  getTidePools,
+  seedLayout,
+  type WorldLayout,
+} from "./layout";
 export { isWorldgenOccupied, worldgenKeepOut } from "./occupancy";
 export { seedWorldDress } from "./seed";
 export type {

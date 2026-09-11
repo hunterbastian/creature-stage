@@ -1,7 +1,6 @@
 import { WORLD_RADIUS } from "../constants";
 import { NEST_LAYOUT } from "../wildlife";
 import { BAND, WORLDGEN_SEED, densityFor } from "./density";
-import { sampleGroundY } from "./ground";
 import {
   nearNest,
   sectorSitsOnWaterline,
@@ -170,14 +169,13 @@ function groveTrees(
       const lean = 0.26 + rand() * 0.14;
       const rx = lean * Math.cos(outward);
       const rz = -lean * Math.sin(outward);
-      const gy = sampleGroundY(x, z);
       trunks.push(
-        pose(x, gy + 0.52 * s, z, rx, outward, rz, 0.09 * s, 1.08 * s, 0.09 * s),
+        pose(x, 0.52 * s, z, rx, outward, rz, 0.09 * s, 1.08 * s, 0.09 * s),
       );
       crowns.push(
         pose(
           x + inlandX * 0.42 * s,
-          gy + 1.1 * s,
+          1.1 * s,
           z + inlandZ * 0.42 * s,
           0.38 + rand() * 0.08,
           outward,
@@ -191,7 +189,7 @@ function groveTrees(
         canopies.push(
           pose(
             x + inlandX * 0.6 * s,
-            gy + 1.56 * s,
+            1.56 * s,
             z + inlandZ * 0.6 * s,
             0.42,
             outward + 0.12,
@@ -311,7 +309,7 @@ function foamPatches(layout: WorldLayout, mobile: boolean): PropPose[] {
     (x, z, rand) => {
       const sx = 0.85 + rand() * 1.15;
       const sz = 0.42 + rand() * 0.55;
-      return pose(x, -0.018, z, 0, rand() * Math.PI * 2, 0, sx, 1, sz);
+      return pose(x, 0.022, z, 0, rand() * Math.PI * 2, 0, sx, 1, sz);
     },
     { maxR: WORLD_RADIUS + 0.85, poolExtra: -0.2 },
   );
@@ -551,10 +549,7 @@ export function seedWorldDress(mobile: boolean): WorldDress {
     },
   );
 
-  const shelves = layout.shelves.map((shelf) => ({
-    ...shelf,
-    y: sampleGroundY(shelf.x, shelf.z) + shelf.y,
-  }));
+  const shelves = layout.shelves;
 
   return {
     grass,

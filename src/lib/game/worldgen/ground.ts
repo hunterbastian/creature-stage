@@ -1,25 +1,29 @@
-import { WORLD_RADIUS } from "../constants";
+import { BEACH_INNER_RADIUS, WORLD_RADIUS } from "../constants";
 
 /**
  * Visual ground height for dress props.
  *
- * Today the playable island is a flat disk: meadow at y=0, a slightly raised
- * sand ring in `World.tsx`, and the waterline shelf a hair below. Collision is
- * landing a heightmap in a parallel PR — when something like
- * `samplePlayableHeight(x, z)` appears, **rebind this function to it** so
- * props follow terrain without rewriting scatter.
+ * Default is 0 so worldgen can seed poses as *lifts* above the dirt.
+ * Collision binds the real height field with `setGroundSampler(surfaceHeight)`
+ * (see `collision.ts`) — do not import collision from here (cycle).
  *
- * Do not bake locomotion clamps in here.
+ * Instanced props add `sampleGroundY(x, z)` at draw time. Pose `y` is local
+ * lift, not world height.
  */
+export type GroundSampler = (x: number, z: number) => number;
+
+let sampler: GroundSampler = () => 0;
+
+export function setGroundSampler(next: GroundSampler): void {
+  sampler = next;
+}
+
 export function sampleGroundY(x: number, z: number): number {
-  const radius = Math.hypot(x, z);
-  if (radius > WORLD_RADIUS + 0.08) return -0.04;
-  if (radius > WORLD_RADIUS - 2.35) return 0.004;
-  return 0;
+  return sampler(x, z);
 }
 
 /** Sand / waterline band used by shore biomes and foam. */
 export function isWaterline(x: number, z: number): boolean {
   const radius = Math.hypot(x, z);
-  return radius >= WORLD_RADIUS - 2.4 && radius <= WORLD_RADIUS + 0.55;
+  return radius >= BEACH_INNER_RADIUS - 0.05 && radius <= WORLD_RADIUS + 0.55;
 }

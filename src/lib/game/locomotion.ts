@@ -1,3 +1,4 @@
+import { collidePlayer } from "./collision";
 import {
   MOVE_ACCEL,
   MOVE_DECEL,
@@ -7,7 +8,6 @@ import {
   STAMINA_WINDED,
   TURN_SPEED,
   TURN_SPEED_SPRINT,
-  WORLD_RADIUS,
   YAW_ACCEL,
 } from "./constants";
 import { bearingTo, type Waypoint } from "./progress";
@@ -17,17 +17,6 @@ function approach(current: number, target: number, maxDelta: number): number {
   const delta = target - current;
   if (Math.abs(delta) <= maxDelta) return target;
   return current + Math.sign(delta) * maxDelta;
-}
-
-function clampIsland(): void {
-  const limit = WORLD_RADIUS - 1.15 * sim.size;
-  const radius = Math.hypot(sim.x, sim.z);
-  if (radius <= limit) return;
-  const scale = limit / radius;
-  sim.x *= scale;
-  sim.z *= scale;
-  sim.vx *= 0.35;
-  sim.vz *= 0.35;
 }
 
 /**
@@ -69,7 +58,13 @@ export function tickLocomotion(
 
   sim.x += sim.vx * dt;
   sim.z += sim.vz * dt;
-  clampIsland();
+  const next = collidePlayer(sim, dt);
+  sim.x = next.x;
+  sim.y = next.y;
+  sim.z = next.z;
+  sim.vx = next.vx;
+  sim.vy = next.vy;
+  sim.vz = next.vz;
 
   const speedNow = Math.hypot(sim.vx, sim.vz);
   sim.moving = speedNow > 0.12;
