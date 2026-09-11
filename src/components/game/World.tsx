@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { Suspense, useEffect, useMemo } from "react";
 import { Sky } from "@react-three/drei";
 import { WATER_Y } from "@/lib/game/collision";
 import { WORLD_RADIUS } from "@/lib/game/constants";
@@ -76,7 +76,9 @@ export function World() {
       </mesh>
 
       <IslandMesh coarse={coarse} />
-      <CoastalDress coarse={coarse} />
+      <Suspense fallback={null}>
+        <CoastalDress coarse={coarse} />
+      </Suspense>
     </>
   );
 }

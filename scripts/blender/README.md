@@ -1,4 +1,55 @@
-# Tideform saurian kit (Blender → glTF)
+# Tideform glTF kits (Blender → glTF)
+
+Two kits ship under `public/models/`:
+
+| Kit | Path | Loaded by |
+| --- | --- | --- |
+| Saurian creature | `public/models/saurian-kit.glb` | `SaurianKit.tsx` / `Creature.tsx` |
+| Coastal props | `public/models/coastal-props.glb` | `CoastalDress.tsx` via `CoastalPropsKit.tsx` |
+
+Coordinate system matches the R3F scene: **+Y up, +Z forward**. The exporter uses glTF `+Y up`.
+
+---
+
+## Coastal props
+
+Hero set dressing (rocks, driftwood, kelp, shells, grove trees, scrub, reeds) is a unit-space glTF kit. Worldgen still instances the same poses; only the shared mesh changes. Collision cylinders stay on pose scale (`sx`/`sz` rocks, `sy`/`sx` wood) — do not retarget radii from mesh bounds.
+
+### Re-export
+
+Needs Node 20+ (committed path; no Blender required):
+
+```bash
+npm run props:build
+# or: node scripts/blender/build_coastal_props.mjs --out public/models/coastal-props.glb
+```
+
+Artist rebuild with **Blender 4.2+**:
+
+```bash
+blender --background --python scripts/blender/build_coastal_props.py
+```
+
+Keep object **names** stable — `COASTAL_PROP_NODES` in `src/lib/game/worldgen/props-kit.ts` looks them up.
+
+| Node | Replaces | Local space |
+| --- | --- | --- |
+| `prop_rock_dry` / `_wet` / `_shelf` | dodecahedron r=1 | unit weathered stone |
+| `prop_shell` | sphere r=1 | ridged clam |
+| `prop_spiral` | torus r=1, tube 0.36 | XY-plane moon-snail |
+| `prop_kelp` | cone r=1, h=1 | wavy blade |
+| `prop_driftwood` | cylinder r=1, h=1 | gnarled Y-up log |
+| `prop_trunk` | cylinder r=1 / 1.18, h=1 | bark-tapered pine |
+| `prop_crown` / `prop_canopy` / `prop_scrub` | icosa / cone r=1 | lumpy wind-bent foliage |
+| `prop_reed` | cone r=1, h=1 | three-blade clump |
+
+Poly target: mid-poly PS3-era, about 70–320 tris per mesh, **one draw call per kind**. Grass / foam / haze / tide-pool discs stay cheap primitives. Mobile still uses `DENSITY.mobile` (~half the desktop instance caps). Untextured — engine Phong in `CoastalDress` keeps salt-light finishes.
+
+iOS Safari is the performance ceiling. Do not add unique meshes per instance, 4k maps, or extra shadow casters.
+
+---
+
+## Saurian kit
 
 Creatures are authored as a single glTF 2.0 kit at `public/models/saurian-kit.glb`. The live game loads named nodes with drei `useGLTF` and swaps editor parts without touching gameplay.
 

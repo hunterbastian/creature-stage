@@ -1,7 +1,7 @@
 "use client";
 
 import { useLayoutEffect, useMemo, useRef, type ReactNode } from "react";
-import { InstancedMesh, Object3D } from "three";
+import { InstancedMesh, Object3D, type BufferGeometry } from "three";
 import { assertNever } from "@/lib/game/types";
 import {
   sampleGroundY,
@@ -11,6 +11,7 @@ import {
   type PropPose,
   type TidePoolSpec,
 } from "@/lib/game/worldgen";
+import { useCoastalPropGeometries } from "./CoastalPropsKit";
 
 const dummy = new Object3D();
 
@@ -18,13 +19,26 @@ function propY(item: PropPose): number {
   return item.y + sampleGroundY(item.x, item.z);
 }
 
+function KitGeometry({
+  geometry,
+  fallback,
+}: {
+  geometry: BufferGeometry | null;
+  fallback: ReactNode;
+}) {
+  if (geometry) return null;
+  return fallback;
+}
+
 function InstancedField({
   poses,
+  geometry = null,
   castShadow = false,
   receiveShadow = false,
   children,
 }: {
   poses: PropPose[];
+  geometry?: BufferGeometry | null;
   castShadow?: boolean;
   receiveShadow?: boolean;
   children: ReactNode;
@@ -51,9 +65,10 @@ function InstancedField({
   return (
     <instancedMesh
       ref={mesh}
-      args={[undefined, undefined, poses.length]}
+      args={[geometry ?? undefined, undefined, poses.length]}
       castShadow={castShadow}
       receiveShadow={receiveShadow}
+      dispose={null}
     >
       {children}
     </instancedMesh>
@@ -174,28 +189,70 @@ function NestClearing({
   );
 }
 
-function Landform({ spec }: { spec: LandformSpec }) {
+function RockChunk({
+  geometry,
+  position,
+  scale,
+  color,
+  shininess,
+  specular,
+  castShadow = false,
+}: {
+  geometry: BufferGeometry | null;
+  position: [number, number, number];
+  scale: [number, number, number];
+  color: string;
+  shininess: number;
+  specular: string;
+  castShadow?: boolean;
+}) {
+  return (
+    <mesh
+      geometry={geometry ?? undefined}
+      position={position}
+      scale={scale}
+      castShadow={castShadow}
+      dispose={null}
+    >
+      <KitGeometry
+        geometry={geometry}
+        fallback={<dodecahedronGeometry args={[1, 1]} />}
+      />
+      <meshPhongMaterial color={color} shininess={shininess} specular={specular} />
+    </mesh>
+  );
+}
+
+function Landform({
+  spec,
+  rock,
+}: {
+  spec: LandformSpec;
+  rock: BufferGeometry | null;
+}) {
   const { x, z, scale, rot, kind } = spec;
 
   switch (kind) {
     case "cliff":
       return (
         <group position={[x, 0, z]} rotation={[0, rot, 0]}>
-          <mesh
+          <RockChunk
+            geometry={rock}
             position={[0, scale * 0.55, 0]}
             scale={[scale, scale * 1.15, scale * 0.72]}
+            color="#9a9488"
+            shininess={6}
+            specular="#c4b8a8"
             castShadow
-          >
-            <dodecahedronGeometry args={[1.1, 1]} />
-            <meshPhongMaterial color="#9a9488" shininess={6} specular="#c4b8a8" />
-          </mesh>
-          <mesh
+          />
+          <RockChunk
+            geometry={rock}
             position={[scale * 0.55, scale * 0.34, -scale * 0.2]}
             scale={[scale * 0.55, scale * 0.72, scale * 0.45]}
-          >
-            <dodecahedronGeometry args={[1, 1]} />
-            <meshPhongMaterial color="#8e887c" shininess={5} specular="#b8aea0" />
-          </mesh>
+            color="#8e887c"
+            shininess={5}
+            specular="#b8aea0"
+          />
         </group>
       );
     case "isle":
@@ -209,33 +266,36 @@ function Landform({ spec }: { spec: LandformSpec }) {
             <circleGeometry args={[1.05, 12]} />
             <meshPhongMaterial color="#c4b48a" shininess={8} specular="#d8c9a4" />
           </mesh>
-          <mesh
+          <RockChunk
+            geometry={rock}
             position={[0, scale * 0.42, 0]}
             scale={[scale * 0.92, scale * 0.88, scale * 0.7]}
-          >
-            <dodecahedronGeometry args={[1.05, 1]} />
-            <meshPhongMaterial color="#9a9488" shininess={6} specular="#c4b8a8" />
-          </mesh>
-          <mesh
+            color="#9a9488"
+            shininess={6}
+            specular="#c4b8a8"
+          />
+          <RockChunk
+            geometry={rock}
             position={[scale * 0.48, scale * 0.22, -scale * 0.16]}
             scale={[scale * 0.42, scale * 0.5, scale * 0.36]}
-          >
-            <dodecahedronGeometry args={[1, 1]} />
-            <meshPhongMaterial color="#8c867a" shininess={5} specular="#b8aea0" />
-          </mesh>
+            color="#8c867a"
+            shininess={5}
+            specular="#b8aea0"
+          />
         </group>
       );
     case "stack":
       return (
         <group position={[x, 0, z]} rotation={[0, rot, 0]}>
-          <mesh
+          <RockChunk
+            geometry={rock}
             position={[0, scale * 0.62, 0]}
             scale={[scale * 0.72, scale * 1.25, scale * 0.58]}
+            color="#908a80"
+            shininess={8}
+            specular="#c4b8a8"
             castShadow
-          >
-            <dodecahedronGeometry args={[1, 1]} />
-            <meshPhongMaterial color="#908a80" shininess={8} specular="#c4b8a8" />
-          </mesh>
+          />
         </group>
       );
     default:
@@ -245,6 +305,7 @@ function Landform({ spec }: { spec: LandformSpec }) {
 
 export function CoastalDress({ coarse }: { coarse: boolean }) {
   const dress = useMemo(() => seedWorldDress(coarse), [coarse]);
+  const kit = useCoastalPropGeometries();
   const shade = !coarse;
   const rims = useMemo(() => poolRimPoses(dress.tidePools), [dress.tidePools]);
   const water = useMemo(() => poolWaterPoses(dress.tidePools), [dress.tidePools]);
@@ -269,52 +330,102 @@ export function CoastalDress({ coarse }: { coarse: boolean }) {
         <coneGeometry args={[1, 1, 6]} />
         <meshPhongMaterial color="#5e7644" shininess={5} specular="#9aaa70" />
       </InstancedField>
-      <InstancedField poses={dress.reeds}>
-        <coneGeometry args={[1, 1, 6]} />
+      <InstancedField poses={dress.reeds} geometry={kit.reeds}>
+        <KitGeometry geometry={kit.reeds} fallback={<coneGeometry args={[1, 1, 6]} />} />
         <meshPhongMaterial color="#5c6848" shininess={6} specular="#a8b088" />
       </InstancedField>
-      <InstancedField poses={dress.dryRocks} castShadow={shade} receiveShadow>
-        <dodecahedronGeometry args={[1, 0]} />
+      <InstancedField
+        poses={dress.dryRocks}
+        geometry={kit.dryRocks}
+        castShadow={shade}
+        receiveShadow
+      >
+        <KitGeometry
+          geometry={kit.dryRocks}
+          fallback={<dodecahedronGeometry args={[1, 0]} />}
+        />
         <meshPhongMaterial color="#8a8276" shininess={7} specular="#c4b8a8" />
       </InstancedField>
-      <InstancedField poses={dress.wetRocks} castShadow={shade} receiveShadow>
-        <dodecahedronGeometry args={[1, 0]} />
+      <InstancedField
+        poses={dress.wetRocks}
+        geometry={kit.wetRocks}
+        castShadow={shade}
+        receiveShadow
+      >
+        <KitGeometry
+          geometry={kit.wetRocks}
+          fallback={<dodecahedronGeometry args={[1, 0]} />}
+        />
         <meshPhongMaterial color="#5e6864" shininess={24} specular="#c8d8d0" />
       </InstancedField>
-      <InstancedField poses={dress.shelves} castShadow={shade} receiveShadow>
-        <dodecahedronGeometry args={[1, 0]} />
+      <InstancedField
+        poses={dress.shelves}
+        geometry={kit.shelves}
+        castShadow={shade}
+        receiveShadow
+      >
+        <KitGeometry
+          geometry={kit.shelves}
+          fallback={<dodecahedronGeometry args={[1, 0]} />}
+        />
         <meshPhongMaterial color="#7a766c" shininess={10} specular="#c8d0c4" />
       </InstancedField>
-      <InstancedField poses={dress.shells}>
-        <sphereGeometry args={[1, 7, 6]} />
+      <InstancedField poses={dress.shells} geometry={kit.shells}>
+        <KitGeometry
+          geometry={kit.shells}
+          fallback={<sphereGeometry args={[1, 7, 6]} />}
+        />
         <meshPhongMaterial color="#e4d8c4" shininess={20} specular="#f4eee4" />
       </InstancedField>
-      <InstancedField poses={dress.spirals}>
-        <torusGeometry args={[1, 0.36, 6, 10]} />
+      <InstancedField poses={dress.spirals} geometry={kit.spirals}>
+        <KitGeometry
+          geometry={kit.spirals}
+          fallback={<torusGeometry args={[1, 0.36, 6, 10]} />}
+        />
         <meshPhongMaterial color="#e8dcc8" shininess={22} specular="#f6f0e6" />
       </InstancedField>
-      <InstancedField poses={dress.kelp}>
-        <coneGeometry args={[1, 1, 6]} />
+      <InstancedField poses={dress.kelp} geometry={kit.kelp}>
+        <KitGeometry geometry={kit.kelp} fallback={<coneGeometry args={[1, 1, 6]} />} />
         <meshPhongMaterial color="#4a5a44" shininess={8} specular="#8a9c78" />
       </InstancedField>
-      <InstancedField poses={dress.driftwood} castShadow={shade} receiveShadow>
-        <cylinderGeometry args={[1, 1, 1, 6]} />
+      <InstancedField
+        poses={dress.driftwood}
+        geometry={kit.driftwood}
+        castShadow={shade}
+        receiveShadow
+      >
+        <KitGeometry
+          geometry={kit.driftwood}
+          fallback={<cylinderGeometry args={[1, 1, 1, 6]} />}
+        />
         <meshPhongMaterial color="#9a8a70" shininess={8} specular="#d4c4a8" />
       </InstancedField>
-      <InstancedField poses={dress.trunks} castShadow={shade}>
-        <cylinderGeometry args={[1, 1.18, 1, 6]} />
+      <InstancedField poses={dress.trunks} geometry={kit.trunks} castShadow={shade}>
+        <KitGeometry
+          geometry={kit.trunks}
+          fallback={<cylinderGeometry args={[1, 1.18, 1, 6]} />}
+        />
         <meshPhongMaterial color="#7a6a52" shininess={7} specular="#c4b49a" />
       </InstancedField>
-      <InstancedField poses={dress.crowns} castShadow={shade}>
-        <icosahedronGeometry args={[1, coarse ? 0 : 1]} />
+      <InstancedField poses={dress.crowns} geometry={kit.crowns} castShadow={shade}>
+        <KitGeometry
+          geometry={kit.crowns}
+          fallback={<icosahedronGeometry args={[1, coarse ? 0 : 1]} />}
+        />
         <meshPhongMaterial color="#5a6848" shininess={9} specular="#c4d0a8" />
       </InstancedField>
-      <InstancedField poses={dress.canopies} castShadow={shade}>
-        <coneGeometry args={[1, 1, 7]} />
+      <InstancedField poses={dress.canopies} geometry={kit.canopies} castShadow={shade}>
+        <KitGeometry
+          geometry={kit.canopies}
+          fallback={<coneGeometry args={[1, 1, 7]} />}
+        />
         <meshPhongMaterial color="#627050" shininess={9} specular="#c8d4b0" />
       </InstancedField>
-      <InstancedField poses={dress.scrub}>
-        <icosahedronGeometry args={[1, 0]} />
+      <InstancedField poses={dress.scrub} geometry={kit.scrub}>
+        <KitGeometry
+          geometry={kit.scrub}
+          fallback={<icosahedronGeometry args={[1, 0]} />}
+        />
         <meshPhongMaterial color="#61684c" shininess={7} specular="#b0b888" />
       </InstancedField>
 
@@ -338,7 +449,11 @@ export function CoastalDress({ coarse }: { coarse: boolean }) {
       </InstancedDecals>
 
       {dress.landforms.map((spec) => (
-        <Landform key={`${spec.kind}-${spec.x}-${spec.z}`} spec={spec} />
+        <Landform
+          key={`${spec.kind}-${spec.x}-${spec.z}`}
+          spec={spec}
+          rock={kit.dryRocks}
+        />
       ))}
     </>
   );

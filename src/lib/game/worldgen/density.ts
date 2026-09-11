@@ -4,6 +4,8 @@
  *
  * Counts are instance budgets per prop type — one draw call each in
  * `CoastalDress`. Keep mobile well under the desktop cap for iOS Safari.
+ * Hero meshes live in `coastal-props.glb`; swapping kits must not raise
+ * these caps.
  */
 export const WORLDGEN_SEED = 0x71def04;
 
