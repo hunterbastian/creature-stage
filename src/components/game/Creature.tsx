@@ -1124,7 +1124,8 @@ export function Creature() {
     group.rotation.y = sim.yaw;
     const squash = 1 + sim.eatFlash * 0.16 - sim.eatFlash * sim.eatFlash * 0.05;
     const swell = 1 + sim.formFlash * 0.22 + sim.claimFlash * 0.08;
-    group.scale.setScalar(sim.size * squash * swell);
+    const flinch = 1 - sim.hurtFlash * 0.14;
+    group.scale.setScalar(sim.size * squash * swell * flinch);
   });
 
   return (

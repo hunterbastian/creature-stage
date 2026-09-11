@@ -28,6 +28,7 @@ export const LESSON_IDS = [
   "herd",
   "edit",
   "mutate",
+  "deep",
 ] as const;
 export type LessonId = (typeof LESSON_IDS)[number];
 
@@ -41,7 +42,7 @@ export const OBJECTIVE_IDS = [
 ] as const;
 export type ObjectiveId = (typeof OBJECTIVE_IDS)[number];
 
-export const WAYPOINT_KINDS = ["food", "nest", "herd"] as const;
+export const WAYPOINT_KINDS = ["food", "nest", "herd", "beast"] as const;
 export type WaypointKind = (typeof WAYPOINT_KINDS)[number];
 
 export type Waypoint = {
@@ -333,8 +334,43 @@ export function lessonLine(id: LessonId): string {
       return "Editor is live. Swap parts, or Mutate for a surprise.";
     case "mutate":
       return "Mutate is a reward now — randomize your unlocked parts.";
+    case "deep":
+      return "The deep hunts the far shore. When it slams, bite — or flee inland.";
     default:
       return assertNever(id, "Unknown lesson");
+  }
+}
+
+/** Breath the leviathans can take from you. Scales with form, not parts. */
+export function formVitality(formId: FormId): number {
+  switch (formId) {
+    case "hatchling":
+    case "fledgling":
+      return 3;
+    case "wanderer":
+    case "tideborn":
+      return 4;
+    case "elder":
+      return 5;
+    case "apex":
+      return 6;
+    default:
+      return assertNever(formId, "Unknown form");
+  }
+}
+
+/** Elder / Apex bite harder — weight, not twitch DPS. */
+export function playerBiteDamage(eaten: number): number {
+  const form = formAt(eaten);
+  switch (form.respect) {
+    case "honored":
+    case "apex":
+      return 2;
+    case "wary":
+    case "known":
+      return 1;
+    default:
+      return assertNever(form.respect, "Unknown respect");
   }
 }
 

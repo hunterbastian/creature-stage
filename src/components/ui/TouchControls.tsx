@@ -21,14 +21,17 @@ export function TouchControls() {
   const { touch } = usePlaySurface();
   const starterChosen = useGameStore((state) => state.starterChosen);
   const nearby = useGameStore((state) => state.nearbyNest);
+  const threat = useGameStore((state) => state.nearbyThreat);
   const eaten = useGameStore((state) => state.eaten);
-  const eatLabel = nearby
-    ? nearby.isHome
-      ? "Rest"
-      : canClaimNest(eaten)
-        ? "Claim"
-        : "Eat"
-    : "Eat";
+  const eatLabel = threat?.canBite
+    ? "Bite"
+    : nearby
+      ? nearby.isHome
+        ? "Rest"
+        : canClaimNest(eaten)
+          ? "Claim"
+          : "Eat"
+      : "Eat";
   const padRef = useRef<HTMLDivElement>(null);
   const [knob, setKnob] = useState({ x: 0, y: 0 });
   const [held, setHeld] = useState(false);
