@@ -83,12 +83,18 @@ function MappedObject({
     isMesh(object) && Boolean(object.geometry.getAttribute("color"));
   return (
     <group
+      name={object.name}
       position={[object.position.x, object.position.y, object.position.z]}
       rotation={[object.rotation.x, object.rotation.y, object.rotation.z]}
       scale={[object.scale.x, object.scale.y, object.scale.z]}
     >
       {look && isMesh(object) ? (
-        <mesh geometry={object.geometry} castShadow={castShadow} dispose={null}>
+        <mesh
+          name={object.name}
+          geometry={object.geometry}
+          castShadow={castShadow}
+          dispose={null}
+        >
           <CreatureMaterial
             color={look.color}
             finish={look.finish}
