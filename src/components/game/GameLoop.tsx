@@ -11,6 +11,7 @@ import { tickLocomotion } from "@/lib/game/locomotion";
 import {
   forceTideRetreat,
   nearbyTide,
+  stageShoreHunt,
   tickTide,
   tideBiteTarget,
   tideThreat,
@@ -186,6 +187,7 @@ export function GameLoop() {
   const lingerDone = useRef(false);
   const graceUntil = useRef(2.5);
   const threatArmed = useRef(false);
+  const huntStaged = useRef(false);
 
   useEffect(() => bindInput(), []);
 
@@ -207,6 +209,16 @@ export function GameLoop() {
       return;
     }
 
+    if (!huntStaged.current && window.location.hash === "#hunt") {
+      stageShoreHunt();
+      sim.x = 0;
+      sim.z = 14.85;
+      sim.yaw = 0;
+      sim.vx = 0;
+      sim.vz = 0;
+      huntStaged.current = true;
+    }
+
     const waypoint = liveWaypoint();
     const { throttle, turn, sprint } = sampleMove();
     tickLocomotion(dt, throttle, turn, sprint, waypoint);
@@ -225,6 +237,7 @@ export function GameLoop() {
     tickWildlife(dt, elapsed, sim.x, sim.z, homeNestId, eaten);
     syncNearbyNest();
     syncNearbyThreat();
+    sim.shoreThreat = nearbyTide(sim.x, sim.z) ? 1 : 0;
     syncWaypoint(waypoint);
     maybeGreet();
 

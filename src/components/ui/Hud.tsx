@@ -104,7 +104,8 @@ function VitalityBreath({ compact }: { compact?: boolean }) {
     let frame = 0;
     const tick = () => {
       const hurt = sim.hp < sim.maxHp - 0.01;
-      const show = hurt || sim.hurtFlash > 0.05 || sim.threat > 0.22;
+      const show =
+        hurt || sim.hurtFlash > 0.05 || sim.threat > 0.22 || sim.shoreThreat > 0;
       if (wrap.current) wrap.current.style.opacity = show ? "1" : "0";
       if (fill.current) {
         const ratio = sim.maxHp > 0 ? sim.hp / sim.maxHp : 0;

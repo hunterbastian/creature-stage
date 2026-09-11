@@ -64,7 +64,7 @@ export const TIDE_NOTICE_SEC = 0.82;
 export const TIDE_SURGE_SEC = 3.35;
 export const TIDE_WINDUP_SEC = 0.74;
 export const TIDE_STRIKE_SEC = 0.16;
-export const TIDE_RECOVER_SEC = 1.48;
+export const TIDE_RECOVER_SEC = 1.85;
 export const TIDE_RETREAT_SEC = 3.6;
 export const TIDE_COOLDOWN_SEC = 11;
 export const TIDE_DOWN_SEC = 22;
@@ -266,11 +266,11 @@ export function tideMoodLift(mood: TideMood): number {
     case "ambient":
       return 0;
     case "notice":
-      return 0.62;
+      return 0.45;
     case "surge":
-      return 0.95;
+      return 0.72;
     case "windup":
-      return 1.85;
+      return 1.15;
     case "strike":
       return 0.18;
     case "recover":
@@ -326,12 +326,12 @@ export function engagedMood(mood: TideMood): boolean {
 export function biteableMood(mood: TideMood): boolean {
   switch (mood) {
     case "recover":
-    case "strike":
-    case "windup":
       return true;
     case "ambient":
     case "notice":
     case "surge":
+    case "windup":
+    case "strike":
     case "retreat":
     case "down":
       return false;

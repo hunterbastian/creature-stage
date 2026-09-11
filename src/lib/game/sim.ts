@@ -40,6 +40,8 @@ export const sim = {
   iFrames: 0,
   /** Seconds before another leviathan bite registers. */
   biteLock: 0,
+  /** 1 while a shore leviathan is engaged near the player. */
+  shoreThreat: 0,
 };
 
 export function resetSim(x = 0, z = 0, yaw = 0): void {
@@ -66,6 +68,7 @@ export function resetSim(x = 0, z = 0, yaw = 0): void {
   sim.hurtFlash = 0;
   sim.iFrames = 0;
   sim.biteLock = 0;
+  sim.shoreThreat = 0;
 }
 
 export function tickFeel(dt: number): void {

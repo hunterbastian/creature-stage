@@ -96,6 +96,22 @@ export function seedTide(mobile = isCoarsePointer(), time = 0): void {
   tide.engagedId = null;
 }
 
+/** Reviewer warp: park the player on the +Z beach and stage Coil in-arc. */
+export function stageShoreHunt(): void {
+  if (tide.beasts.length === 0) seedTide(isCoarsePointer(), 0);
+  const coil = tide.beasts.find((beast) => beast.spec.id === "coil") ?? tide.beasts[0];
+  if (!coil) return;
+  coil.pose = { x: 0, y: 1.15, z: 26.5, yaw: Math.PI, pitch: 0 };
+  coil.from = { ...coil.pose };
+  coil.to = { ...coil.pose };
+  coil.mood = "ambient";
+  coil.hp = coil.spec.hp;
+  coil.moodUntil = 0;
+  coil.cooldownUntil = 0;
+  coil.glow = 0;
+  tide.engagedId = null;
+}
+
 export function resetTide(mobile = isCoarsePointer()): void {
   seedTide(mobile, 0);
 }
