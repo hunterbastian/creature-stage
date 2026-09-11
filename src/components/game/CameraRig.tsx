@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { Vector3 } from "three";
+import { surfaceHeight } from "@/lib/game/collision";
 import { CAMERA_FOLLOW, CAMERA_LOOK } from "@/lib/game/constants";
 import { sim } from "@/lib/game/sim";
 
@@ -26,7 +27,7 @@ export function CameraRig() {
       settle * 1.55 +
       kick * 0.28 -
       claim * 0.22;
-    const height = 1.12 + sim.size * 0.2 + settle * 0.35;
+    const height = 1.12 + sim.size * 0.2 + settle * 0.35 + sim.y;
     const side = 3.55 + sim.size * 0.36;
     desired.set(
       sim.x - Math.sin(sim.yaw) * back - Math.cos(sim.yaw) * side,
@@ -35,7 +36,7 @@ export function CameraRig() {
     );
     lookDesired.set(
       sim.x + Math.sin(sim.yaw) * 0.42,
-      0.58 * sim.size,
+      sim.y + 0.58 * sim.size,
       sim.z + Math.cos(sim.yaw) * 0.42,
     );
     if (sim.focus && sim.hasFocusTarget) {
@@ -51,6 +52,8 @@ export function CameraRig() {
       Math.sin(t * 19) * rumble * 0.4,
     );
     desired.add(shake);
+    const camFloor = surfaceHeight(desired.x, desired.z) + 0.45;
+    if (desired.y < camFloor) desired.y = camFloor;
 
     if (!initialized.current) {
       camera.position.copy(desired);

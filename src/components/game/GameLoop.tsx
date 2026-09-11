@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
+import { groundHeight } from "@/lib/game/collision";
 import {
   NEST_INTERACT_RADIUS,
   NEST_LINGER_SEC,
@@ -213,8 +214,10 @@ export function GameLoop() {
       stageShoreHunt();
       sim.x = 0;
       sim.z = 14.85;
+      sim.y = groundHeight(0, 14.85);
       sim.yaw = 0;
       sim.vx = 0;
+      sim.vy = 0;
       sim.vz = 0;
       huntStaged.current = true;
     }

@@ -305,7 +305,7 @@ export function Creature() {
   useFrame(() => {
     const group = root.current;
     if (!group) return;
-    group.position.set(sim.x, 0, sim.z);
+    group.position.set(sim.x, sim.y, sim.z);
     group.rotation.y = sim.yaw;
     const squash = 1 + sim.eatFlash * 0.16 - sim.eatFlash * sim.eatFlash * 0.05;
     const swell = 1 + sim.formFlash * 0.22 + sim.claimFlash * 0.08;

@@ -3,6 +3,7 @@
 import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import type { Group } from "three";
+import { groundHeight } from "@/lib/game/collision";
 import { isCoarsePointer } from "@/lib/game/device";
 import { useGameStore } from "@/lib/game/store";
 import { fauna } from "@/lib/game/wildlife";
@@ -22,7 +23,7 @@ function WildlifeCritter({ agentId }: { agentId: string }) {
     const show = agent.present || agent.departing;
     root.current.visible = show;
     if (!show) return;
-    root.current.position.set(agent.x, 0, agent.z);
+    root.current.position.set(agent.x, groundHeight(agent.x, agent.z), agent.z);
     root.current.rotation.y = agent.yaw;
     const fade = agent.departing ? 0.82 : 1;
     root.current.scale.setScalar(agent.size * fade);
@@ -55,7 +56,7 @@ function HerdBeacon() {
       return;
     }
     ring.current.visible = true;
-    ring.current.position.set(agent.x, 0.06, agent.z);
+    ring.current.position.set(agent.x, groundHeight(agent.x, agent.z) + 0.06, agent.z);
     const pulse = 0.32 + Math.sin(state.clock.elapsedTime * 3) * 0.04;
     ring.current.scale.setScalar(pulse);
   });
@@ -63,7 +64,7 @@ function HerdBeacon() {
   if (waypoint?.kind !== "herd") return null;
 
   return (
-    <group ref={ring} position={[waypoint.x, 0.06, waypoint.z]}>
+    <group ref={ring} position={[waypoint.x, groundHeight(waypoint.x, waypoint.z) + 0.06, waypoint.z]}>
       <mesh rotation={[-Math.PI / 2, 0, 0]}>
         <ringGeometry args={[1.1, 1.35, 18]} />
         <meshBasicMaterial color="#c8e8a8" transparent opacity={0.45} />
