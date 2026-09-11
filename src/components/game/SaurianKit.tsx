@@ -42,7 +42,13 @@ function lookFor(mesh: Mesh, colors: KitColors): { color: string; finish: Finish
   if (tag.includes("claw") || tag.includes("_toe") || tag.includes("_dew")) {
     return { color: CLAW_GREY, finish: "keratin" };
   }
-  if (tag.includes("wet") || tag.includes("sucker") || tag.includes("_pad")) {
+  if (
+    tag.includes("wet") ||
+    tag.includes("sucker") ||
+    tag.includes("_pad") ||
+    tag.includes("gum") ||
+    tag.includes("nostril")
+  ) {
     return { color: colors.accent ?? colors.skin, finish: "wet" };
   }
   if (
@@ -62,7 +68,8 @@ function lookFor(mesh: Mesh, colors: KitColors): { color: string; finish: Finish
     tag.includes("eyerim") ||
     tag.includes("vane") ||
     tag.includes("collar") ||
-    tag.includes("club")
+    tag.includes("club") ||
+    tag.includes("_lid")
   ) {
     return { color: colors.accent ?? SHELL_CREAM, finish: "plate" };
   }
