@@ -2,54 +2,25 @@ import {
   CanvasTexture,
   LinearFilter,
   LinearSRGBColorSpace,
+  RepeatWrapping,
   SRGBColorSpace,
   type ColorSpace,
 } from "three";
-import { assertNever, type BodyId, type LegId } from "./types";
+import { KIT_SOCKETS, LEG_DROP, type KitSockets } from "./saurian-sockets";
+import type { BodyId, LegId } from "./types";
 
 export type Finish = "skin" | "keratin" | "wet" | "plate";
 
 export type Vec3 = [number, number, number];
 
-/** Ivory modules + gold eye from the new Skyrim coastal Spore targets. */
+/** Ivory modules + coastal teal eye from the locked Skyrim-saurian vibe. */
 export const SHELL_CREAM = "#eee4d0";
 export const BELLY_CREAM = "#eadfca";
 export const FACE_CREAM = "#e6dcc6";
 export const CLAW_GREY = "#3f3c38";
-export const EYE_GLASS = "#c4a24a";
+export const EYE_GLASS = "#7eb89a";
 
-export type SpiralSpec = {
-  position: Vec3;
-  rotation: Vec3;
-  scale: number;
-};
-
-export type BodyPlan = {
-  stance: "biped" | "quad";
-  pitch: number;
-  hip: { x: number; z: number };
-  shoulder: { x: number; z: number };
-  torso: { position: Vec3; scale: Vec3 };
-  chest: { position: Vec3; scale: Vec3 };
-  belly: { position: Vec3; scale: Vec3 };
-  neckJoints: { position: Vec3; scale: Vec3 }[];
-  neckCream: { position: Vec3; scale: Vec3 }[];
-  head: { position: Vec3; scale: Vec3 };
-  face: { position: Vec3; scale: Vec3 };
-  snout: { position: Vec3; scale: Vec3 };
-  jaw: Vec3;
-  eye: { x: number; y: number; z: number };
-  brow: { x: number; y: number; z: number };
-  faceSpiralScale: number;
-  arm: { position: Vec3; rotation: Vec3 };
-  tailRoot: { position: Vec3; rotation: Vec3 };
-  tailLength: number;
-  spirals: SpiralSpec[];
-  nubs: Vec3[];
-  crest: Vec3[];
-  sails: SpiralSpec[];
-  creamFace: boolean;
-};
+export type BodyPlan = KitSockets;
 
 export type CoastalMaps = {
   map: CanvasTexture;
@@ -74,201 +45,11 @@ export function shadeHex(hex: string, amount: number): string {
 }
 
 export function bodyPlan(id: BodyId): BodyPlan {
-  switch (id) {
-    case "sleek":
-      return theropodPlan();
-    case "plump":
-      return sauropodPlan();
-    case "spiky":
-      return stegosaurPlan();
-    default:
-      return assertNever(id, "Unknown body");
-  }
-}
-
-/** Target A — cream-faced cliff theropod with face spirals and osteoderms. */
-function theropodPlan(): BodyPlan {
-  return {
-    stance: "biped",
-    pitch: -0.08,
-    hip: { x: 0.2, z: -0.02 },
-    shoulder: { x: 0.28, z: 0.48 },
-    torso: { position: [0, 0.08, -0.1], scale: [0.64, 0.74, 0.9] },
-    chest: { position: [0, 0.18, 0.36], scale: [0.74, 0.88, 1.1] },
-    belly: { position: [0, -0.02, 0.16], scale: [0.64, 0.5, 0.96] },
-    neckJoints: [{ position: [0, 0.3, 0.82], scale: [0.42, 0.44, 0.54] }],
-    neckCream: [{ position: [0, 0.18, 0.84], scale: [0.34, 0.28, 0.48] }],
-    head: { position: [0, 0.44, 1.14], scale: [0.56, 0.48, 0.98] },
-    face: { position: [0, 0.42, 1.28], scale: [0.58, 0.46, 0.64] },
-    snout: { position: [0, 0.38, 1.46], scale: [0.36, 0.26, 0.42] },
-    jaw: [0, 0.3, 1.6],
-    eye: { x: 0.2, y: 0.5, z: 1.26 },
-    brow: { x: 0.14, y: 0.62, z: 1.1 },
-    faceSpiralScale: 1.02,
-    arm: { position: [0.28, 0.14, 0.48], rotation: [0.82, 0, 0.92] },
-    tailRoot: { position: [0, 0.16, -0.5], rotation: [-0.18, 0, 0] },
-    tailLength: 1.4,
-    spirals: [
-      { position: [0, 0.54, 0.88], rotation: [-0.55, 0, 0], scale: 0.7 },
-      { position: [0.1, 0.5, 0.7], rotation: [-0.48, 0.42, 0], scale: 0.78 },
-      { position: [-0.1, 0.5, 0.7], rotation: [-0.48, -0.42, 0], scale: 0.78 },
-      { position: [0.12, 0.5, 0.5], rotation: [-0.4, 0.48, 0], scale: 0.92 },
-      { position: [-0.12, 0.5, 0.5], rotation: [-0.4, -0.48, 0], scale: 0.92 },
-      { position: [0.1, 0.48, 0.3], rotation: [-0.32, 0.4, 0], scale: 0.8 },
-      { position: [-0.1, 0.48, 0.3], rotation: [-0.32, -0.4, 0], scale: 0.8 },
-      { position: [0, 0.46, 0.12], rotation: [-0.22, 0, 0], scale: 0.7 },
-      { position: [0, 0.4, -0.08], rotation: [-0.14, 0, 0], scale: 0.56 },
-    ],
-    nubs: [
-      [0, 0.52, 0.62],
-      [0, 0.5, 0.42],
-      [0, 0.48, 0.24],
-      [0, 0.44, 0.06],
-      [0, 0.38, -0.14],
-      [0, 0.32, -0.3],
-    ],
-    crest: [
-      [0.07, 0.64, 1.06],
-      [-0.07, 0.64, 1.06],
-      [0, 0.62, 0.94],
-    ],
-    sails: [],
-    creamFace: true,
-  };
-}
-
-/** Long-neck grazer — locked sauropod. Neck reads forward, not giraffe-up. */
-function sauropodPlan(): BodyPlan {
-  return {
-    stance: "quad",
-    pitch: 0.03,
-    hip: { x: 0.32, z: -0.4 },
-    shoulder: { x: 0.3, z: 0.52 },
-    torso: { position: [0, 0.14, -0.12], scale: [1.08, 0.88, 1.38] },
-    chest: { position: [0, 0.18, 0.46], scale: [0.98, 0.82, 1.18] },
-    belly: { position: [0, -0.04, 0.08], scale: [0.96, 0.66, 1.38] },
-    neckJoints: [
-      { position: [0, 0.28, 0.88], scale: [0.4, 0.38, 0.56] },
-      { position: [0, 0.38, 1.26], scale: [0.32, 0.32, 0.52] },
-      { position: [0, 0.46, 1.62], scale: [0.26, 0.26, 0.48] },
-      { position: [0, 0.52, 1.96], scale: [0.22, 0.22, 0.42] },
-      { position: [0, 0.56, 2.26], scale: [0.2, 0.2, 0.36] },
-    ],
-    neckCream: [
-      { position: [0, 0.16, 0.9], scale: [0.32, 0.26, 0.52] },
-      { position: [0, 0.26, 1.28], scale: [0.26, 0.22, 0.48] },
-      { position: [0, 0.34, 1.64], scale: [0.2, 0.18, 0.44] },
-      { position: [0, 0.4, 1.98], scale: [0.16, 0.16, 0.38] },
-      { position: [0, 0.46, 2.26], scale: [0.14, 0.14, 0.32] },
-    ],
-    head: { position: [0, 0.6, 2.52], scale: [0.38, 0.32, 0.58] },
-    face: { position: [0, 0.58, 2.62], scale: [0.44, 0.3, 0.48] },
-    snout: { position: [0, 0.54, 2.74], scale: [0.34, 0.22, 0.38] },
-    jaw: [0, 0.5, 2.82],
-    eye: { x: 0.13, y: 0.66, z: 2.56 },
-    brow: { x: 0.1, y: 0.72, z: 2.42 },
-    faceSpiralScale: 0.72,
-    arm: { position: [0.5, 0.2, 0.44], rotation: [0.18, 0, 0.38] },
-    tailRoot: { position: [0, 0.16, -0.72], rotation: [-0.26, 0, 0] },
-    tailLength: 1.58,
-    spirals: [
-      { position: [0, 0.5, 0.96], rotation: [-0.48, 0, 0], scale: 0.7 },
-      { position: [0, 0.58, 1.24], rotation: [-0.38, 0, 0], scale: 0.6 },
-      { position: [0, 0.64, 1.52], rotation: [-0.28, 0, 0], scale: 0.5 },
-      { position: [0, 0.68, 1.8], rotation: [-0.2, 0, 0], scale: 0.42 },
-      { position: [0, 0.7, 2.06], rotation: [-0.14, 0, 0], scale: 0.36 },
-      { position: [0, 0.58, 0.42], rotation: [-0.35, 0, 0], scale: 1.08 },
-      { position: [0.14, 0.52, 0.28], rotation: [-0.28, 0.5, 0], scale: 0.82 },
-      { position: [-0.14, 0.52, 0.28], rotation: [-0.28, -0.5, 0], scale: 0.82 },
-      { position: [0, 0.56, 0.14], rotation: [-0.22, 0, 0], scale: 0.95 },
-      { position: [0.12, 0.5, 0.0], rotation: [-0.16, 0.45, 0], scale: 0.72 },
-      { position: [-0.12, 0.5, 0.0], rotation: [-0.16, -0.45, 0], scale: 0.72 },
-      { position: [0, 0.52, -0.12], rotation: [-0.12, 0, 0], scale: 0.82 },
-      { position: [0, 0.46, -0.28], rotation: [-0.08, 0, 0], scale: 0.64 },
-    ],
-    nubs: [
-      [0, 0.5, 0.32],
-      [0, 0.46, 0.08],
-      [0, 0.4, -0.16],
-    ],
-    crest: [
-      [0, 0.72, 2.42],
-      [0, 0.68, 2.28],
-    ],
-    sails: [],
-    creamFace: true,
-  };
-}
-
-/** Target B — bone-plated quad: sails plus flank spiral shells. */
-function stegosaurPlan(): BodyPlan {
-  return {
-    stance: "quad",
-    pitch: 0.04,
-    hip: { x: 0.34, z: -0.4 },
-    shoulder: { x: 0.3, z: 0.5 },
-    torso: { position: [0, 0.12, -0.08], scale: [1.02, 0.78, 1.42] },
-    chest: { position: [0, 0.14, 0.42], scale: [0.88, 0.68, 1.06] },
-    belly: { position: [0, -0.04, 0.1], scale: [0.86, 0.5, 1.24] },
-    neckJoints: [
-      { position: [0, 0.2, 0.82], scale: [0.36, 0.32, 0.48] },
-      { position: [0, 0.26, 1.1], scale: [0.28, 0.26, 0.4] },
-      { position: [0, 0.32, 1.34], scale: [0.24, 0.22, 0.34] },
-    ],
-    neckCream: [{ position: [0, 0.12, 1.0], scale: [0.24, 0.16, 0.46] }],
-    head: { position: [0, 0.36, 1.54], scale: [0.32, 0.28, 0.5] },
-    face: { position: [0, 0.34, 1.66], scale: [0.28, 0.24, 0.36] },
-    snout: { position: [0, 0.3, 1.78], scale: [0.2, 0.16, 0.26] },
-    jaw: [0, 0.26, 1.88],
-    eye: { x: 0.11, y: 0.4, z: 1.58 },
-    brow: { x: 0.08, y: 0.46, z: 1.44 },
-    faceSpiralScale: 0,
-    arm: { position: [0.46, 0.14, 0.4], rotation: [0.1, 0, 0.26] },
-    tailRoot: { position: [0, 0.14, -0.76], rotation: [-0.12, 0, 0] },
-    tailLength: 1.48,
-    spirals: [
-      { position: [0.28, 0.4, 0.28], rotation: [-0.2, 1.05, 0.15], scale: 1.15 },
-      { position: [-0.28, 0.4, 0.28], rotation: [-0.2, -1.05, -0.15], scale: 1.15 },
-      { position: [0.24, 0.38, 0.06], rotation: [-0.12, 1.0, 0.1], scale: 0.95 },
-      { position: [-0.24, 0.38, 0.06], rotation: [-0.12, -1.0, -0.1], scale: 0.95 },
-      { position: [0.2, 0.34, -0.16], rotation: [-0.08, 0.95, 0.08], scale: 0.78 },
-      { position: [-0.2, 0.34, -0.16], rotation: [-0.08, -0.95, -0.08], scale: 0.78 },
-    ],
-    nubs: [
-      [0, 0.48, 0.36],
-      [0, 0.46, 0.16],
-      [0, 0.42, -0.04],
-      [0, 0.36, -0.24],
-    ],
-    crest: [
-      [0.06, 0.5, 1.42],
-      [-0.06, 0.5, 1.42],
-    ],
-    sails: [
-      { position: [0, 0.5, 0.52], rotation: [0.12, 0, 0], scale: 0.42 },
-      { position: [0, 0.64, 0.32], rotation: [0.08, 0, 0], scale: 0.7 },
-      { position: [0, 0.78, 0.12], rotation: [0.04, 0, 0], scale: 0.98 },
-      { position: [0, 0.86, -0.08], rotation: [0, 0, 0], scale: 1.18 },
-      { position: [0, 0.84, -0.28], rotation: [-0.04, 0, 0], scale: 1.08 },
-      { position: [0, 0.7, -0.48], rotation: [-0.1, 0, 0], scale: 0.82 },
-      { position: [0, 0.52, -0.66], rotation: [-0.16, 0, 0], scale: 0.54 },
-      { position: [0, 0.36, -0.84], rotation: [-0.22, 0, 0], scale: 0.34 },
-    ],
-    creamFace: false,
-  };
+  return KIT_SOCKETS[id];
 }
 
 export function hipHeight(id: LegId): number {
-  switch (id) {
-    case "stubby":
-      return 0.56;
-    case "stilts":
-      return 0.94;
-    case "paddles":
-      return 0.54;
-    default:
-      return assertNever(id, "Unknown legs");
-  }
+  return LEG_DROP[id];
 }
 
 export function getCoastalMaps(hex: string, finish: Finish): CoastalMaps {
@@ -314,9 +95,10 @@ function paintMaps(hex: string, finish: Finish): CoastalMaps {
       const mottle = (blotch[i] - 0.5) * contrast;
       const grainN = (grain[i] - 0.5) * 0.045;
       const pit = poreHint(x, y, size) * pitAmt;
-      const scales = poreHint(x, y, size) * (finish === "wet" ? 0 : 0.07);
+      const hex = hexScale(x, y, size);
+      const scales = finish === "wet" ? 0 : hex.fill * 0.1 + hex.rim * 0.08;
 
-      const lift = mottle + grainN - pit * 0.25 + scales * 0.18;
+      const lift = mottle + grainN - pit * 0.25 + scales + hex.light * 0.04;
       const r = base[0] * (1 + lift);
       const g = base[1] * (1 + lift * 0.96);
       const bch = base[2] * (1 + lift * 0.9);
@@ -364,6 +146,8 @@ function eraTexture(canvas: HTMLCanvasElement, space: ColorSpace): CanvasTexture
   texture.colorSpace = space;
   texture.magFilter = LinearFilter;
   texture.minFilter = LinearFilter;
+  texture.wrapS = RepeatWrapping;
+  texture.wrapT = RepeatWrapping;
   texture.generateMipmaps = false;
   texture.anisotropy = 1;
   texture.needsUpdate = true;
@@ -398,7 +182,15 @@ function blurInPlace(data: Uint8ClampedArray, size: number, radius: number): voi
 }
 
 function poreHint(x: number, y: number, size: number): number {
-  const cells = 9;
+  return hexScale(x, y, size).fill ** 2;
+}
+
+function hexScale(
+  x: number,
+  y: number,
+  size: number,
+): { fill: number; rim: number; light: number } {
+  const cells = 11;
   const u = (x / size) * cells;
   const v = (y / size) * cells;
   const row = Math.floor(v);
@@ -406,7 +198,10 @@ function poreHint(x: number, y: number, size: number): number {
   const cx = hx - Math.floor(hx) - 0.5;
   const cy = v - row - 0.5;
   const d = Math.sqrt(cx * cx + cy * cy);
-  return Math.max(0, 1 - d / 0.28) ** 2;
+  const fill = Math.max(0, 1 - d / 0.42);
+  const rim = Math.max(0, 1 - Math.abs(d - 0.34) / 0.07);
+  const light = cx * 0.28 + cy * 0.42;
+  return { fill, rim, light };
 }
 
 function valueNoise(

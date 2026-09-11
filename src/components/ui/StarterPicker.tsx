@@ -11,7 +11,7 @@ function swatch(id: BodyId): string {
     case "plump":
       return "#7a9e90";
     case "spiky":
-      return "#eee4d0";
+      return "#7d9484";
     default:
       return assertNever(id, "Unknown body");
   }

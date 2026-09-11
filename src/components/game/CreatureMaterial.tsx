@@ -7,9 +7,11 @@ import { assertNever } from "@/lib/game/types";
 export function CreatureMaterial({
   color,
   finish = "skin",
+  vertexColors = false,
 }: {
   color: string;
   finish?: Finish;
+  vertexColors?: boolean;
 }) {
   const maps = useMemo(() => getCoastalMaps(color, finish), [color, finish]);
 
@@ -20,12 +22,13 @@ export function CreatureMaterial({
           map={maps.map}
           specularMap={maps.specMap}
           bumpMap={maps.bumpMap}
-          bumpScale={0.085}
+          bumpScale={0.11}
           color="#ffffff"
           specular="#c8d4c4"
-          shininess={18}
+          shininess={16}
           emissive={color}
-          emissiveIntensity={0.03}
+          emissiveIntensity={0.035}
+          vertexColors={vertexColors}
         />
       );
     case "keratin":
@@ -40,6 +43,7 @@ export function CreatureMaterial({
           shininess={18}
           emissive={color}
           emissiveIntensity={0.02}
+          vertexColors={vertexColors}
         />
       );
     case "wet":
@@ -54,6 +58,7 @@ export function CreatureMaterial({
           shininess={32}
           emissive={color}
           emissiveIntensity={0.03}
+          vertexColors={vertexColors}
         />
       );
     case "plate":
@@ -68,6 +73,7 @@ export function CreatureMaterial({
           shininess={14}
           emissive={color}
           emissiveIntensity={0.025}
+          vertexColors={vertexColors}
         />
       );
     default:

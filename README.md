@@ -1,6 +1,6 @@
 # Tideform
 
-A Spore-inspired **creature stage** toy: assemble a modular critter from simple geometry, walk it around a tiny 3D meadow, and eat glowing fruit to grow through named forms.
+A Spore-inspired **creature stage** toy: assemble a modular coastal saurian from a Blender glTF kit, walk it around a tiny 3D meadow, and eat glowing fruit to grow through named forms.
 
 The GitHub repository stays `creature-stage`; the game players see is **Tideform**.
 
@@ -92,8 +92,8 @@ Add the page to your Home Screen if you want a more app-like fullscreen, then ke
 ## What shipped
 
 - Full-screen coastal meadow with Skyrim-PS3 lighting (warm sun, grass, sea).
-- Three locked starters: **Theropod** (biped hunter), **Sauropod** (long-neck), **Stego** (beaked herbivore, cream spiral plates). Seafoam/cream + modular accents.
-- A modular creature: **body, legs, mouth, eyes**, plus unlockable **arms, tail, and accessory**.
+- Three locked starters: **Theropod** (biped hunter), **Sauropod** (long-neck), **Stego** (beaked herbivore, cream spiral plates). Seafoam/cream + modular accents, loaded from a Blender glTF kit (`public/models/saurian-kit.glb`).
+- A modular creature: **body, legs, mouth, eyes**, plus unlockable **arms, tail, and accessory** (named glTF nodes, live editor swaps).
 - Live editor: swapping a part updates the 3D mesh immediately.
 - Survival nibble loop: 8 fruits in the world (one waits in front of you), they respawn after you eat them.
 - Named form progression from Hatchling to Apex, with herd-respect tiers and a shrinking flock (5 → 1 nestmate).
@@ -145,7 +145,7 @@ Mechanical nods to Skyrim / Elden Ring, not their art:
 | `src/app/` | App Router layout + page |
 | `src/components/game/` | R3F canvas, world, nests, wildlife herds, offshore fauna, creature, food, camera, movement loop |
 | `src/components/ui/` | Overlay editor, starter picker, touch stick, rotate hint, stats, toasts |
-| `src/lib/game/` | Part catalog, species, wildlife sim, offshore AI, **forms / objectives**, derived stats, zustand store, input |
+| `scripts/blender/` | Headless bpy generator for the saurian glTF kit; re-export notes in `scripts/blender/README.md` |
 
 Locomotion (`x`, `z`, `yaw`, stamina, vitality, feel pulses) lives in `src/lib/game/sim.ts` and `src/lib/game/locomotion.ts` so the HUD does not rerender every frame. Wildlife poses live in `src/lib/game/wildlife.ts`. Leviathan moods live in `src/lib/game/offshore-ai.ts`. Form thresholds, herd-mate curve, and the current objective live in `src/lib/game/progress.ts`.
 
