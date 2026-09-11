@@ -38,6 +38,7 @@ import {
   nestNear,
   tickWildlife,
 } from "@/lib/game/wildlife";
+import { GROVE_OVERLOOK } from "@/lib/game/worldgen/landmarks";
 
 function tryEat(reachBoost = 1): boolean {
   const reach = (sim.bite + 0.65) * sim.size * reachBoost;
@@ -191,6 +192,7 @@ export function GameLoop() {
   const threatArmed = useRef(false);
   const huntStaged = useRef(false);
   const nestLookStaged = useRef(false);
+  const beautyStaged = useRef(false);
 
   useEffect(() => bindInput(), []);
 
@@ -245,6 +247,27 @@ export function GameLoop() {
         sim.vz = 0;
       }
       nestLookStaged.current = true;
+    }
+
+    if (!beautyStaged.current) {
+      if (window.location.hash === "#overlook") {
+        sim.x = GROVE_OVERLOOK.x;
+        sim.z = GROVE_OVERLOOK.z;
+        sim.y = groundHeight(sim.x, sim.z);
+        sim.yaw = Math.atan2(GROVE_OVERLOOK.x, GROVE_OVERLOOK.z);
+        sim.vx = 0;
+        sim.vy = 0;
+        sim.vz = 0;
+      } else if (window.location.hash === "#waterline") {
+        sim.x = 0;
+        sim.z = 14.2;
+        sim.y = groundHeight(0, 14.2);
+        sim.yaw = 0;
+        sim.vx = 0;
+        sim.vy = 0;
+        sim.vz = 0;
+      }
+      beautyStaged.current = true;
     }
 
     const waypoint = liveWaypoint();

@@ -62,3 +62,10 @@ test("look knobs do not move the collision waterline", () => {
   assert.equal(WATER_Y, -0.22);
   assert.equal(WATERLINE_RADIUS, WORLD_RADIUS + 0.1);
 });
+
+test("foam is salt-grey, not paper white", () => {
+  const foam = new Color(SHORE.foam);
+  assert.ok(luma(foam) < 0.8);
+  assert.ok(foam.g >= foam.r);
+  assert.ok(SHORE.foamShininess <= 8);
+});

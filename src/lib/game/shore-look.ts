@@ -6,7 +6,9 @@
  * Knobs:
  * - `SHORE.deepWater` / `midWater` / `shallowsWater` — ocean gradient
  * - `SHORE.drySand` / `dampSand` / `wetSand` / `submergedSand` — beach strip
- * - `SHORE.foam*` — waterline lace (World rings + dress patches)
+ * - `SHORE.foam*` — waterline lace (World rings + dress patches).
+ *   Albedo luma stays under `ATMOSPHERE.*.bloom.threshold` so bloom
+ *   kisses water glints, not the foam ring.
  * - `SHORE.pool*` — tide-pool bed / rim / clear water
  * - `SHORE_BAND` — radii in world units from origin
  *
@@ -33,8 +35,9 @@ export const SHORE = {
   /** Transparent overlay so wet sand shows through near shore. */
   shallowsOverlay: "#5a9aa0",
 
-  foam: "#d2e0da",
-  foamShadow: "#b8ccc6",
+  /** Salt-grey lace — luma must stay under ATMOSPHERE bloom.threshold. */
+  foam: "#bcc8c4",
+  foamShadow: "#a4b4ae",
 
   poolBed: "#6e6758",
   poolRim: "#5a564c",
@@ -54,13 +57,13 @@ export const SHORE = {
   waterSpecularShallow: "#d0f0ee",
   poolSpecular: "#d8f6f0",
   wetSpecular: "#c4d4cc",
-  foamShininess: 12,
-  foamSpecular: "#dce8e4",
+  foamShininess: 7,
+  foamSpecular: "#c4d0cc",
 
   shallowsOpacity: 0.28,
-  foamInnerOpacity: 0.18,
-  foamOuterOpacity: 0.09,
-  foamPatchOpacity: 0.14,
+  foamInnerOpacity: 0.16,
+  foamOuterOpacity: 0.08,
+  foamPatchOpacity: 0.12,
   foamPulse: 0.03,
   foamHz: 0.22,
   poolWaterOpacity: 0.5,
