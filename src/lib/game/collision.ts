@@ -36,7 +36,7 @@ export { BEACH_INNER_RADIUS };
 
 /** Meadow plateau (world y). Beach slopes down from here. */
 export const MEADOW_HEIGHT = 0.07;
-/** Ocean surface. Matches the deep-water discs in World. */
+/** Ocean surface. Matches the ocean disc in `ShoreWater`. */
 export const WATER_Y = -0.22;
 /** Radial where the sand shelf meets the sea. */
 export const WATERLINE_RADIUS = WORLD_RADIUS + 0.1;

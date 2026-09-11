@@ -1,39 +1,15 @@
+import { BufferAttribute, BufferGeometry, Color } from "three";
 import {
-  BufferAttribute,
-  BufferGeometry,
-  Color,
-} from "three";
-import {
-  BEACH_INNER_RADIUS,
   ISLAND_MESH_RADIUS,
   surfaceHeight,
 } from "./collision";
-import { WORLD_RADIUS } from "./constants";
+import { terrainColor } from "./shore-look";
 
-const MEADOW = new Color("#5f7a48");
-const SAND = new Color("#c2b080");
-const WET = new Color("#c4b48a");
-const FOAM = new Color("#c5d0c4");
 const scratch = new Color();
-
-function terrainColor(radius: number, target: Color): Color {
-  const beach = smooth01(BEACH_INNER_RADIUS - 1.8, BEACH_INNER_RADIUS + 0.2, radius);
-  target.copy(MEADOW).lerp(SAND, beach);
-  const wet = smooth01(WORLD_RADIUS - 0.9, WORLD_RADIUS + 0.4, radius);
-  target.lerp(WET, wet);
-  const foamIn = smooth01(WORLD_RADIUS + 0.02, WORLD_RADIUS + 0.5, radius);
-  const foamOut = 1 - smooth01(WORLD_RADIUS + 0.5, WORLD_RADIUS + 1.35, radius);
-  target.lerp(FOAM, foamIn * foamOut * 0.62);
-  return target;
-}
-
-function smooth01(edge0: number, edge1: number, x: number): number {
-  const t = Math.min(1, Math.max(0, (x - edge0) / (edge1 - edge0)));
-  return t * t * (3 - 2 * t);
-}
 
 /**
  * Polar grid displaced by `surfaceHeight` so feet and dirt share one field.
+ * Vertex colors: meadow → dry sand → dark wet strip → cool submerged shelf.
  * ~1–2k verts — cheap enough for iOS Safari landscape.
  */
 export function createIslandGeometry(

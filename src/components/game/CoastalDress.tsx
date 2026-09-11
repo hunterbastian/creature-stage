@@ -2,6 +2,7 @@
 
 import { useLayoutEffect, useMemo, useRef, type ReactNode } from "react";
 import { InstancedMesh, Object3D, type BufferGeometry } from "three";
+import { SHORE } from "@/lib/game/shore-look";
 import { assertNever } from "@/lib/game/types";
 import {
   sampleGroundY,
@@ -12,6 +13,7 @@ import {
   type TidePoolSpec,
 } from "@/lib/game/worldgen";
 import { useCoastalPropGeometries } from "./CoastalPropsKit";
+import { ShoreFoamMaterial } from "./ShoreWater";
 
 const dummy = new Object3D();
 
@@ -127,7 +129,7 @@ function InstancedDecals({
 function poolRimPoses(pools: TidePoolSpec[]): PropPose[] {
   return pools.map((pool) => ({
     x: pool.x,
-    y: 0.008,
+    y: 0.01,
     z: pool.z,
     rx: 0,
     ry: pool.yaw,
@@ -138,10 +140,24 @@ function poolRimPoses(pools: TidePoolSpec[]): PropPose[] {
   }));
 }
 
+function poolBedPoses(pools: TidePoolSpec[]): PropPose[] {
+  return pools.map((pool) => ({
+    x: pool.x,
+    y: 0.004,
+    z: pool.z,
+    rx: 0,
+    ry: pool.yaw,
+    rz: 0,
+    sx: pool.sx * 1.02,
+    sy: 1,
+    sz: pool.sz * 1.02,
+  }));
+}
+
 function poolWaterPoses(pools: TidePoolSpec[]): PropPose[] {
   return pools.map((pool) => ({
     x: pool.x,
-    y: 0.015,
+    y: 0.02,
     z: pool.z,
     rx: 0,
     ry: pool.yaw,
@@ -149,6 +165,20 @@ function poolWaterPoses(pools: TidePoolSpec[]): PropPose[] {
     sx: pool.sx,
     sy: 1,
     sz: pool.sz,
+  }));
+}
+
+function poolFoamPoses(pools: TidePoolSpec[]): PropPose[] {
+  return pools.map((pool) => ({
+    x: pool.x,
+    y: 0.026,
+    z: pool.z,
+    rx: 0,
+    ry: pool.yaw,
+    rz: 0,
+    sx: pool.sx * 1.1,
+    sy: 1,
+    sz: pool.sz * 1.1,
   }));
 }
 
@@ -308,7 +338,12 @@ export function CoastalDress({ coarse }: { coarse: boolean }) {
   const kit = useCoastalPropGeometries();
   const shade = !coarse;
   const rims = useMemo(() => poolRimPoses(dress.tidePools), [dress.tidePools]);
+  const beds = useMemo(() => poolBedPoses(dress.tidePools), [dress.tidePools]);
   const water = useMemo(() => poolWaterPoses(dress.tidePools), [dress.tidePools]);
+  const poolFoam = useMemo(
+    () => poolFoamPoses(dress.tidePools),
+    [dress.tidePools],
+  );
   const mist = useMemo(() => hazePoses(dress.haze), [dress.haze]);
 
   return (
@@ -317,13 +352,36 @@ export function CoastalDress({ coarse }: { coarse: boolean }) {
         <NestClearing key={`${clearing.x}-${clearing.z}`} {...clearing} />
       ))}
 
-      <InstancedDecals poses={rims} receiveShadow>
-        <ringGeometry args={[0.5, 0.74, 16]} />
-        <meshPhongMaterial color="#8a8068" shininess={14} specular="#d4c8a8" />
+      <InstancedDecals poses={beds} receiveShadow>
+        <circleGeometry args={[0.56, 16]} />
+        <meshPhongMaterial
+          color={SHORE.poolBed}
+          shininess={SHORE.poolBedShininess}
+          specular={SHORE.wetSpecular}
+        />
       </InstancedDecals>
-      <InstancedDecals poses={water} receiveShadow>
+      <InstancedDecals poses={rims} receiveShadow>
+        <ringGeometry args={[0.5, 0.76, 16]} />
+        <meshPhongMaterial
+          color={SHORE.poolRim}
+          shininess={SHORE.poolRimShininess}
+          specular={SHORE.wetSpecular}
+        />
+      </InstancedDecals>
+      <InstancedDecals poses={water} renderOrder={1}>
         <circleGeometry args={[0.55, 16]} />
-        <meshPhongMaterial color="#3d6e74" shininess={48} specular="#c8e8e0" />
+        <meshPhongMaterial
+          color={SHORE.poolWater}
+          transparent
+          opacity={SHORE.poolWaterOpacity}
+          shininess={SHORE.poolWaterShininess}
+          specular={SHORE.poolSpecular}
+          depthWrite={false}
+        />
+      </InstancedDecals>
+      <InstancedDecals poses={poolFoam} renderOrder={2}>
+        <ringGeometry args={[0.62, 0.78, 12]} />
+        <ShoreFoamMaterial opacity={SHORE.poolFoamOpacity} />
       </InstancedDecals>
 
       <InstancedField poses={dress.grass}>
@@ -431,12 +489,7 @@ export function CoastalDress({ coarse }: { coarse: boolean }) {
 
       <InstancedDecals poses={dress.foam} renderOrder={2}>
         <circleGeometry args={[1, 10]} />
-        <meshBasicMaterial
-          color="#e4eee8"
-          transparent
-          opacity={0.16}
-          depthWrite={false}
-        />
+        <ShoreFoamMaterial />
       </InstancedDecals>
       <InstancedDecals poses={mist} renderOrder={-1} followGround={false}>
         <circleGeometry args={[1, 12]} />

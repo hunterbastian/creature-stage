@@ -157,7 +157,7 @@ Mechanical nods to Skyrim / Elden Ring, not their art:
 | Path | Role |
 | --- | --- |
 | `src/app/` | App Router layout + page |
-| `src/components/game/` | R3F canvas, world, coastal dress, nests, wildlife herds, offshore fauna, creature, food, camera, movement loop |
+| `src/components/game/` | R3F canvas, world, shore water, coastal dress, nests, wildlife herds, offshore fauna, creature, food, camera, movement loop |
 | `src/components/ui/` | Overlay editor, starter picker, mute, touch stick, rotate hint, stats, toasts |
 | `src/lib/game/audio.ts` | Web Audio coastal bed + eat/form cues (iOS gesture unlock) |
 | `src/lib/game/worldgen/` | Seeded coastal set dressing (biomes, density knobs, ground-Y hook) |
@@ -165,7 +165,7 @@ Mechanical nods to Skyrim / Elden Ring, not their art:
 | `scripts/blender/` | Headless bpy / Node generators for the saurian + coastal-prop glTF kits; re-export notes in `scripts/blender/README.md` |
 | `scripts/audio/` | Regenerates the CC0 coastal MP3s |
 
-Locomotion (`x`, `y`, `z`, `yaw`, stamina, vitality, feel pulses) lives in `src/lib/game/sim.ts` and `src/lib/game/locomotion.ts` so the HUD does not rerender every frame. Visual walk/idle/trot/eat poses live in `src/lib/game/anim.ts` (applied in `useCreatureAnim.ts`). World collision (height field, shore lip, nest bowls, prop capsules) lives in `src/lib/game/collision.ts`. Wildlife x/z lives in `src/lib/game/wildlife.ts`. Leviathan moods live in `src/lib/game/offshore-ai.ts`. Form thresholds, herd-mate curve, and the current objective live in `src/lib/game/progress.ts`. Coastal set dressing is seeded in `src/lib/game/worldgen/` and drawn by `CoastalDress`. Creature roots follow collision footing (`sim.y` / `groundHeight`); props use `sampleGroundY` (collision binds that hook to `surfaceHeight`). Coastal sound is a small Web Audio bootstrap in `src/lib/game/audio.ts` — not wired through worldgen, collision, or the Blender kit.
+Locomotion (`x`, `y`, `z`, `yaw`, stamina, vitality, feel pulses) lives in `src/lib/game/sim.ts` and `src/lib/game/locomotion.ts` so the HUD does not rerender every frame. Visual walk/idle/trot/eat poses live in `src/lib/game/anim.ts` (applied in `useCreatureAnim.ts`). World collision (height field, shore lip, nest bowls, prop capsules) lives in `src/lib/game/collision.ts`. Wildlife x/z lives in `src/lib/game/wildlife.ts`. Leviathan moods live in `src/lib/game/offshore-ai.ts`. Form thresholds, herd-mate curve, and the current objective live in `src/lib/game/progress.ts`. Coastal set dressing is seeded in `src/lib/game/worldgen/` and drawn by `CoastalDress`. Shore water, wet sand, and foam knobs live in `src/lib/game/shore-look.ts` (drawn by `ShoreWater` + island vertex colors). Creature roots follow collision footing (`sim.y` / `groundHeight`); props use `sampleGroundY` (collision binds that hook to `surfaceHeight`). Coastal sound is a small Web Audio bootstrap in `src/lib/game/audio.ts` — not wired through worldgen, collision, or the Blender kit.
 
 ## World generation
 
@@ -185,6 +185,21 @@ Shore micro-biomes (tide terraces, kelp wrack, rock shelves, shell fans) are aut
 
 **Density / iOS:** `DENSITY.mobile` is roughly half of desktop (rocks 14 vs 26, kelp 12 vs 22, shells 26 vs 54, driftwood 7 vs 13, one fewer grove). One draw call per prop kind. Kit is untextured Phong, ~70–320 tris per hero mesh, no extra shadow casters on mobile. Grass / foam / haze stay primitive discs and cones.
 
+## Coastal water & wet sand
+
+Near-shore water, the wet-sand strip, foam lace, and tide-pool water share one knob file so the shoreline can be tuned without touching collision or worldgen layout. Target is **PS3 Skyrim coastal** (clear teal shallows, dark wet sand, soft foam) on **iOS Safari** — vertex colors + a couple of transparent rings, no custom shaders or extra shadows.
+
+| Knob | Where | Notes |
+| --- | --- | --- |
+| `SHORE.deepWater` / `midWater` / `shallowsWater` | `src/lib/game/shore-look.ts` | Stacked ocean discs (deep / mid) plus shallows overlay tint. |
+| `SHORE.shallowsOverlay` / `shallowsOpacity` | same | Transparent ring so wet sand shows through near the lip. |
+| `SHORE.drySand` / `dampSand` / `wetSand` / `submergedSand` | same | Island vertex strip. Wet must stay darker than dry. |
+| `SHORE.foam*` / `foamHz` / `foamPulse` | same | Waterline lace + dress patches. One opacity pulse. |
+| `SHORE.poolBed` / `poolRim` / `poolWater` | same | Tide-pool pebble bed under clear water. |
+| `SHORE_BAND` | same | Overlay radii. `WATER_Y` / `WATERLINE_RADIUS` stay in `collision.ts`. |
+
+`ShoreWater` draws stacked ocean discs, a shallows overlay, and foam rings. Island wet sand is vertex color in `island-mesh.ts`. Tide pools (bed / rim / water / foam) are instanced in `CoastalDress`. Mobile uses 32-segment circles/rings (desktop 48) and the same shared materials.
+
 ## Creature animation
 
 The Blender kit (`public/models/saurian-kit.glb`) has no clips. Theropod / sauropod / stego (and nestmates / wildlife that share `CreatureVisual`) get:
@@ -194,7 +209,7 @@ The Blender kit (`public/models/saurian-kit.glb`) has no clips. Theropod / sauro
 - **Trot** — same cycle, slightly faster, when sprinting
 - **Eat / bite** — jaw (`mouth_*_lower` or sucker pad) plus a neck dip, driven by existing `sim.eatFlash`
 
-Tune weight in `PROFILES` inside `src/lib/game/anim.ts`. Re-export notes (and how to add real armature clips later) are in `scripts/blender/README.md`. Gait checks ride `npm test` with the collision suite.
+Tune weight in `PROFILES` inside `src/lib/game/anim.ts`. Re-export notes (and how to add real armature clips later) are in `scripts/blender/README.md`. Gait checks ride `npm test` with the collision and shore-look suites.
 
 ## Sound
 

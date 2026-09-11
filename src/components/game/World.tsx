@@ -2,12 +2,11 @@
 
 import { Suspense, useEffect, useMemo } from "react";
 import { Sky } from "@react-three/drei";
-import { WATER_Y } from "@/lib/game/collision";
-import { WORLD_RADIUS } from "@/lib/game/constants";
 import { isCoarsePointer } from "@/lib/game/device";
 import { createIslandGeometry } from "@/lib/game/island-mesh";
-import { OFFSHORE_LANE_INNER, OCEAN_RADIUS } from "@/lib/game/offshore";
+import { SHORE } from "@/lib/game/shore-look";
 import { CoastalDress } from "./CoastalDress";
+import { ShoreWater } from "./ShoreWater";
 
 function IslandMesh({ coarse }: { coarse: boolean }) {
   const geometry = useMemo(
@@ -21,8 +20,8 @@ function IslandMesh({ coarse }: { coarse: boolean }) {
     <mesh geometry={geometry} receiveShadow>
       <meshPhongMaterial
         vertexColors
-        shininess={6}
-        specular="#9aaa70"
+        shininess={SHORE.islandShininess}
+        specular={SHORE.islandSpecular}
       />
     </mesh>
   );
@@ -62,19 +61,7 @@ export function World() {
       />
       <directionalLight color="#8a9aa0" position={[-10, 7, -8]} intensity={0.28} />
 
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, WATER_Y - 0.02, 0]}>
-        <circleGeometry args={[OCEAN_RADIUS, 32]} />
-        <meshPhongMaterial color="#245868" shininess={20} specular="#7aadb8" />
-      </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, WATER_Y, 0]}>
-        <circleGeometry args={[OFFSHORE_LANE_INNER, 32]} />
-        <meshPhongMaterial color="#3d7288" shininess={28} specular="#9ec8d0" />
-      </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, WATER_Y + 0.018, 0]}>
-        <ringGeometry args={[WORLD_RADIUS + 0.04, WORLD_RADIUS + 0.62, 48]} />
-        <meshPhongMaterial color="#c5d0c4" shininess={18} specular="#e0e8dc" />
-      </mesh>
-
+      <ShoreWater coarse={coarse} />
       <IslandMesh coarse={coarse} />
       <Suspense fallback={null}>
         <CoastalDress coarse={coarse} />
