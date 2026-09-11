@@ -9,9 +9,20 @@ import {
 import { bindInput, sampleMove, steer } from "@/lib/game/input";
 import { tickLocomotion } from "@/lib/game/locomotion";
 import {
+  forceTideRetreat,
+  nearbyTide,
+  stageShoreHunt,
+  tickTide,
+  tideBiteTarget,
+  tideThreat,
+  tideWaypoint,
+  woundTide,
+} from "@/lib/game/offshore-ai";
+import {
   currentObjective,
   nearestFood,
   nearestWildNest,
+  playerBiteDamage,
   type Waypoint,
 } from "@/lib/game/progress";
 import { pulseEncounter, sim, tickFeel } from "@/lib/game/sim";
@@ -36,6 +47,23 @@ function tryEat(reachBoost = 1): boolean {
     }
   }
   return false;
+}
+
+function tryBite(elapsed: number, reachBoost = 1): boolean {
+  if (sim.biteLock > 0) return false;
+  const reach = (sim.bite + 1.05) * sim.size * reachBoost;
+  const target = tideBiteTarget(sim.x, sim.z, reach);
+  if (!target) return false;
+  const { eaten, harvestDeep } = useGameStore.getState();
+  const killed = woundTide(target.spec.id, playerBiteDamage(eaten), elapsed);
+  sim.biteLock = 0.58;
+  sim.eatFlash = 1;
+  if (killed) {
+    harvestDeep(target.spec.name);
+    return true;
+  }
+  pulseEncounter("greet");
+  return true;
 }
 
 function tryNestle(): boolean {
@@ -63,7 +91,21 @@ function syncNearbyNest(): void {
   });
 }
 
+function syncNearbyThreat(): void {
+  const near = nearbyTide(sim.x, sim.z);
+  useGameStore.getState().setNearbyThreat(
+    near
+      ? { id: near.id, name: near.name, canBite: near.canBite }
+      : null,
+  );
+}
+
 function liveWaypoint(): Waypoint | null {
+  const beast = tideWaypoint(sim.x, sim.z);
+  if (beast) {
+    return { kind: "beast", id: beast.id, x: beast.x, z: beast.z };
+  }
+
   const state = useGameStore.getState();
   const beat = currentObjective({
     eaten: state.eaten,
@@ -109,8 +151,33 @@ function maybeGreet(): void {
   if (homeHerdNear(sim.x, sim.z, homeNestId, 3.4)) greetHerd();
 }
 
+function handleTideEvents(
+  events: ReturnType<typeof tickTide>,
+  elapsed: number,
+): void {
+  const { noticeDeep, applyWound } = useGameStore.getState();
+  for (const event of events) {
+    switch (event.kind) {
+      case "notice":
+        noticeDeep(event.name);
+        break;
+      case "strike":
+        if (event.hit) {
+          const result = applyWound(event.damage, event.name);
+          if (result === "down") forceTideRetreat(elapsed);
+        }
+        break;
+      case "down":
+        break;
+      default:
+        assertNever(event, "Unknown tide event");
+    }
+  }
+}
+
 /**
- * Owns WASD / analog locomotion, proximity eating, nestling, and wildlife.
+ * Owns WASD / analog locomotion, proximity eating, nestling, wildlife,
+ * and the one active offshore threat.
  * Runs inside the R3F tree so it can hook `useFrame` without rendering.
  */
 export function GameLoop() {
@@ -120,11 +187,13 @@ export function GameLoop() {
   const lingerDone = useRef(false);
   const graceUntil = useRef(2.5);
   const threatArmed = useRef(false);
+  const huntStaged = useRef(false);
 
   useEffect(() => bindInput(), []);
 
   useFrame((state, delta) => {
     const dt = Math.min(delta, 0.05);
+    const elapsed = state.clock.elapsedTime;
     tickFeel(dt);
     const { starterChosen, homeNestId, eaten } = useGameStore.getState();
     if (steer.focusTap) {
@@ -135,22 +204,29 @@ export function GameLoop() {
     if (!starterChosen) {
       sim.moving = false;
       sim.gait = 0;
-      tickWildlife(
-        dt,
-        state.clock.elapsedTime,
-        sim.x,
-        sim.z,
-        homeNestId,
-        eaten,
-      );
+      tickWildlife(dt, elapsed, sim.x, sim.z, homeNestId, eaten);
+      tickTide(dt, elapsed, sim.x, sim.z, false);
       return;
+    }
+
+    if (!huntStaged.current && window.location.hash === "#hunt") {
+      stageShoreHunt();
+      sim.x = 0;
+      sim.z = 14.85;
+      sim.yaw = 0;
+      sim.vx = 0;
+      sim.vz = 0;
+      huntStaged.current = true;
     }
 
     const waypoint = liveWaypoint();
     const { throttle, turn, sprint } = sampleMove();
     tickLocomotion(dt, throttle, turn, sprint, waypoint);
 
-    const threat = chaseThreat(sim.x, sim.z);
+    const events = tickTide(dt, elapsed, sim.x, sim.z, true);
+    handleTideEvents(events, elapsed);
+
+    const threat = Math.max(chaseThreat(sim.x, sim.z), tideThreat(sim.x, sim.z));
     if (threat > 0.48 && !threatArmed.current) {
       pulseEncounter("threat");
       threatArmed.current = true;
@@ -158,21 +234,16 @@ export function GameLoop() {
     if (threat < 0.12) threatArmed.current = false;
     sim.threat += (threat - sim.threat) * (1 - Math.exp(-dt * 3.1));
 
-    tickWildlife(
-      dt,
-      state.clock.elapsedTime,
-      sim.x,
-      sim.z,
-      homeNestId,
-      eaten,
-    );
+    tickWildlife(dt, elapsed, sim.x, sim.z, homeNestId, eaten);
     syncNearbyNest();
+    syncNearbyThreat();
+    sim.shoreThreat = nearbyTide(sim.x, sim.z) ? 1 : 0;
     syncWaypoint(waypoint);
     maybeGreet();
 
     if (steer.eat) {
       if (!eatLatch.current) {
-        if (!tryEat(1.55)) tryNestle();
+        if (!tryEat(1.55) && !tryBite(elapsed, 1.55)) tryNestle();
       }
       eatLatch.current = true;
     } else {
@@ -187,7 +258,7 @@ export function GameLoop() {
     }
 
     const nest = nestNear(sim.x, sim.z, NEST_INTERACT_RADIUS);
-    const pastGrace = state.clock.elapsedTime > graceUntil.current;
+    const pastGrace = elapsed > graceUntil.current;
     if (!nest) {
       linger.current = 0;
       lingerDone.current = false;
@@ -202,7 +273,7 @@ export function GameLoop() {
     }
 
     // Body-centered nibble so fruit does not require a pixel-perfect mouth poke.
-    tryEat(1);
+    if (!tryEat(1)) tryBite(elapsed, 1);
   });
 
   return null;

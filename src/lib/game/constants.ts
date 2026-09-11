@@ -23,11 +23,13 @@ export const FEEL = {
   eatHitstop: 0.055,
   formHitstop: 0.09,
   claimHitstop: 0.065,
+  hurtHitstop: 0.14,
   eatKick: 0.7,
   formKick: 1,
   claimKick: 0.85,
   greetKick: 0.42,
   threatKick: 0.55,
+  hurtKick: 1.12,
 } as const;
 
 export const CAMERA_FOLLOW = 2.15;

@@ -13,12 +13,16 @@ import {
   STARTING_FOOD,
   WORLD_RADIUS,
 } from "./constants";
+import { isCoarsePointer } from "./device";
+import { resetTide } from "./offshore-ai";
+import { TIDE_HARVEST_MEALS, TIDE_IFRAMES, TIDE_KNOCKBACK } from "./offshore";
 import {
   canClaimNest,
   canMutate,
   FORMS,
   formAt,
   formUpToast,
+  formVitality,
   hasLesson,
   herdThinLine,
   lessonLine,
@@ -27,7 +31,16 @@ import {
   type LessonId,
   type Waypoint,
 } from "./progress";
-import { pulseClaim, pulseEat, pulseEncounter, resetSim, sim, syncSimStats } from "./sim";
+import {
+  pulseClaim,
+  pulseEat,
+  pulseEncounter,
+  pulseHurt,
+  resetSim,
+  sim,
+  syncSimStats,
+  syncSimVitality,
+} from "./sim";
 import { speciesDef } from "./species";
 import { computeStats } from "./stats";
 import {
@@ -43,7 +56,13 @@ import {
   type PartId,
   type SlotId,
 } from "./types";
-import { playerSpawnAt, seedMeadow, syncHerdToForm } from "./wildlife";
+import { fauna, playerSpawnAt, seedMeadow, syncHerdToForm } from "./wildlife";
+
+export type NearbyThreat = {
+  id: string;
+  name: string;
+  canBite: boolean;
+};
 
 export type GameStore = {
   parts: EquippedParts;
@@ -54,10 +73,12 @@ export type GameStore = {
   originNestId: string;
   homeNestId: string;
   nearbyNest: NearbyNest | null;
+  nearbyThreat: NearbyThreat | null;
   waypoint: Waypoint | null;
   claimedWild: boolean;
   greetedHerd: boolean;
   hasMutated: boolean;
+  harvestedDeep: boolean;
   lessonsSeen: LessonId[];
   editorNudge: boolean;
   meadowEpoch: number;
@@ -67,9 +88,13 @@ export type GameStore = {
   chooseStarter: (body: BodyId) => void;
   setPart: (slot: SlotId, id: PartId) => void;
   eat: (foodId: string) => void;
+  harvestDeep: (name: string) => void;
+  applyWound: (damage: number, name: string) => "ignored" | "hurt" | "down";
+  noticeDeep: (name: string) => void;
   nestle: (nestId: string) => void;
   greetHerd: () => void;
   setNearbyNest: (nest: NearbyNest | null) => void;
+  setNearbyThreat: (threat: NearbyThreat | null) => void;
   setWaypoint: (waypoint: Waypoint | null) => void;
   randomize: () => void;
   reset: () => void;
@@ -176,6 +201,7 @@ function buildState(
 ) {
   const stats = computeStats(parts, eaten);
   syncSimStats(stats);
+  syncSimVitality(formVitality(formAt(eaten).id), true);
   return {
     parts,
     eaten,
@@ -185,8 +211,34 @@ function buildState(
   };
 }
 
+function wakeAtHome(homeNestId: string): void {
+  const nest = fauna.nests.find((site) => site.id === homeNestId);
+  if (!nest) {
+    sim.hp = sim.maxHp;
+    sim.x = 0;
+    sim.z = 0;
+    return;
+  }
+  const spawn = playerSpawnAt(nest);
+  sim.x = spawn.x;
+  sim.z = spawn.z;
+  sim.yaw = spawn.yaw;
+  sim.vx = 0;
+  sim.vz = 0;
+  sim.hp = sim.maxHp;
+  sim.hurtFlash = 0;
+  sim.iFrames = 0.4;
+}
+
+function knockInland(): void {
+  const radius = Math.hypot(sim.x, sim.z) || 1;
+  sim.vx -= (sim.x / radius) * TIDE_KNOCKBACK;
+  sim.vz -= (sim.z / radius) * TIDE_KNOCKBACK;
+}
+
 function spawnPose() {
   const meadow = seedMeadow();
+  resetTide(typeof window !== "undefined" && isCoarsePointer());
   const home = meadow.nests.find((nest) => nest.id === meadow.homeNestId);
   const spawn = home
     ? playerSpawnAt(home)
@@ -220,6 +272,102 @@ function teach(
   return { lessonsSeen: withLesson(seen, id), line: lessonLine(id) };
 }
 
+function unlockNewParts(
+  parts: EquippedParts,
+  newly: SlotId[],
+): EquippedParts {
+  const nextParts = { ...parts };
+  for (const slot of newly) {
+    switch (slot) {
+      case "arms":
+        nextParts.arms = UNLOCK_DEFAULTS.arms;
+        break;
+      case "tail":
+        nextParts.tail = UNLOCK_DEFAULTS.tail;
+        break;
+      case "accessory":
+        nextParts.accessory = UNLOCK_DEFAULTS.accessory;
+        break;
+      case "body":
+      case "legs":
+      case "mouth":
+      case "eyes":
+        break;
+      default:
+        assertNever(slot, "Unknown slot");
+    }
+  }
+  return nextParts;
+}
+
+function grantMeals(
+  eaten: number,
+  parts: EquippedParts,
+  unlocked: SlotId[],
+  lessonsSeen: LessonId[],
+  editorNudge: boolean,
+  homeNestId: string,
+  meals: number,
+  firstMealLesson: boolean,
+): {
+  eaten: number;
+  parts: EquippedParts;
+  unlocked: SlotId[];
+  stats: ReturnType<typeof computeStats>;
+  toast: string | null;
+  lessonsSeen: LessonId[];
+  editorNudge: boolean;
+  formedUp: boolean;
+} {
+  const nextEaten = eaten + meals;
+  const prevForm = formAt(eaten);
+  const nextFormDef = formAt(nextEaten);
+  const formedUp = nextFormDef.id !== prevForm.id;
+  const nextUnlocked = unlockedSlots(nextEaten);
+  const newly = nextUnlocked.filter((slot) => !unlocked.includes(slot));
+  const nextParts = unlockNewParts(parts, newly);
+  const stats = computeStats(nextParts, nextEaten);
+  syncSimStats(stats);
+  syncSimVitality(formVitality(nextFormDef.id));
+  if (formedUp) {
+    sim.hp = Math.min(sim.maxHp, sim.hp + 1);
+  }
+
+  let nextLessons = lessonsSeen;
+  let toast: string | null = null;
+  let nudge = editorNudge;
+
+  if (formedUp) {
+    const { playerThinned } = syncHerdToForm(nextEaten, homeNestId);
+    const thin = playerThinned > 0 ? herdThinLine(nextFormDef) : "";
+    toast = thin ? `${formUpToast(nextFormDef)} ${thin}` : formUpToast(nextFormDef);
+    if (newly.length) {
+      const edit = teach(nextLessons, "edit");
+      nextLessons = edit.lessonsSeen;
+      nudge = true;
+    }
+    if (nextFormDef.canMutate && !prevForm.canMutate) {
+      const mutate = teach(nextLessons, "mutate");
+      nextLessons = mutate.lessonsSeen;
+    }
+  } else if (firstMealLesson && eaten === 0) {
+    const grow = teach(nextLessons, "grow");
+    nextLessons = grow.lessonsSeen;
+    toast = grow.line;
+  }
+
+  return {
+    eaten: nextEaten,
+    parts: nextParts,
+    unlocked: nextUnlocked,
+    stats,
+    toast,
+    lessonsSeen: nextLessons,
+    editorNudge: nudge,
+    formedUp,
+  };
+}
+
 const initialWorld = bootWorld();
 
 export const useGameStore = create<GameStore>((set, get) => ({
@@ -228,10 +376,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
   originNestId: initialWorld.meadow.homeNestId,
   homeNestId: initialWorld.meadow.homeNestId,
   nearbyNest: null,
+  nearbyThreat: null,
   waypoint: null,
   claimedWild: false,
   greetedHerd: false,
   hasMutated: false,
+  harvestedDeep: false,
   lessonsSeen: [],
   editorNudge: false,
   meadowEpoch: 0,
@@ -245,6 +395,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     syncSimStats(stats);
     faceNearestFruit(foods);
     const lesson = teach(lessonsSeen, "graze");
+    syncSimVitality(formVitality(formAt(eaten).id), true);
     set({
       parts: nextParts,
       stats,
@@ -266,76 +417,32 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   eat: (foodId) => {
-    const { foods, eaten, parts, unlocked, lessonsSeen } = get();
+    const { foods, eaten, parts, unlocked, lessonsSeen, homeNestId } = get();
     const morsel = foods.find((food) => food.id === foodId);
     if (!morsel) return;
 
-    const nextEaten = eaten + 1;
-    const prevForm = formAt(eaten);
-    const nextFormDef = formAt(nextEaten);
-    const formedUp = nextFormDef.id !== prevForm.id;
-    const nextUnlocked = unlockedSlots(nextEaten);
-    const newly = nextUnlocked.filter((slot) => !unlocked.includes(slot));
-    const nextParts = { ...parts };
-    for (const slot of newly) {
-      switch (slot) {
-        case "arms":
-          nextParts.arms = UNLOCK_DEFAULTS.arms;
-          break;
-        case "tail":
-          nextParts.tail = UNLOCK_DEFAULTS.tail;
-          break;
-        case "accessory":
-          nextParts.accessory = UNLOCK_DEFAULTS.accessory;
-          break;
-        case "body":
-        case "legs":
-        case "mouth":
-        case "eyes":
-          break;
-        default:
-          assertNever(slot, "Unknown slot");
-      }
-    }
-
     const remaining = foods.filter((food) => food.id !== foodId);
-    const stats = computeStats(nextParts, nextEaten);
-    syncSimStats(stats);
-    pulseEat(formedUp);
-
-    let nextLessons = lessonsSeen;
-    let toast: string | null = null;
-    let editorNudge = get().editorNudge;
-
-    if (formedUp) {
-      const { homeNestId } = get();
-      const { playerThinned } = syncHerdToForm(nextEaten, homeNestId);
-      const thin = playerThinned > 0 ? herdThinLine(nextFormDef) : "";
-      toast = thin ? `${formUpToast(nextFormDef)} ${thin}` : formUpToast(nextFormDef);
-      if (newly.length) {
-        const edit = teach(nextLessons, "edit");
-        nextLessons = edit.lessonsSeen;
-        editorNudge = true;
-      }
-      if (nextFormDef.canMutate && !prevForm.canMutate) {
-        const mutate = teach(nextLessons, "mutate");
-        nextLessons = mutate.lessonsSeen;
-      }
-    } else if (nextEaten === 1) {
-      const grow = teach(nextLessons, "grow");
-      nextLessons = grow.lessonsSeen;
-      toast = grow.line;
-    }
+    const gain = grantMeals(
+      eaten,
+      parts,
+      unlocked,
+      lessonsSeen,
+      get().editorNudge,
+      homeNestId,
+      1,
+      true,
+    );
+    pulseEat(gain.formedUp);
 
     set({
       foods: remaining,
-      eaten: nextEaten,
-      unlocked: nextUnlocked,
-      parts: nextParts,
-      stats,
-      toast,
-      lessonsSeen: nextLessons,
-      editorNudge,
+      eaten: gain.eaten,
+      unlocked: gain.unlocked,
+      parts: gain.parts,
+      stats: gain.stats,
+      toast: gain.toast,
+      lessonsSeen: gain.lessonsSeen,
+      editorNudge: gain.editorNudge,
     });
 
     const gen = worldGen;
@@ -347,6 +454,75 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }, FOOD_RESPAWN_MS);
   },
 
+  harvestDeep: (name) => {
+    const { eaten, parts, unlocked, lessonsSeen, homeNestId } = get();
+    const gain = grantMeals(
+      eaten,
+      parts,
+      unlocked,
+      lessonsSeen,
+      get().editorNudge,
+      homeNestId,
+      TIDE_HARVEST_MEALS,
+      false,
+    );
+    pulseEat(gain.formedUp);
+    const marrow = `${name} driven off. Deep marrow — ${TIDE_HARVEST_MEALS} meals.`;
+    set({
+      eaten: gain.eaten,
+      unlocked: gain.unlocked,
+      parts: gain.parts,
+      stats: gain.stats,
+      toast: gain.formedUp ? `${gain.toast} ${marrow}` : marrow,
+      lessonsSeen: gain.lessonsSeen,
+      editorNudge: gain.editorNudge,
+      harvestedDeep: true,
+    });
+  },
+
+  applyWound: (damage, name) => {
+    if (sim.iFrames > 0 || damage <= 0) return "ignored";
+    sim.hp = Math.max(0, sim.hp - damage);
+    sim.iFrames = TIDE_IFRAMES;
+    pulseHurt();
+    knockInland();
+    const { homeNestId, lessonsSeen } = get();
+    if (sim.hp <= 0) {
+      wakeAtHome(homeNestId);
+      set({
+        toast: `The ${name.toLowerCase()} took you. Wake at the hollow.`,
+      });
+      return "down";
+    }
+    const lesson = teach(lessonsSeen, "deep");
+    if (lesson.line) {
+      set({
+        lessonsSeen: lesson.lessonsSeen,
+        toast: lesson.line,
+      });
+    }
+    return "hurt";
+  },
+
+  noticeDeep: (name) => {
+    const { lessonsSeen } = get();
+    const lesson = teach(lessonsSeen, "deep");
+    pulseEncounter("threat");
+    if (!lesson.line) return;
+    set({
+      lessonsSeen: lesson.lessonsSeen,
+      toast: `${name} turns toward the shore. ${lesson.line}`,
+    });
+  },
+
+  setNearbyThreat: (threat) => {
+    const current = get().nearbyThreat;
+    if (current?.id === threat?.id && current?.canBite === threat?.canBite) {
+      return;
+    }
+    set({ nearbyThreat: threat });
+  },
+
   nestle: (nestId) => {
     const { nests, homeNestId, eaten, lessonsSeen, originNestId } = get();
     const nest = nests.find((site) => site.id === nestId);
@@ -355,12 +531,16 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     if (homeNestId === nestId) {
       pulseClaim(false);
+      const hurt = sim.hp < sim.maxHp;
+      sim.hp = sim.maxHp;
       const rest = teach(lessonsSeen, "herd");
       set({
         lessonsSeen: rest.lessonsSeen,
         toast: rest.line
           ? rest.line
-          : `Home nest. ${nest.eggs} eggs warm in the ${nest.name.toLowerCase()}.`,
+          : hurt
+            ? `Home nest. Breath returns. ${nest.eggs} eggs warm in the ${nest.name.toLowerCase()}.`
+            : `Home nest. ${nest.eggs} eggs warm in the ${nest.name.toLowerCase()}.`,
       });
       return;
     }
@@ -464,10 +644,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
       originNestId: world.meadow.homeNestId,
       homeNestId: world.meadow.homeNestId,
       nearbyNest: null,
+      nearbyThreat: null,
       waypoint: null,
       claimedWild: false,
       greetedHerd: false,
       hasMutated: false,
+      harvestedDeep: false,
       lessonsSeen: [],
       editorNudge: false,
       meadowEpoch: get().meadowEpoch + 1,

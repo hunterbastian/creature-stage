@@ -33,6 +33,15 @@ export const sim = {
   /** 1 → 0 form-up swell. */
   formFlash: 0,
   claimFlash: 0,
+  hp: 3,
+  maxHp: 3,
+  /** 1 → 0 flinch after a shore slam. */
+  hurtFlash: 0,
+  iFrames: 0,
+  /** Seconds before another leviathan bite registers. */
+  biteLock: 0,
+  /** 1 while a shore leviathan is engaged near the player. */
+  shoreThreat: 0,
 };
 
 export function resetSim(x = 0, z = 0, yaw = 0): void {
@@ -55,6 +64,11 @@ export function resetSim(x = 0, z = 0, yaw = 0): void {
   sim.eatFlash = 0;
   sim.formFlash = 0;
   sim.claimFlash = 0;
+  sim.hp = sim.maxHp;
+  sim.hurtFlash = 0;
+  sim.iFrames = 0;
+  sim.biteLock = 0;
+  sim.shoreThreat = 0;
 }
 
 export function tickFeel(dt: number): void {
@@ -63,6 +77,9 @@ export function tickFeel(dt: number): void {
   if (sim.eatFlash > 0) sim.eatFlash = Math.max(0, sim.eatFlash - dt * 3.4);
   if (sim.formFlash > 0) sim.formFlash = Math.max(0, sim.formFlash - dt * 1.55);
   if (sim.claimFlash > 0) sim.claimFlash = Math.max(0, sim.claimFlash - dt * 2.6);
+  if (sim.hurtFlash > 0) sim.hurtFlash = Math.max(0, sim.hurtFlash - dt * 2.8);
+  if (sim.iFrames > 0) sim.iFrames = Math.max(0, sim.iFrames - dt);
+  if (sim.biteLock > 0) sim.biteLock = Math.max(0, sim.biteLock - dt);
   if (sim.winded > 0) sim.winded = Math.max(0, sim.winded - dt);
 }
 
@@ -94,6 +111,21 @@ export function pulseEncounter(kind: "greet" | "threat"): void {
     return;
   }
   kick(FEEL.greetKick, 0.035);
+}
+
+export function pulseHurt(): void {
+  sim.hurtFlash = 1;
+  kick(FEEL.hurtKick, FEEL.hurtHitstop);
+  sim.stamina = Math.max(0, sim.stamina - 0.2);
+}
+
+export function syncSimVitality(maxHp: number, refill = false): void {
+  sim.maxHp = Math.max(1, maxHp);
+  if (refill) {
+    sim.hp = sim.maxHp;
+    return;
+  }
+  sim.hp = Math.min(sim.maxHp, Math.max(0, sim.hp));
 }
 
 export function syncSimStats(stats: {

@@ -23,9 +23,10 @@ import { sim } from "@/lib/game/sim";
 import { temperamentLabel } from "@/lib/game/species";
 import { useGameStore } from "@/lib/game/store";
 import { SLOT_IDS, assertNever, type SlotId } from "@/lib/game/types";
+import { nearbyTide } from "@/lib/game/offshore-ai";
 import { fauna } from "@/lib/game/wildlife";
 
-function waypointPos(id: string, kind: "food" | "nest" | "herd") {
+function waypointPos(id: string, kind: "food" | "nest" | "herd" | "beast") {
   switch (kind) {
     case "food": {
       const food = useGameStore.getState().foods.find((item) => item.id === id);
@@ -38,6 +39,11 @@ function waypointPos(id: string, kind: "food" | "nest" | "herd") {
     case "herd": {
       const agent = fauna.agents.find((item) => item.id === id);
       return agent ? { x: agent.x, z: agent.z } : null;
+    }
+    case "beast": {
+      const beast = nearbyTide(sim.x, sim.z);
+      if (beast && beast.id === id) return { x: beast.x, z: beast.z };
+      return null;
     }
     default:
       return assertNever(kind, "Unknown waypoint");
@@ -87,6 +93,52 @@ function Compass() {
         style={{ transformOrigin: "50% 70%", marginBottom: "2px" }}
       />
     </button>
+  );
+}
+
+function VitalityBreath({ compact }: { compact?: boolean }) {
+  const fill = useRef<HTMLDivElement>(null);
+  const wrap = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    let frame = 0;
+    const tick = () => {
+      const hurt = sim.hp < sim.maxHp - 0.01;
+      const show =
+        hurt || sim.hurtFlash > 0.05 || sim.threat > 0.22 || sim.shoreThreat > 0;
+      if (wrap.current) wrap.current.style.opacity = show ? "1" : "0";
+      if (fill.current) {
+        const ratio = sim.maxHp > 0 ? sim.hp / sim.maxHp : 0;
+        fill.current.style.width = `${Math.round(ratio * 100)}%`;
+        fill.current.style.background = ratio <= 0.34 ? "#c4a070" : "#9ec4b8";
+      }
+      frame = window.requestAnimationFrame(tick);
+    };
+    frame = window.requestAnimationFrame(tick);
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
+
+  return (
+    <div
+      ref={wrap}
+      className={`pointer-events-none transition-opacity duration-200 ${
+        compact ? "mt-1" : "mt-1.5"
+      }`}
+      style={{ opacity: 0 }}
+      aria-hidden
+    >
+      <div
+        className={`overflow-hidden rounded-full bg-white/10 ${
+          compact ? "h-[3px] w-20" : "h-[3px] w-28"
+        }`}
+      >
+        <div
+          ref={fill}
+          className="h-full rounded-full bg-[#9ec4b8]"
+          style={{ width: "100%" }}
+        />
+      </div>
+    </div>
   );
 }
 
@@ -171,13 +223,40 @@ function MateLine({ mates }: { mates: number }) {
   );
 }
 
+function TidePrompt({ compact }: { compact?: boolean }) {
+  const threat = useGameStore((state) => state.nearbyThreat);
+  const toast = useGameStore((state) => state.toast);
+  const { touch } = usePlaySurface();
+
+  if (!threat || toast) return null;
+
+  const action = touch ? "Eat" : "Eat / walk in";
+  const line = threat.canBite
+    ? `${threat.name} is open · ${action} to bite`
+    : `${threat.name} surges · flee inland or wait the slam`;
+
+  return (
+    <div
+      className={`pointer-events-none absolute left-1/2 z-10 -translate-x-1/2 rounded-full border border-teal-100/40 bg-black/55 px-4 py-2 text-center text-lime-50 backdrop-blur ${
+        compact ? "top-[7.1rem] text-xs" : "top-28 text-sm"
+      }`}
+    >
+      <span className="font-medium">{line}</span>
+      <span className="mt-0.5 block text-[11px] text-emerald-100/75">
+        Deep water only — the meadow is safe
+      </span>
+    </div>
+  );
+}
+
 function NestPrompt({ compact }: { compact?: boolean }) {
   const nearby = useGameStore((state) => state.nearbyNest);
+  const threat = useGameStore((state) => state.nearbyThreat);
   const toast = useGameStore((state) => state.toast);
   const eaten = useGameStore((state) => state.eaten);
   const { touch } = usePlaySurface();
 
-  if (!nearby || toast) return null;
+  if (threat || !nearby || toast) return null;
 
   const action = touch ? "Eat" : "E or linger";
   const claimOpen = formAt(eaten).canClaimNest;
@@ -369,6 +448,7 @@ function CompactHud({
           </p>
           <div className="mt-2">
             <ObjectiveChip compact />
+            <VitalityBreath compact />
             <StaminaBreath compact />
           </div>
         </div>
@@ -394,6 +474,7 @@ function CompactHud({
         </div>
       ) : null}
 
+      <TidePrompt compact />
       <NestPrompt compact />
 
       {open ? (
@@ -474,6 +555,7 @@ function DesktopHud() {
             Tideform
           </h1>
           <ObjectiveChip />
+          <VitalityBreath />
           <StaminaBreath />
         </div>
       </header>
@@ -484,6 +566,7 @@ function DesktopHud() {
         </div>
       ) : null}
 
+      <TidePrompt />
       <NestPrompt />
 
       <aside
@@ -520,7 +603,7 @@ function DesktopHud() {
         <span className="font-semibold text-lime-200">WASD</span> walk ·{" "}
         <span className="font-semibold text-lime-200">Shift</span> trot ·{" "}
         <span className="font-semibold text-lime-200">F</span> or tap the
-        compass to focus · fruit grows you ·{" "}
+        compass to focus ·         fruit grows you · far shore wakes the deep ·{" "}
         <span className="font-semibold text-lime-200">E</span> nestle
       </footer>
     </div>

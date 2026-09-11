@@ -1,13 +1,15 @@
 "use client";
 
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import type { Group, MeshBasicMaterial } from "three";
 import { isCoarsePointer } from "@/lib/game/device";
+import { seedTide, tide } from "@/lib/game/offshore-ai";
 import {
   offshorePose,
   offshoreRoster,
   type OffshoreKind,
+  type OffshorePose,
   type OffshoreSpec,
 } from "@/lib/game/offshore";
 import { assertNever } from "@/lib/game/types";
@@ -334,6 +336,16 @@ function BeastBody({ kind, detail }: { kind: OffshoreKind; detail: number }) {
   }
 }
 
+function livePose(spec: OffshoreSpec, time: number): OffshorePose {
+  const beast = tide.beasts.find((item) => item.spec.id === spec.id);
+  return beast?.pose ?? offshorePose(spec, time);
+}
+
+function liveGlow(spec: OffshoreSpec): number {
+  const beast = tide.beasts.find((item) => item.spec.id === spec.id);
+  return beast?.glow ?? 0;
+}
+
 function wakeSpread(kind: OffshoreKind): { back: number; width: number } {
   switch (kind) {
     case "ray":
@@ -354,7 +366,7 @@ function WakeHint({ spec }: { spec: OffshoreSpec }) {
 
   useFrame(({ clock }) => {
     if (!wake.current) return;
-    const pose = offshorePose(spec, clock.elapsedTime);
+    const pose = livePose(spec, clock.elapsedTime);
     wake.current.position.set(
       pose.x - Math.sin(pose.yaw) * spread.back,
       -0.168,
@@ -387,6 +399,36 @@ function WakeHint({ spec }: { spec: OffshoreSpec }) {
   );
 }
 
+function TelegraphHint({ spec }: { spec: OffshoreSpec }) {
+  const disc = useRef<Group>(null);
+  const foam = useRef<MeshBasicMaterial>(null);
+
+  useFrame(({ clock }) => {
+    if (!disc.current) return;
+    const glow = liveGlow(spec);
+    const pose = livePose(spec, clock.elapsedTime);
+    disc.current.position.set(pose.x, -0.14, pose.z);
+    disc.current.visible = glow > 0.04;
+    disc.current.scale.setScalar(1.15 + glow * 1.8);
+    if (foam.current) foam.current.opacity = 0.08 + glow * 0.28;
+  });
+
+  return (
+    <group ref={disc} visible={false}>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} renderOrder={-1}>
+        <circleGeometry args={[2.4, 14]} />
+        <meshBasicMaterial
+          ref={foam}
+          color="#d7efe8"
+          transparent
+          opacity={0.12}
+          depthWrite={false}
+        />
+      </mesh>
+    </group>
+  );
+}
+
 function OffshoreBeast({
   spec,
   detail,
@@ -397,13 +439,19 @@ function OffshoreBeast({
   wake: boolean;
 }) {
   const root = useRef<Group>(null);
+  const flare = useRef<MeshBasicMaterial>(null);
   const start = offshorePose(spec, 0);
 
   useFrame(({ clock }) => {
     if (!root.current) return;
-    const pose = offshorePose(spec, clock.elapsedTime);
+    const pose = livePose(spec, clock.elapsedTime);
     root.current.position.set(pose.x, pose.y, pose.z);
     root.current.rotation.set(pose.pitch, pose.yaw, 0);
+    const glow = liveGlow(spec);
+    if (flare.current) {
+      flare.current.opacity = glow * 0.32;
+      flare.current.visible = glow > 0.05;
+    }
   });
 
   return (
@@ -416,7 +464,19 @@ function OffshoreBeast({
         userData={{ tideformOffshore: spec.id }}
       >
         <BeastBody kind={spec.kind} detail={detail} />
+        <mesh position={[0, 0.45, spec.maw]} scale={[1.15, 0.42, 1.15]}>
+          <sphereGeometry args={[0.55, 8, 6]} />
+          <meshBasicMaterial
+            ref={flare}
+            color="#e8f4ee"
+            transparent
+            opacity={0}
+            depthWrite={false}
+            visible={false}
+          />
+        </mesh>
       </group>
+      <TelegraphHint spec={spec} />
       {wake ? <WakeHint spec={spec} /> : null}
     </>
   );
@@ -426,6 +486,10 @@ export function OffshoreFauna() {
   const coarse = useMemo(() => isCoarsePointer(), []);
   const roster = useMemo(() => offshoreRoster(coarse), [coarse]);
   const detail = coarse ? 7 : 10;
+
+  useEffect(() => {
+    seedTide(coarse);
+  }, [coarse]);
 
   return (
     <group>
