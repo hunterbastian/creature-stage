@@ -21,7 +21,7 @@ test("desktop bloom is the richer pyramid; mobile is the cheap cap", () => {
   assert.ok(desk.strength > mob.strength);
   assert.ok(desk.radius > mob.radius);
   assert.ok(mob.threshold >= desk.threshold);
-  assert.ok(desk.threshold >= 0.75);
+  assert.ok(desk.threshold >= 0.82);
   assert.ok(desk.strength < 0.85, "bloom stays shy of nuclear");
 });
 

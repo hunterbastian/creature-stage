@@ -258,16 +258,19 @@ export function GameLoop() {
         sim.vx = 0;
         sim.vy = 0;
         sim.vz = 0;
+        beautyStaged.current = true;
       } else if (window.location.hash === "#waterline") {
+        // Just inland of the leviathan notice ring so the beach shot
+        // does not stage a hunt. Camera still looks seaward at the foam.
         sim.x = 0;
-        sim.z = 14.2;
-        sim.y = groundHeight(0, 14.2);
+        sim.z = 13.05;
+        sim.y = groundHeight(0, 13.05);
         sim.yaw = 0;
         sim.vx = 0;
         sim.vy = 0;
         sim.vz = 0;
+        beautyStaged.current = true;
       }
-      beautyStaged.current = true;
     }
 
     const waypoint = liveWaypoint();

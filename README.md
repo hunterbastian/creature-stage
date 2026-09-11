@@ -163,7 +163,7 @@ Post stack (see `EraLook`): **Reinhard** on the renderer → **capped Unreal blo
 - Still no MSAA, DPR cap 1.15, 512px shadows, fewer instances (see Mobile play).
 - To kill the grade blit entirely, set `ATMOSPHERE.mobile.grade.enabled = false`.
 
-Beauty warps (pick a starter, or `?starter=theropod`): `/#waterline` (north beach, no hunt), `/#overlook` (grove hill facing the sea). `/#hunt` is still the leviathan staging warp.
+Beauty warps (pick a starter, or `?starter=theropod`): `/#waterline` (north beach, just inland of the leviathan notice ring), `/#overlook` (grove hill facing the sea). `/#hunt` is still the leviathan staging warp.
 
 **Before:** tiny lift/gain grade on desktop only, constructor bloom size ignored after resize (full half-res mip chain), foam bright enough to bloom as a white ring.
 
