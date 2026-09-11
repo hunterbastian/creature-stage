@@ -2,11 +2,17 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
   BEACH_INNER_RADIUS,
+  NEST_BLEND_RADIUS,
+  NEST_FLOOR_LIFT,
+  NEST_FLOOR_RADIUS,
+  NEST_RIM_LIFT,
+  NEST_RIM_RADIUS,
   WATER_Y,
   buildPropColliders,
   clampToShore,
   collidePlayer,
   groundHeight,
+  nestBowlHeight,
   playableRadius,
   resolveProps,
   settleFooting,
@@ -14,7 +20,12 @@ import {
   type PropCollider,
 } from "./collision";
 import { DENSITY, sampleGroundY, seedWorldDress } from "./worldgen";
-import { BEACH_INNER_RADIUS as CONST_BEACH, MAX_SIZE, NEST_INTERACT_RADIUS } from "./constants";
+import {
+  BEACH_INNER_RADIUS as CONST_BEACH,
+  MAX_SIZE,
+  NEST_CLEARING,
+  NEST_INTERACT_RADIUS,
+} from "./constants";
 import { SHORE_DANGER_RADIUS, SHORE_SAFE_RADIUS, playerOnShore, playerInlandSafe } from "./offshore";
 import { NEST_LAYOUT } from "./wildlife";
 
@@ -52,7 +63,17 @@ test("nest bowls have a walkable rim above the floor", () => {
 });
 
 test("claim volumes still contain the bowl", () => {
-  assert.ok(NEST_INTERACT_RADIUS > 1.42);
+  assert.equal(NEST_INTERACT_RADIUS, 2.7);
+  assert.ok(NEST_INTERACT_RADIUS > NEST_BLEND_RADIUS);
+  assert.ok(NEST_CLEARING > NEST_INTERACT_RADIUS);
+});
+
+test("authored nest bowl height matches collision lifts", () => {
+  assert.equal(nestBowlHeight(0), NEST_FLOOR_LIFT);
+  assert.equal(nestBowlHeight(NEST_FLOOR_RADIUS), NEST_FLOOR_LIFT + 0.05);
+  assert.ok(Math.abs(nestBowlHeight(NEST_RIM_RADIUS) - NEST_RIM_LIFT) < 1e-6);
+  assert.equal(nestBowlHeight(NEST_BLEND_RADIUS), 0);
+  assert.ok(nestBowlHeight(NEST_RIM_RADIUS) > nestBowlHeight(0));
 });
 
 test("playable lip still reaches shore-danger, including Apex", () => {

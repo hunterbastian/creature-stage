@@ -1,21 +1,33 @@
 "use client";
 
-import { useRef } from "react";
+import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
-import type { Group } from "three";
+import { DoubleSide, type Group, type MeshPhongMaterial } from "three";
 import { surfaceHeight } from "@/lib/game/collision";
+import {
+  clutchOffsets,
+  EGG_SIT,
+  getNestWeaveMap,
+  liningFinish,
+  nestBowlGeometry,
+  NEST_BLEND_RADIUS,
+  NEST_FLOOR_LIFT,
+  NEST_FLOOR_RADIUS,
+  NEST_RIM_LIFT,
+  NEST_RIM_RADIUS,
+  NEST_SALT,
+  NEST_SCOOP,
+  NEST_SHELLS,
+  reedColor,
+  rimLight,
+  RIM_WEAVE,
+  SPILL_TWIGS,
+  type ReedPose,
+} from "@/lib/game/nest-look";
 import { formAt } from "@/lib/game/progress";
 import { speciesDef } from "@/lib/game/species";
 import { useGameStore } from "@/lib/game/store";
-import type { NestSite } from "@/lib/game/types";
-
-const TWIGS = [
-  { x: 0.72, z: 0.18, rot: 0.4, lean: 0.55 },
-  { x: -0.64, z: 0.32, rot: 1.1, lean: -0.45 },
-  { x: 0.12, z: -0.78, rot: -0.6, lean: 0.7 },
-  { x: -0.28, z: 0.74, rot: 2.2, lean: -0.35 },
-  { x: 0.58, z: -0.48, rot: -1.4, lean: 0.5 },
-] as const;
+import { assertNever, type NestSite, type SpeciesId } from "@/lib/game/types";
 
 function Egg({
   x,
@@ -29,26 +41,190 @@ function Egg({
   phase: number;
 }) {
   const group = useRef<Group>(null);
+  const shell = useRef<MeshPhongMaterial>(null);
 
   useFrame((state) => {
     if (!group.current) return;
     const t = state.clock.elapsedTime + phase;
-    group.current.position.y = 0.56 + Math.sin(t * 1.6) * 0.025;
-    group.current.rotation.y = Math.sin(t * 0.35) * 0.12;
+    group.current.position.y = EGG_SIT + Math.sin(t * 1.15) * 0.008;
+    group.current.rotation.y = Math.sin(t * 0.22) * 0.06;
+    if (shell.current) {
+      shell.current.emissiveIntensity = 0.045 + Math.sin(t * 1.4) * 0.02;
+    }
   });
 
   return (
-    <group ref={group} position={[x, 0.56, z]} scale={[0.82, 1.12, 0.82]}>
+    <group ref={group} position={[x, EGG_SIT, z]} scale={[0.78, 1.08, 0.82]}>
       <mesh castShadow>
-        <sphereGeometry args={[0.15, 10, 8]} />
-        <meshPhongMaterial color={color} shininess={22} specular="#efe4d0" />
+        <sphereGeometry args={[0.15, 12, 10]} />
+        <meshPhongMaterial
+          ref={shell}
+          color={color}
+          emissive={color}
+          emissiveIntensity={0.045}
+          shininess={28}
+          specular="#f4ead8"
+        />
       </mesh>
-      <mesh position={[0.045, 0.02, 0.04]}>
-        <sphereGeometry args={[0.035, 6, 6]} />
-        <meshPhongMaterial color="#f2eadc" shininess={18} specular="#fff6ea" />
+      <mesh position={[0.042, 0.028, 0.038]}>
+        <sphereGeometry args={[0.038, 7, 6]} />
+        <meshPhongMaterial
+          color={NEST_SALT}
+          shininess={42}
+          specular="#fff8ee"
+        />
+      </mesh>
+      <mesh position={[-0.05, -0.02, 0.02]} scale={[0.55, 0.4, 0.45]}>
+        <sphereGeometry args={[0.06, 6, 5]} />
+        <meshPhongMaterial
+          color={color}
+          transparent
+          opacity={0.28}
+          shininess={8}
+          specular="#e8dcc8"
+        />
       </mesh>
     </group>
   );
+}
+
+function WeaveSkin({ color }: { color: string }) {
+  const map = useMemo(() => getNestWeaveMap(color), [color]);
+  return (
+    <meshPhongMaterial
+      map={map}
+      color="#ffffff"
+      shininess={6}
+      specular="#c4b090"
+    />
+  );
+}
+
+function Reed({
+  pose,
+  color,
+}: {
+  pose: ReedPose;
+  color: string;
+}) {
+  return (
+    <mesh
+      position={[pose.x, pose.y, pose.z]}
+      rotation={[pose.lean, pose.rot, pose.roll]}
+      scale={[pose.sx, pose.sy, pose.sz]}
+      castShadow
+    >
+      <cylinderGeometry args={[1, 1.2, 1, 5]} />
+      <meshPhongMaterial color={color} shininess={8} specular="#efe4c8" />
+    </mesh>
+  );
+}
+
+function NestShell({
+  x,
+  z,
+  yaw,
+  tilt,
+}: {
+  x: number;
+  z: number;
+  yaw: number;
+  tilt: number;
+}) {
+  return (
+    <mesh
+      position={[x, NEST_FLOOR_LIFT + 0.028, z]}
+      rotation={[tilt, yaw, 0.18]}
+      scale={[0.055, 0.055, 0.022]}
+      castShadow
+    >
+      <sphereGeometry args={[1, 8, 6]} />
+      <meshPhongMaterial
+        color="#e8dcc8"
+        shininess={22}
+        specular="#f6f0e6"
+      />
+    </mesh>
+  );
+}
+
+function HomeMarker() {
+  return (
+    <group
+      position={[0.1, NEST_RIM_LIFT + 0.02, -0.16]}
+      rotation={[0.1, 0.35, 0.08]}
+    >
+      <mesh position={[0, 0.28, 0]} castShadow>
+        <cylinderGeometry args={[0.026, 0.038, 0.62, 5]} />
+        <meshPhongMaterial color="#c8b890" shininess={8} specular="#d8d0a8" />
+      </mesh>
+      <mesh
+        position={[0.02, 0.58, 0.015]}
+        rotation={[0.55, 0.25, 0.4]}
+        castShadow
+      >
+        <torusGeometry args={[0.1, 0.036, 6, 10]} />
+        <meshPhongMaterial
+          color="#e4d4b4"
+          emissive="#d8c898"
+          emissiveIntensity={0.14}
+          shininess={20}
+          specular="#f4eee0"
+        />
+      </mesh>
+    </group>
+  );
+}
+
+function TideKelp() {
+  return (
+    <group>
+      <mesh
+        position={[0.58, 0.5, 0.22]}
+        rotation={[0.45, 0.3, 0.28]}
+        castShadow
+      >
+        <coneGeometry args={[0.048, 0.3, 5]} />
+        <meshPhongMaterial color="#4a5a44" shininess={8} specular="#8a9c78" />
+      </mesh>
+      <mesh
+        position={[-0.5, 0.48, 0.3]}
+        rotation={[0.35, -0.4, -0.22]}
+        castShadow
+      >
+        <coneGeometry args={[0.042, 0.26, 5]} />
+        <meshPhongMaterial color="#526448" shininess={8} specular="#8a9c78" />
+      </mesh>
+    </group>
+  );
+}
+
+function SpeciesDress({ speciesId }: { speciesId: SpeciesId }) {
+  switch (speciesId) {
+    case "sporling":
+      return null;
+    case "tideglider":
+      return <TideKelp />;
+    case "brambleback":
+      return (
+        <Reed
+          pose={{
+            x: 0.82,
+            y: 0.44,
+            z: -0.36,
+            lean: 0.62,
+            rot: -0.9,
+            roll: 0.2,
+            sx: 0.034,
+            sy: 0.56,
+            sz: 0.038,
+          }}
+          color="#b8a880"
+        />
+      );
+    default:
+      return assertNever(speciesId, "Unknown nest species");
+  }
 }
 
 function NestMesh({
@@ -63,14 +239,20 @@ function NestMesh({
   aimed: boolean;
 }) {
   const species = speciesDef(nest.speciesId);
-  const eggs = Array.from({ length: nest.eggs }, (_, index) => {
-    const angle = (index / nest.eggs) * Math.PI * 2 + 0.4;
-    return {
-      x: Math.sin(angle) * 0.22,
-      z: Math.cos(angle) * 0.22,
-      phase: nest.x + index * 1.7,
-    };
-  });
+  const eggs = clutchOffsets(nest.eggs).map((egg) => ({
+    ...egg,
+    phase: nest.x + egg.phase,
+  }));
+  const lining = liningFinish(nest.speciesId);
+  const twigs = reedColor(nest.speciesId);
+  const glow = rimLight(isHome, claimable, aimed);
+  const bowl = nestBowlGeometry();
+  const mossEmissive = isHome
+    ? "#d8c898"
+    : claimable || aimed
+      ? "#9ec8b0"
+      : "#000000";
+  const mossIntensity = isHome ? 0.05 : aimed ? 0.14 : claimable ? 0.07 : 0;
 
   return (
     <group
@@ -78,57 +260,109 @@ function NestMesh({
       rotation={[0, nest.yaw, 0]}
     >
       <mesh
-        position={[0, 0.1, 0]}
-        scale={[1.65, 0.3, 1.65]}
+        rotation={[-Math.PI / 2, 0, 0]}
+        position={[0, 0.006, 0]}
         receiveShadow
-        castShadow
       >
-        <sphereGeometry args={[0.7, 12, 8]} />
-        <meshPhongMaterial color="#e2d4b4" shininess={10} specular="#f4ead0" />
+        <circleGeometry args={[NEST_BLEND_RADIUS + 0.28, 20]} />
+        <meshPhongMaterial color={NEST_SCOOP} shininess={4} specular="#a09070" />
       </mesh>
-      <mesh
-        position={[0, 0.44, 0]}
-        rotation={[Math.PI / 2, 0, 0]}
-        castShadow
-        receiveShadow
-      >
-        <torusGeometry args={[0.68, 0.2, 8, 16]} />
-        <meshPhongMaterial color={species.weave} shininess={5} specular="#c4b090" />
+      <mesh geometry={bowl} receiveShadow castShadow>
+        <meshPhongMaterial
+          vertexColors
+          shininess={7}
+          specular="#c4b49a"
+          side={DoubleSide}
+        />
       </mesh>
       <mesh
         rotation={[-Math.PI / 2, 0, 0]}
-        position={[0, 0.36, 0]}
+        position={[0, NEST_FLOOR_LIFT + 0.012, 0]}
         receiveShadow
       >
-        <circleGeometry args={[0.56, 14]} />
-        <meshPhongMaterial color="#efe4c8" shininess={8} specular="#f8f0dc" />
+        <circleGeometry args={[NEST_FLOOR_RADIUS, 16]} />
+        <meshPhongMaterial
+          color={lining.color}
+          shininess={lining.shininess}
+          specular="#f8f0dc"
+        />
       </mesh>
       <mesh
-        position={[0, 0.6, 0]}
+        rotation={[-Math.PI / 2, 0, 0]}
+        position={[0, NEST_FLOOR_LIFT + 0.016, 0]}
+      >
+        <circleGeometry args={[NEST_FLOOR_RADIUS * 0.72, 14]} />
+        <meshPhongMaterial
+          color="#4a4030"
+          transparent
+          opacity={0.22}
+          shininess={2}
+          specular="#705844"
+        />
+      </mesh>
+      <mesh
+        position={[0, 0.46, 0]}
+        rotation={[Math.PI / 2, 0, 0]}
+        castShadow
+        receiveShadow
+      >
+        <torusGeometry args={[0.62, 0.16, 8, 18]} />
+        <WeaveSkin color={species.weave} />
+      </mesh>
+      <mesh
+        position={[0, 0.52, 0]}
+        rotation={[Math.PI / 2, 0, 0]}
+        castShadow
+        receiveShadow
+      >
+        <torusGeometry args={[0.7, 0.11, 8, 16]} />
+        <WeaveSkin color={species.weave} />
+      </mesh>
+      <mesh
+        position={[0, NEST_RIM_LIFT, 0]}
         rotation={[Math.PI / 2, 0, 0]}
         castShadow
       >
-        <torusGeometry args={[0.78, 0.09, 8, 14]} />
+        <torusGeometry args={[NEST_RIM_RADIUS, 0.09, 8, 16]} />
         <meshPhongMaterial
           color={species.moss}
           shininess={8}
           specular="#e8f0dc"
-          emissive={
-            isHome ? "#d8c898" : claimable || aimed ? "#9ec8b0" : "#000000"
-          }
-          emissiveIntensity={isHome ? 0.05 : aimed ? 0.14 : claimable ? 0.07 : 0}
+          emissive={mossEmissive}
+          emissiveIntensity={mossIntensity}
         />
       </mesh>
-      {TWIGS.map((twig) => (
-        <mesh
-          key={`${twig.x}-${twig.z}`}
-          position={[twig.x, 0.55, twig.z]}
-          rotation={[twig.lean, twig.rot, 0.15]}
-          castShadow
-        >
-          <cylinderGeometry args={[0.03, 0.045, 0.55, 5]} />
-          <meshPhongMaterial color="#d4c4a0" shininess={8} specular="#efe4c8" />
-        </mesh>
+      <mesh
+        position={[0, NEST_RIM_LIFT + 0.025, 0]}
+        rotation={[Math.PI / 2, 0, 0]}
+      >
+        <torusGeometry args={[NEST_RIM_RADIUS + 0.05, 0.03, 6, 20]} />
+        <meshPhongMaterial
+          color={glow.color}
+          emissive={glow.emissive}
+          emissiveIntensity={glow.intensity}
+          shininess={14}
+          specular="#fff6e4"
+          transparent
+          opacity={0.78}
+        />
+      </mesh>
+      {RIM_WEAVE.map((pose) => (
+        <Reed
+          key={`weave-${pose.x}-${pose.z}`}
+          pose={pose}
+          color={twigs}
+        />
+      ))}
+      {SPILL_TWIGS.map((pose) => (
+        <Reed
+          key={`spill-${pose.x}-${pose.z}`}
+          pose={pose}
+          color={twigs}
+        />
+      ))}
+      {NEST_SHELLS.map((shell) => (
+        <NestShell key={`${shell.x}-${shell.z}`} {...shell} />
       ))}
       {eggs.map((egg) => (
         <Egg
@@ -139,6 +373,7 @@ function NestMesh({
           phase={egg.phase}
         />
       ))}
+      <SpeciesDress speciesId={nest.speciesId} />
       {aimed || claimable ? (
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.08, 0]}>
           <ringGeometry args={[1.05, 1.18, 22]} />
@@ -149,24 +384,7 @@ function NestMesh({
           />
         </mesh>
       ) : null}
-      {isHome ? (
-        <group position={[0.02, 0.92, -0.08]}>
-          <mesh position={[0, 0.22, 0]} castShadow>
-            <cylinderGeometry args={[0.03, 0.04, 0.55, 5]} />
-            <meshPhongMaterial color="#c8c090" shininess={8} specular="#d8d0a8" />
-          </mesh>
-          <mesh position={[0, 0.52, 0]} castShadow>
-            <sphereGeometry args={[0.12, 10, 8]} />
-            <meshPhongMaterial
-              color="#b8a070"
-              emissive="#8a7850"
-              emissiveIntensity={0.08}
-              shininess={8}
-              specular="#a09070"
-            />
-          </mesh>
-        </group>
-      ) : null}
+      {isHome ? <HomeMarker /> : null}
     </group>
   );
 }

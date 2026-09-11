@@ -28,6 +28,17 @@ A sunny coastal creature stage: **dinosaur bodies** with **Spore-like modular ac
 - Nests and herds placed as part of the landscape.
 - Lighting: soft bloom, hazy depth, warm-cool coastal day — Skyrim-PS3 mood without Nordic gloom as default.
 
+### Nests & hollows
+Authored **rest landmarks**, not floating props. Each hollow is a packed-earth scoop with a woven reed bowl, a clutch of eggs, and a soft salt-light rim.
+
+- **Bowl:** Walkable floor and moss rim share the collision profile (`nestBowlHeight`) — a berm you climb, a lining you settle into.
+- **Weave:** Crossing reed dress (torus + rim sticks) in species cream / seafoam / dry-tan. Tide warren picks up kelp; Bramble croft a few extra dry twigs.
+- **Eggs:** Nestled on the lining, salt spec, faint warmth — not candy orbs hovering in air.
+- **Rim light:** Soft coastal bloom on the crest (warmer at home, seafoam when a wild nest is claimable). Not a neon quest ring.
+- **Ground depression:** Worn meadow stain + darker packed scoop under the bowl. The island mesh stays a height field; the hollow is authored geometry.
+- **Home hollow:** Driftwood stake and a spiral shell. Wild nests keep the same bowl language without the marker.
+- **Do not:** Dirt craters in the island mesh, vinyl toy nests, gothic braziers, changing claim/rest radii or nest-floor collision.
+
 ### Rendering target
 - **PS3 Skyrim-era:** mid-poly, soft bloom, slightly soft textures, 2011 console fidelity.
 - Prefer readable silhouettes over modern UE5 photoreal.
