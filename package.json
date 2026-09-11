@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "tsx --test src/lib/game/collision.test.ts src/lib/game/anim.test.ts src/lib/game/coastal-props.test.ts src/lib/game/audio.test.ts",
+    "test": "tsx --test src/lib/game/collision.test.ts src/lib/game/anim.test.ts src/lib/game/coastal-props.test.ts src/lib/game/audio.test.ts src/lib/game/shore-look.test.ts",
     "props:build": "node scripts/blender/build_coastal_props.mjs"
   },
   "dependencies": {
