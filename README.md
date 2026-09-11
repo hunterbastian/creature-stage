@@ -143,11 +143,28 @@ Mechanical nods to Skyrim / Elden Ring, not their art:
 | Path | Role |
 | --- | --- |
 | `src/app/` | App Router layout + page |
-| `src/components/game/` | R3F canvas, world, nests, wildlife herds, offshore fauna, creature, food, camera, movement loop |
+| `src/components/game/` | R3F canvas, world, coastal dress, nests, wildlife herds, offshore fauna, creature, food, camera, movement loop |
 | `src/components/ui/` | Overlay editor, starter picker, touch stick, rotate hint, stats, toasts |
+| `src/lib/game/worldgen/` | Seeded coastal set dressing (biomes, density knobs, ground-Y hook) |
 | `scripts/blender/` | Headless bpy generator for the saurian glTF kit; re-export notes in `scripts/blender/README.md` |
 
-Locomotion (`x`, `z`, `yaw`, stamina, vitality, feel pulses) lives in `src/lib/game/sim.ts` and `src/lib/game/locomotion.ts` so the HUD does not rerender every frame. Wildlife poses live in `src/lib/game/wildlife.ts`. Leviathan moods live in `src/lib/game/offshore-ai.ts`. Form thresholds, herd-mate curve, and the current objective live in `src/lib/game/progress.ts`.
+Locomotion (`x`, `z`, `yaw`, stamina, vitality, feel pulses) lives in `src/lib/game/sim.ts` and `src/lib/game/locomotion.ts` so the HUD does not rerender every frame. Wildlife poses live in `src/lib/game/wildlife.ts`. Leviathan moods live in `src/lib/game/offshore-ai.ts`. Form thresholds, herd-mate curve, and the current objective live in `src/lib/game/progress.ts`. Coastal set dressing is seeded in `src/lib/game/worldgen/` and drawn by `CoastalDress`.
+
+## World generation
+
+The island is **seeded set dressing**, not a heightmap. Same seed → same groves, tide pools, and wrack every reload. Fruit still randomizes, but it refuses pools and rock shelves so objectives stay walkable.
+
+| Knob | Where | Notes |
+| --- | --- | --- |
+| `WORLDGEN_SEED` (`0x71def04`) | `src/lib/game/worldgen/density.ts` | Bump to reshuffle the whole island. |
+| `DENSITY.desktop` / `DENSITY.mobile` | same file | Per-prop instance caps. Mobile is roughly half. |
+| `BAND` | same file | Meadow / grove / shore / waterline radii. Groves stay on the beach–meadow edge (no forest wall). |
+| `PROP_CATALOG` | `src/lib/game/worldgen/catalog.ts` | Which props instance, which band they belong to. |
+| `sampleGroundY(x, z)` | `src/lib/game/worldgen/ground.ts` | Props sit on the current flat meadow / sand ring. **Collision merge hook:** rebind this when a heightmap API lands. Do not rewrite locomotion clamps here. |
+
+Shore micro-biomes (tide terraces, kelp wrack, rock shelves, shell fans) are authored arcs in `layout.ts`, then filled with instanced props. Nest bowls keep a clearing; `isWorldgenOccupied` is the fruit keep-out.
+
+**Likely merge conflicts with collision:** `World.tsx` ground meshes, `locomotion.ts` island clamp, and any new height sampler. Dressing should keep sampling Y through `sampleGroundY` and stay out of `Creature.tsx` / offshore AI. `src/lib/game/world-dress.ts` is a thin re-export of the worldgen module.
 
 ## What's next
 
