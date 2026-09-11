@@ -3,6 +3,7 @@
  * times a second would rerender the HUD. The canvas reads these fields
  * inside `useFrame`; the store only syncs stats when parts or meals change.
  */
+import { cueFeel } from "./audio";
 import { groundHeight } from "./collision";
 import { FEEL } from "./constants";
 
@@ -97,9 +98,11 @@ export function pulseEat(formUp = false): void {
   sim.eatFlash = 1;
   kick(FEEL.eatKick, FEEL.eatHitstop);
   sim.stamina = Math.max(0, sim.stamina - 0.07);
+  cueFeel("eat");
   if (formUp) {
     sim.formFlash = 1;
     kick(FEEL.formKick, FEEL.formHitstop);
+    cueFeel("form");
   }
 }
 
