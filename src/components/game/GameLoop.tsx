@@ -236,11 +236,10 @@ export function GameLoop() {
       if (nestIndex >= 0) {
         const nest = NEST_LAYOUT[nestIndex];
         // Per-nest yaw keeps the chase cam off nearby groves.
-        const lookYaw = [0, Math.PI, 0] as const;
         sim.x = nest.x;
         sim.z = nest.z;
         sim.y = groundHeight(sim.x, sim.z);
-        sim.yaw = lookYaw[nestIndex];
+        sim.yaw = nestIndex === 1 ? Math.PI : 0;
         sim.vx = 0;
         sim.vy = 0;
         sim.vz = 0;
