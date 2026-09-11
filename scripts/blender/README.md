@@ -53,9 +53,9 @@ iOS Safari is the performance ceiling. Do not add unique meshes per instance, 4k
 
 Creatures are authored as a single glTF 2.0 kit at `public/models/saurian-kit.glb`. The live game loads named nodes with drei `useGLTF` and swaps editor parts without touching gameplay.
 
-## Re-export
+### Re-export
 
-Needs **Blender 4.2+** (4.2.23 LTS used here) with the bundled glTF exporter.
+Needs **Blender 4.2+** (4.2.9 LTS used here) with the bundled glTF exporter.
 
 From the repo root:
 
@@ -70,9 +70,16 @@ blender --background --python scripts/blender/build_saurians.py -- \
   --out public/models/saurian-kit.glb
 ```
 
+Optional EEVEE 3/4 previews of the three locked starters (needs a GPU / libEGL; skipped on headless VMs):
+
+```bash
+blender --background --python scripts/blender/build_saurians.py -- \
+  --preview scripts/blender/previews
+```
+
 The script also rewrites `src/lib/game/saurian-sockets.ts` (attach points + leg drop). Do not hand-edit that file.
 
-## What it builds
+### What it builds
 
 | Node prefix | Role |
 | --- | --- |
@@ -80,18 +87,28 @@ The script also rewrites `src/lib/game/saurian-sockets.ts` (attach points + leg 
 | `legs_*` | One left-style limb at the hip origin; the game mirrors it |
 | `mouth_*` / `eyes_*` / `arms_*` / `tail_*` / `accessory_*` | Modular editor slots |
 
+Chassis volumes (children of the same empties — `KitNode` still walks the tree):
+
+| Chassis | Volumes | Silhouette |
+| --- | --- | --- |
+| `sleek` | `sleek_body` + `sleek_neck` + `sleek_head` | Hip-heavy biped, wasp waist, S-neck, boxy skull |
+| `plump` | `plump_body` + `plump_neck` + `plump_head` | Barrel torso, long S-neck, tiny skull |
+| `spiky` | `spiky_body` | High-arched back, staggered kite plates, small low head |
+
+Lofts use superellipse cross-sections (fleshy, not lathe-circles), a cream belly via vertex colors, and a light hex-scale displace on hide. No public node names changed vs the first kit — editor / mutate / `anim.ts` still bind `mouth_*_lower` / `*_pad`, `legs_*`, `tail_*`.
+
 Coordinate system matches the R3F scene: **+Y up, +Z forward**. The exporter uses glTF `+Y up`.
 
-## Editing by hand
+### Editing by hand
 
 1. Open a new Blender file, File → Append from a run of this script, or import the GLB.
 2. Keep object **names** stable — `Creature.tsx` looks them up.
 3. Materials named `mat_skin`, `mat_keratin`, `mat_plate`, `mat_wet`, `mat_eye`, `mat_pupil`, `mat_cream`, `mat_claw` map to in-engine Phong finishes.
 4. Export glTF 2.0 (`.glb`), **+Y Up**, Apply Modifiers, no cameras/lights. Skip Draco unless you also ship a decoder.
 
-Poly target: mid-poly PS3-era (about 1–2k tris per chassis after one subsurf). iOS Safari is the performance ceiling — do not bake 4k maps or heavy skinning.
+Poly target: mid-poly PS3-era, **no subsurf** (shade-smooth + 12–14 sided lofts). Measured on the last export: **2596 / 2620 / 3152 tris** for theropod / sauropod / stego chassis (including Spore shells/plates); stilts 440; maw 418; whole kit ~15k. Assembled starter stays under ~8k. The build prints a `tris` JSON blob. iOS Safari is the performance ceiling — do not bake 4k maps or heavy skinning.
 
-## Animation (walk / idle / eat)
+### Animation (walk / idle / eat)
 
 The kit is **unskinned**. Runtime motion is procedural in `src/lib/game/anim.ts` (applied by `src/components/game/useCreatureAnim.ts`): hip swing, foot lift, body bob/roll, tail sway, idle breath/look, and jaw open tied to `sim.eatFlash`.
 
@@ -122,8 +139,9 @@ export_skins=True
 
 Do not add a full IK solver for Safari landscape — foot height comes from collision (`sim.y` / `groundHeight`). Props use `sampleGroundY` in `src/lib/game/worldgen/ground.ts`, which collision binds to `surfaceHeight`.
 
-## Knobs
+### Knobs
 
 - Silhouette rings live in `build_theropod` / `build_sauropod` / `build_stego` inside `build_saurians.py`.
+- Cross-section knobs on `Ring`: `power` (superellipse), `peak` (dorsal), `flat` (belly).
 - Engine tints still come from `src/lib/game/catalog.ts` (seafoam / sage / cream).
-- Coastal scale/bump maps stay in `src/lib/game/creature-look.ts`.
+- Coastal scale/bump maps stay in `src/lib/game/creature-look.ts` (96px salt-light Phong).

@@ -23,12 +23,12 @@ export function CreatureMaterial({
           map={maps.map}
           specularMap={maps.specMap}
           bumpMap={maps.bumpMap}
-          bumpScale={0.11}
+          bumpScale={0.14}
           color="#ffffff"
-          specular="#c8d4c4"
-          shininess={16}
+          specular="#d4e2dc"
+          shininess={20}
           emissive={color}
-          emissiveIntensity={0.035}
+          emissiveIntensity={0.04}
           vertexColors={vertexColors}
           side={DoubleSide}
         />
@@ -39,12 +39,12 @@ export function CreatureMaterial({
           map={maps.map}
           specularMap={maps.specMap}
           bumpMap={maps.bumpMap}
-          bumpScale={0.1}
+          bumpScale={0.11}
           color="#ffffff"
-          specular="#d4c8b0"
-          shininess={18}
+          specular="#e0d4bc"
+          shininess={22}
           emissive={color}
-          emissiveIntensity={0.02}
+          emissiveIntensity={0.022}
           vertexColors={vertexColors}
           side={DoubleSide}
         />
@@ -55,12 +55,12 @@ export function CreatureMaterial({
           map={maps.map}
           specularMap={maps.specMap}
           bumpMap={maps.bumpMap}
-          bumpScale={0.05}
+          bumpScale={0.045}
           color="#ffffff"
-          specular="#b8c8c4"
-          shininess={32}
+          specular="#c4ddd8"
+          shininess={42}
           emissive={color}
-          emissiveIntensity={0.03}
+          emissiveIntensity={0.032}
           vertexColors={vertexColors}
           side={DoubleSide}
         />
@@ -71,12 +71,12 @@ export function CreatureMaterial({
           map={maps.map}
           specularMap={maps.specMap}
           bumpMap={maps.bumpMap}
-          bumpScale={0.09}
+          bumpScale={0.12}
           color="#ffffff"
-          specular="#d8d0c0"
-          shininess={14}
+          specular="#ece6d4"
+          shininess={18}
           emissive={color}
-          emissiveIntensity={0.025}
+          emissiveIntensity={0.028}
           vertexColors={vertexColors}
           side={DoubleSide}
         />

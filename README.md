@@ -96,7 +96,7 @@ Add the page to your Home Screen if you want a more app-like fullscreen, then ke
 
 - Full-screen coastal meadow with Skyrim-PS3 lighting (warm sun, grass, sea).
 - Authored coastal props from a Blender/Node glTF kit (`public/models/coastal-props.glb`) — rocks, driftwood, kelp, shells, and wind-bent grove trees instance as mid-fi meshes, not primitive blobs.
-- Three locked starters: **Theropod** (biped hunter), **Sauropod** (long-neck), **Stego** (beaked herbivore, cream spiral plates). Seafoam/cream + modular accents, loaded from a Blender glTF kit (`public/models/saurian-kit.glb`).
+- Three locked starters: **Theropod** (biped hunter), **Sauropod** (long-neck), **Stego** (beaked herbivore, cream spiral plates). Seafoam/cream + modular accents, loaded from a Blender glTF kit (`public/models/saurian-kit.glb`). Rebuild: `blender --background --python scripts/blender/build_saurians.py` (see `scripts/blender/README.md`).
 - A modular creature: **body, legs, mouth, eyes**, plus unlockable **arms, tail, and accessory** (named glTF nodes, live editor swaps).
 - Live editor: swapping a part updates the 3D mesh immediately.
 - Survival nibble loop: 8 fruits in the world (one waits in front of you), they respawn after you eat them.
