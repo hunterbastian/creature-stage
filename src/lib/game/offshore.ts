@@ -19,8 +19,8 @@ export const OFFSHORE_LANE_INNER = WORLD_RADIUS + 10;
 /** Outer swim bound. Beasts stay inside the ocean disk. */
 export const OFFSHORE_LANE_OUTER = 52;
 
-/** Mean breach height (water mesh sits near y = -0.2). */
-export const OFFSHORE_WATER_Y = -0.06;
+/** Mean breach height. Chase cam is ~1.1 up, so they must rise off the waterline. */
+export const OFFSHORE_WATER_Y = 0.55;
 
 export const OFFSHORE_KINDS = ["serpent", "ray", "leviathan"] as const;
 export type OffshoreKind = (typeof OFFSHORE_KINDS)[number];
@@ -58,50 +58,50 @@ export const OFFSHORE_BEASTS: readonly OffshoreSpec[] = [
   {
     id: "coil",
     kind: "serpent",
-    radius: 38.8,
+    radius: 36.2,
     speed: 0.036,
     phase: 0.42,
     clockwise: true,
-    bob: 0.28,
+    bob: 0.42,
     bobHz: 0.42,
     wobble: 1.15,
-    scale: 1,
+    scale: 1.22,
   },
   {
     id: "veil",
     kind: "ray",
-    radius: 35.4,
+    radius: 35.2,
     speed: 0.024,
     phase: 2.55,
     clockwise: false,
-    bob: 0.16,
+    bob: 0.28,
     bobHz: 0.33,
     wobble: 0.85,
-    scale: 1,
+    scale: 1.35,
   },
   {
     id: "keel",
     kind: "leviathan",
-    radius: 43.8,
+    radius: 41.6,
     speed: 0.018,
     phase: 4.18,
     clockwise: true,
-    bob: 0.22,
+    bob: 0.36,
     bobHz: 0.28,
     wobble: 1.35,
-    scale: 1.06,
+    scale: 1.42,
   },
   {
     id: "rift",
     kind: "serpent",
-    radius: 49.2,
+    radius: 47.4,
     speed: 0.015,
     phase: 5.4,
     clockwise: false,
-    bob: 0.18,
+    bob: 0.3,
     bobHz: 0.36,
     wobble: 1.05,
-    scale: 0.68,
+    scale: 0.92,
   },
 ];
 
@@ -121,7 +121,7 @@ export function offshorePose(spec: OffshoreSpec, time: number): OffshorePose {
 
   return {
     x: Math.sin(angle) * radius,
-    y: OFFSHORE_WATER_Y + spec.bob * 0.4 + bob,
+    y: OFFSHORE_WATER_Y + spec.bob * 0.55 + bob,
     z: Math.cos(angle) * radius,
     yaw: Math.atan2(tangentX, tangentZ),
     pitch: Math.cos(time * spec.bobHz + spec.phase) * spec.bob * 0.16,

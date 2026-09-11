@@ -12,10 +12,10 @@ import {
 } from "@/lib/game/offshore";
 import { assertNever } from "@/lib/game/types";
 
-const INK = "#355860";
-const INK_DEEP = "#2c4c56";
-const SEAFOAM = "#4e7a78";
-const SEAFOAM_LIFT = "#6a9490";
+const INK = "#3d6c74";
+const INK_DEEP = "#335860";
+const SEAFOAM = "#5a8a86";
+const SEAFOAM_LIFT = "#7aa8a2";
 const BONE = "#e4d8c4";
 
 const SERPENT_SPINE = [
@@ -31,7 +31,7 @@ const SERPENT_SPINE = [
 function InkSkin({
   color,
   emissive = color,
-  glow = 0.08,
+      glow = 0.12,
   shininess = 26,
 }: {
   color: string;
@@ -72,13 +72,14 @@ function SerpentSilhouette({ detail }: { detail: number }) {
     root.children.forEach((node, index) => {
       const wave = Math.sin(t * 0.48 - index * 0.58);
       node.position.x = wave * 0.32;
+      node.position.y = Math.abs(Math.sin(t * 0.36 - index * 0.5)) * 0.55;
       node.rotation.y = wave * 0.16;
     });
   });
 
   return (
     <group>
-      <group position={[0, 0.12, 7.55]}>
+      <group position={[0, 0.55, 7.55]}>
         <mesh scale={[1.18, 0.78, 1.48]}>
           <sphereGeometry args={[0.7, detail, detail - 2]} />
           <InkSkin color={INK} emissive={SEAFOAM} glow={0.09} />
@@ -154,7 +155,7 @@ function RaySilhouette({ detail }: { detail: number }) {
 
   return (
     <group>
-      <mesh scale={[2.15, 0.34, 1.85]}>
+      <mesh position={[0, 0.28, 0]} scale={[2.15, 0.48, 1.85]}>
         <sphereGeometry args={[1, detail, detail - 2]} />
         <InkSkin color={INK} emissive={SEAFOAM} glow={0.08} />
       </mesh>
@@ -181,7 +182,7 @@ function RaySilhouette({ detail }: { detail: number }) {
         <BoneAccent />
       </mesh>
 
-      <group ref={left} position={[-1.15, 0.02, -0.15]}>
+      <group ref={left} position={[-1.15, 0.22, -0.15]}>
         <mesh position={[-1.55, 0, 0]} scale={[2.05, 0.13, 1.28]}>
           <sphereGeometry args={[1, detail, 6]} />
           <InkSkin color={SEAFOAM} emissive={SEAFOAM_LIFT} glow={0.07} />
@@ -191,7 +192,7 @@ function RaySilhouette({ detail }: { detail: number }) {
           <InkSkin color={INK_DEEP} glow={0.05} />
         </mesh>
       </group>
-      <group ref={right} position={[1.15, 0.02, -0.15]}>
+      <group ref={right} position={[1.15, 0.22, -0.15]}>
         <mesh position={[1.55, 0, 0]} scale={[2.05, 0.13, 1.28]}>
           <sphereGeometry args={[1, detail, 6]} />
           <InkSkin color={SEAFOAM} emissive={SEAFOAM_LIFT} glow={0.07} />
@@ -249,10 +250,10 @@ function LeviathanSilhouette({ detail }: { detail: number }) {
         <BoneAccent />
       </mesh>
 
-      <mesh
-        position={[0, 1.05, 0.15]}
+        <mesh
+        position={[0, 1.55, 0.15]}
         rotation={[0.12, 0, 0]}
-        scale={[0.1, 1.15, 1.55]}
+        scale={[0.12, 1.85, 1.7]}
       >
         <coneGeometry args={[1, 1, 6]} />
         <InkSkin color={SEAFOAM} emissive={SEAFOAM_LIFT} glow={0.11} />
@@ -396,6 +397,7 @@ function OffshoreBeast({
   wake: boolean;
 }) {
   const root = useRef<Group>(null);
+  const start = offshorePose(spec, 0);
 
   useFrame(({ clock }) => {
     if (!root.current) return;
@@ -406,7 +408,13 @@ function OffshoreBeast({
 
   return (
     <>
-      <group ref={root} scale={spec.scale}>
+      <group
+        ref={root}
+        scale={spec.scale}
+        position={[start.x, start.y, start.z]}
+        rotation={[start.pitch, start.yaw, 0]}
+        userData={{ tideformOffshore: spec.id }}
+      >
         <BeastBody kind={spec.kind} detail={detail} />
       </group>
       {wake ? <WakeHint spec={spec} /> : null}
