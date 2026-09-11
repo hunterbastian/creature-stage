@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { MuteControl } from "@/components/ui/MuteControl";
 import { STARTER_CHOICES } from "@/lib/game/catalog";
 import { useGameStore } from "@/lib/game/store";
 import { assertNever, type BodyId } from "@/lib/game/types";
@@ -44,6 +45,15 @@ export function StarterPicker() {
 
   return (
     <div className="pointer-events-auto absolute inset-0 z-30 flex items-center justify-center bg-[#2a261c]/55 px-4 backdrop-blur-[2px]">
+      <div
+        className="absolute"
+        style={{
+          top: "max(0.7rem, env(safe-area-inset-top))",
+          right: "max(0.7rem, env(safe-area-inset-right))",
+        }}
+      >
+        <MuteControl compact />
+      </div>
       <div
         data-allow-scroll
         className="w-full max-w-xl rounded-2xl border border-white/12 bg-[#1e1c18]/92 p-4 shadow-2xl shadow-black/50"

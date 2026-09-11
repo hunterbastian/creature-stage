@@ -7,6 +7,7 @@ import {
   type Dispatch,
   type SetStateAction,
 } from "react";
+import { MuteControl } from "@/components/ui/MuteControl";
 import { partsForSlot, slotLabel } from "@/lib/game/catalog";
 import { SLOT_UNLOCK_AT } from "@/lib/game/constants";
 import { steer } from "@/lib/game/input";
@@ -452,20 +453,23 @@ function CompactHud({
             <StaminaBreath compact />
           </div>
         </div>
-        <button
-          type="button"
-          className={`pointer-events-auto min-h-11 min-w-11 touch-manipulation rounded-full border px-4 text-xs font-semibold uppercase tracking-widest backdrop-blur ${
-            editorNudge
-              ? "tideform-pulse border-lime-200/60 bg-lime-300/25"
-              : "border-white/15 bg-black/45"
-          }`}
-          onClick={() => {
-            setOpen((value) => !value);
-            clearEditorNudge();
-          }}
-        >
-          {open ? "Close" : "Editor"}
-        </button>
+        <div className="pointer-events-auto flex items-center gap-2">
+          <MuteControl compact />
+          <button
+            type="button"
+            className={`min-h-11 min-w-11 touch-manipulation rounded-full border px-4 text-xs font-semibold uppercase tracking-widest backdrop-blur ${
+              editorNudge
+                ? "tideform-pulse border-lime-200/60 bg-lime-300/25"
+                : "border-white/15 bg-black/45"
+            }`}
+            onClick={() => {
+              setOpen((value) => !value);
+              clearEditorNudge();
+            }}
+          >
+            {open ? "Close" : "Editor"}
+          </button>
+        </div>
       </header>
 
       {toast ? (
@@ -551,9 +555,12 @@ function DesktopHud() {
     >
       <header className="flex items-start justify-between gap-4">
         <div className="space-y-2">
-          <h1 className="font-sans text-2xl font-semibold tracking-tight text-white">
-            Tideform
-          </h1>
+          <div className="flex items-center gap-2">
+            <h1 className="font-sans text-2xl font-semibold tracking-tight text-white">
+              Tideform
+            </h1>
+            <MuteControl />
+          </div>
           <ObjectiveChip />
           <VitalityBreath />
           <StaminaBreath />
@@ -603,8 +610,9 @@ function DesktopHud() {
         <span className="font-semibold text-lime-200">WASD</span> walk ·{" "}
         <span className="font-semibold text-lime-200">Shift</span> trot ·{" "}
         <span className="font-semibold text-lime-200">F</span> or tap the
-        compass to focus ·         fruit grows you · far shore wakes the deep ·{" "}
-        <span className="font-semibold text-lime-200">E</span> nestle
+        compass to focus · fruit grows you · far shore wakes the deep ·{" "}
+        <span className="font-semibold text-lime-200">E</span> nestle ·{" "}
+        <span className="font-semibold text-lime-200">M</span> mute
       </footer>
     </div>
   );

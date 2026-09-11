@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
+import { bindCoastalAudio } from "@/lib/game/audio";
 
 const GameCanvas = dynamic(
   () => import("@/components/game/GameCanvas").then((mod) => mod.GameCanvas),
@@ -42,7 +43,8 @@ export function Game() {
 
   useEffect(() => {
     const root = shellRef.current;
-    if (!root) return;
+    const unbindAudio = bindCoastalAudio();
+    if (!root) return unbindAudio;
 
     const onTouchMove = (event: TouchEvent) => {
       const target = event.target as HTMLElement | null;
@@ -57,6 +59,7 @@ export function Game() {
     document.addEventListener("gestureend", preventGesture);
 
     return () => {
+      unbindAudio();
       root.removeEventListener("touchmove", onTouchMove);
       document.removeEventListener("gesturestart", preventGesture);
       document.removeEventListener("gesturechange", preventGesture);
