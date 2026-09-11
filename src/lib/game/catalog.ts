@@ -45,7 +45,7 @@ export const PARTS: PartDef[] = [
     slot: "body",
     name: "Stego",
     blurb: "Bone plates and spiral shells.",
-    color: "#8a8878",
+    color: "#7d9484",
     speed: -0.2,
     bite: 0.12,
   },

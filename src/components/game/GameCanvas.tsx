@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { Suspense, useMemo } from "react";
 import { Canvas } from "@react-three/fiber";
 import {
   canvasGlOptions,
@@ -33,8 +33,10 @@ export function GameCanvas() {
       <World />
       <OffshoreFauna />
       <NestField />
-      <WildlifeField />
-      <Creature />
+      <Suspense fallback={null}>
+        <WildlifeField />
+        <Creature />
+      </Suspense>
       <FoodField />
       <CameraRig />
       <GameLoop />
