@@ -12,6 +12,7 @@ import { EraLook } from "./EraLook";
 import { FoodField } from "./Food";
 import { GameLoop } from "./GameLoop";
 import { NestField } from "./Nests";
+import { OffshoreFauna } from "./OffshoreFauna";
 import { WildlifeField } from "./Wildlife";
 import { World } from "./World";
 
@@ -25,11 +26,12 @@ export function GameCanvas() {
       style={{ touchAction: "none" }}
       shadows
       dpr={dpr}
-      camera={{ fov: 46, near: 0.12, far: 110, position: [3.2, 2.1, 5.4] }}
+      camera={{ fov: 46, near: 0.12, far: 130, position: [3.2, 2.1, 5.4] }}
       gl={gl}
       onContextMenu={(event) => event.preventDefault()}
     >
       <World />
+      <OffshoreFauna />
       <NestField />
       <WildlifeField />
       <Creature />

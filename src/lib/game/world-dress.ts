@@ -99,6 +99,8 @@ const HAZE: HazeSpec[] = [
   { x: -16.6, y: 0.48, z: 6.4, radius: 4.7 },
   { x: 5.4, y: 0.4, z: -17.6, radius: 5.0 },
   { x: -7.2, y: 0.46, z: 16.8, radius: 4.5 },
+  { x: 28.6, y: 0.62, z: 10.4, radius: 7.4 },
+  { x: -24.8, y: 0.66, z: -16.2, radius: 6.8 },
 ];
 
 const LANDFORMS: LandformSpec[] = [

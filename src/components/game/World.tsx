@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { Sky } from "@react-three/drei";
 import { WORLD_RADIUS } from "@/lib/game/constants";
 import { isCoarsePointer } from "@/lib/game/device";
+import { OFFSHORE_LANE_INNER, OCEAN_RADIUS } from "@/lib/game/offshore";
 import { CoastalDress } from "./CoastalDress";
 
 export function World() {
@@ -40,8 +41,12 @@ export function World() {
       />
       <directionalLight color="#8a9aa0" position={[-10, 7, -8]} intensity={0.28} />
 
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.24, 0]}>
+        <circleGeometry args={[OCEAN_RADIUS, 32]} />
+        <meshPhongMaterial color="#245868" shininess={20} specular="#7aadb8" />
+      </mesh>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.2, 0]}>
-        <circleGeometry args={[48, 32]} />
+        <circleGeometry args={[OFFSHORE_LANE_INNER, 32]} />
         <meshPhongMaterial color="#3d7288" shininess={28} specular="#9ec8d0" />
       </mesh>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.035, 0]}>
