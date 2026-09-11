@@ -131,7 +131,7 @@ Horizon fauna from the far ocean lane can escalate into a real shore fight. They
 
 Knobs live in `src/lib/game/offshore.ts`. The brain is `src/lib/game/offshore-ai.ts`.
 
-Reviewer warp: open `/#hunt`, pick a starter, and Coil stages on the +Z beach so you do not wait a full orbit. `?starter=theropod|sauropod|stego` (or `sleek|plump|spiky`) auto-picks a chassis.
+Reviewer warp: open `/#hunt`, pick a starter, and Coil stages on the +Z beach so you do not wait a full orbit. Beauty shots: `/#waterline` (same beach, no hunt) and `/#overlook` (grove hill). `?starter=theropod|sauropod|stego` (or `sleek|plump|spiky`) auto-picks a chassis.
 
 ## World collision
 
@@ -145,16 +145,29 @@ Knobs live in `src/lib/game/collision.ts` (`MEADOW_HEIGHT`, `WATER_Y`, `SHORE_LI
 
 Salt light, not grimdark, not candy. The chase cam on iPhone landscape is the beauty shot: cream-haze horizon, wet sand, clear tide pools, a grove you can stand in.
 
+Post stack (see `EraLook`): **Reinhard** on the renderer → **capped Unreal bloom** → **one coastal grade blit**. Tune in `src/lib/game/atmosphere.ts`, not in JSX.
+
 | Knob | Where | Notes |
 | --- | --- | --- |
-| `ATMOSPHERE.desktop` / `.mobile` | `src/lib/game/atmosphere.ts` | Fog near/far, sun height, bloom strength/threshold, exposure. Mobile skips the grade pass. |
+| `ATMOSPHERE.desktop` / `.mobile` | `src/lib/game/atmosphere.ts` | Fog, sun, lights, exposure, bloom, grade. |
+| `bloom.resolution` | same | Longest-edge cap for UnrealBloomPass (composer would otherwise track half the canvas). Desktop **720**, mobile **180**. |
+| `bloom.strength` / `radius` / `threshold` | same | Soft salt glow. Threshold sits *above* foam albedo luma so the waterline does not blow out; water specular glints still bloom. |
+| `grade.*` | same | One ShaderPass: cool shadows, cream mids, warm highlights, mild contrast around meadow luma, highlight shoulder, optional vignette. |
 | `DRESS` | same file | Instanced prop / mist colors. |
-| `COASTAL_GRADE` | same file | Desktop-only lift/gain (cool dirt, warm sky). |
-| `SHORE` / `SHORE_BAND` | `src/lib/game/shore-look.ts` | Ocean discs, wet-sand vertex strip, foam lace, tide-pool bed/rim/water. |
+| `SHORE` / `SHORE_BAND` | `src/lib/game/shore-look.ts` | Ocean discs, wet-sand vertex strip, foam lace, tide-pool bed/rim/water. Foam is salt-grey (`#bcc8c4`), not paper white. |
 
-**Before:** gray-green exp fog, noon-ish key, flat water discs, bloom that barely kissed highlights, props as uniform scatter on a disc.
+**iOS-safe path** (what mobile skips / cheapens):
 
-**After:** linear cream fog (island readable, horizon melts), lower warm sun + cool ocean fill, near-shore water you can see the wet sand through, wet-rock tide pools with a pebble bed under clear water, grove mist, authored places (overlook hill, east tide shelf, nest hollows with packed earth).
+- Bloom pyramid is capped at **180px** longest edge (desktop 720). Same UnrealBloomPass, far fewer texels.
+- Grade **still runs** (iPhone landscape is the beauty shot) but with gentler split-tone / contrast, a stronger white shoulder, and **vignette 0**. Same shader, lighter uniforms — one fullscreen blit, not a second bloom.
+- Still no MSAA, DPR cap 1.15, 512px shadows, fewer instances (see Mobile play).
+- To kill the grade blit entirely, set `ATMOSPHERE.mobile.grade.enabled = false`.
+
+Beauty warps (pick a starter, or `?starter=theropod`): `/#waterline` (north beach, just inland of the leviathan notice ring), `/#overlook` (grove hill facing the sea). `/#hunt` is still the leviathan staging warp.
+
+**Before:** tiny lift/gain grade on desktop only, constructor bloom size ignored after resize (full half-res mip chain), foam bright enough to bloom as a white ring.
+
+**After:** capped bloom with a real threshold, split-tone grade on both tiers, foam coordinated with the threshold, soft vignette on desktop only.
 
 ## How it should feel
 
@@ -174,7 +187,7 @@ Mechanical nods to Skyrim / Elden Ring, not their art:
 | `src/app/` | App Router layout + page |
 | `src/components/game/` | R3F canvas, world, shore water, coastal dress, nests, wildlife herds, offshore fauna, creature, food, camera, movement loop |
 | `src/components/ui/` | Overlay editor, starter picker, mute, touch stick, rotate hint, stats, toasts |
-| `src/lib/game/atmosphere.ts` | Look knobs: fog, sun, bloom, dress colors |
+| `src/lib/game/atmosphere.ts` | Look knobs: fog, sun, bloom, grade, dress colors |
 | `src/lib/game/shore-look.ts` | Water, wet sand, foam, tide-pool clarity knobs |
 | `src/lib/game/audio.ts` | Web Audio coastal bed + eat/form cues (iOS gesture unlock) |
 | `src/lib/game/worldgen/` | Seeded coastal set dressing (biomes, density knobs, landmarks, ground-Y hook) |
