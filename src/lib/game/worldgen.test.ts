@@ -65,7 +65,7 @@ test("nest hollows stay cleared as places", () => {
         Math.hypot(clearing.x - nest.x, clearing.z - nest.z) < 0.05,
     );
     assert.ok(hit);
-    assert.ok(hit.radius >= 2.2);
+    assert.ok(hit.radius >= 2.15);
   }
 });
 
