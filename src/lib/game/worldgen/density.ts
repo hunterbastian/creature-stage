@@ -37,7 +37,7 @@ export type DensityKnobs = {
 
 export const DENSITY: Record<DensityTier, DensityKnobs> = {
   desktop: {
-    grass: 60,
+    grass: 54,
     reeds: 26,
     dryRocks: 26,
     wetRocks: 18,
@@ -57,7 +57,7 @@ export const DENSITY: Record<DensityTier, DensityKnobs> = {
     extraGroveStrips: 2,
   },
   mobile: {
-    grass: 26,
+    grass: 18,
     reeds: 10,
     dryRocks: 10,
     wetRocks: 10,
