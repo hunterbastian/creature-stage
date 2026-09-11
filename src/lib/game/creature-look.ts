@@ -63,8 +63,8 @@ export function getCoastalMaps(hex: string, finish: Finish): CoastalMaps {
 }
 
 function paintMaps(hex: string, finish: Finish): CoastalMaps {
-  // PS3 Skyrim coastal hide: readable scale, no dirt, no sponge grit.
-  const size = 64;
+  // PS3 Skyrim coastal hide: readable scale, salt bloom, no dirt grit.
+  const size = 96;
   const albedo = makeCanvas(size);
   const spec = makeCanvas(size);
   const bump = makeCanvas(size);
@@ -78,11 +78,12 @@ function paintMaps(hex: string, finish: Finish): CoastalMaps {
   const base = hexToRgb(hex);
   const rand = mulberry32(hashSeed(`skyrim:${finish}:${hex}`));
   const blotch = valueNoise(size, 5, rand);
-  const grain = valueNoise(size, 11, rand);
+  const grain = valueNoise(size, 12, rand);
+  const cells = finish === "plate" ? 7 : finish === "keratin" ? 8 : 9;
 
   const contrast =
-    finish === "plate" ? 0.07 : finish === "keratin" ? 0.055 : 0.05;
-  const pitAmt = finish === "wet" ? 0.05 : finish === "plate" ? 0.07 : 0.06;
+    finish === "plate" ? 0.08 : finish === "keratin" ? 0.06 : 0.055;
+  const pitAmt = finish === "wet" ? 0.04 : finish === "plate" ? 0.08 : 0.065;
 
   const aData = a.createImageData(size, size);
   const sData = s.createImageData(size, size);
@@ -93,15 +94,18 @@ function paintMaps(hex: string, finish: Finish): CoastalMaps {
       const i = y * size + x;
       const p = i * 4;
       const mottle = (blotch[i] - 0.5) * contrast;
-      const grainN = (grain[i] - 0.5) * 0.045;
-      const pit = poreHint(x, y, size) * pitAmt;
-      const hex = hexScale(x, y, size);
-      const scales = finish === "wet" ? 0 : hex.fill * 0.1 + hex.rim * 0.08;
+      const grainN = (grain[i] - 0.5) * 0.04;
+      const pit = poreHint(x, y, size, cells) * pitAmt;
+      const hex = hexScale(x, y, size, cells);
+      const ring = finish === "plate" ? growthRing(x, y, size) : 0;
+      const scales =
+        finish === "wet" ? 0 : hex.fill * 0.13 + hex.rim * 0.1 + ring * 0.06;
 
-      const lift = mottle + grainN - pit * 0.25 + scales + hex.light * 0.04;
-      const r = base[0] * (1 + lift);
-      const g = base[1] * (1 + lift * 0.96);
-      const bch = base[2] * (1 + lift * 0.9);
+      const lift = mottle + grainN - pit * 0.25 + scales + hex.light * 0.05;
+      const salt = Math.max(0, lift) * (finish === "skin" ? 22 : 14);
+      const r = base[0] * (1 + lift) + salt * 0.55;
+      const g = base[1] * (1 + lift * 0.96) + salt * 0.42;
+      const bch = base[2] * (1 + lift * 0.88) + salt * 0.28;
 
       aData.data[p] = clampByte(r);
       aData.data[p + 1] = clampByte(g);
@@ -109,8 +113,8 @@ function paintMaps(hex: string, finish: Finish): CoastalMaps {
       aData.data[p + 3] = 255;
 
       const gloss =
-        finish === "wet" ? 0.62 : finish === "keratin" ? 0.4 : 0.34;
-      const specV = clamp01(gloss - pit * 0.15 + mottle * 0.08);
+        finish === "wet" ? 0.7 : finish === "keratin" ? 0.46 : finish === "plate" ? 0.4 : 0.38;
+      const specV = clamp01(gloss - pit * 0.12 + mottle * 0.08 + hex.rim * 0.06);
       const sv = Math.round(specV * 255);
       sData.data[p] = sv;
       sData.data[p + 1] = sv;
@@ -118,7 +122,7 @@ function paintMaps(hex: string, finish: Finish): CoastalMaps {
       sData.data[p + 3] = 255;
 
       const bumpV = Math.round(
-        clamp01(0.5 + grainN * 0.35 - pit * 0.2 + scales * 0.45 + mottle * 0.15) *
+        clamp01(0.5 + grainN * 0.32 - pit * 0.22 + scales * 0.5 + mottle * 0.14) *
           255,
       );
       bData.data[p] = bumpV;
@@ -181,16 +185,23 @@ function blurInPlace(data: Uint8ClampedArray, size: number, radius: number): voi
   }
 }
 
-function poreHint(x: number, y: number, size: number): number {
-  return hexScale(x, y, size).fill ** 2;
+function poreHint(x: number, y: number, size: number, cells = 9): number {
+  return hexScale(x, y, size, cells).fill ** 2;
+}
+
+function growthRing(x: number, y: number, size: number): number {
+  const cx = x / size - 0.5;
+  const cy = y / size - 0.5;
+  const d = Math.sqrt(cx * cx + cy * cy) * 8;
+  return Math.max(0, 1 - Math.abs(Math.sin(d * Math.PI)) * 1.4);
 }
 
 function hexScale(
   x: number,
   y: number,
   size: number,
+  cells = 9,
 ): { fill: number; rim: number; light: number } {
-  const cells = 11;
   const u = (x / size) * cells;
   const v = (y / size) * cells;
   const row = Math.floor(v);
