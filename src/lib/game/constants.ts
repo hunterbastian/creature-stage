@@ -1,5 +1,10 @@
 /** Playable island radius in world units. */
 export const WORLD_RADIUS = 16;
+/**
+ * Inner edge of the dry-sand beach. Leviathan notice (`SHORE_DANGER_RADIUS`)
+ * keys off this same radial so aggro still means “you stepped onto the sand.”
+ */
+export const BEACH_INNER_RADIUS = WORLD_RADIUS - 2.35;
 
 export const TURN_SPEED = 1.85;
 export const TURN_SPEED_SPRINT = 1.12;

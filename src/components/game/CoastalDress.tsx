@@ -2,6 +2,7 @@
 
 import { useLayoutEffect, useMemo, useRef, type ReactNode } from "react";
 import { InstancedMesh, Object3D } from "three";
+import { surfaceHeight } from "@/lib/game/collision";
 import { assertNever } from "@/lib/game/types";
 import {
   seedWorldDress,
@@ -30,7 +31,11 @@ function InstancedField({
     const instanced = mesh.current;
     if (!instanced) return;
     poses.forEach((item, index) => {
-      dummy.position.set(item.x, item.y, item.z);
+      dummy.position.set(
+        item.x,
+        item.y + surfaceHeight(item.x, item.z),
+        item.z,
+      );
       dummy.rotation.set(item.rx, item.ry, item.rz);
       dummy.scale.set(item.sx, item.sy, item.sz);
       dummy.updateMatrix();
@@ -56,7 +61,7 @@ function InstancedField({
 
 function TidePool({ pool }: { pool: TidePoolSpec }) {
   return (
-    <group position={[pool.x, 0, pool.z]} rotation={[0, pool.yaw, 0]}>
+    <group position={[pool.x, surfaceHeight(pool.x, pool.z), pool.z]} rotation={[0, pool.yaw, 0]}>
       <mesh
         rotation={[-Math.PI / 2, 0, 0]}
         position={[0, 0.008, 0]}
@@ -109,7 +114,11 @@ function NestClearing({
   color: string;
 }) {
   return (
-    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[x, 0.006, z]} receiveShadow>
+    <mesh
+      rotation={[-Math.PI / 2, 0, 0]}
+      position={[x, surfaceHeight(x, z) + 0.006, z]}
+      receiveShadow
+    >
       <circleGeometry args={[radius, 16]} />
       <meshPhongMaterial color={color} shininess={5} specular="#9aaa70" />
     </mesh>

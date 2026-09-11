@@ -1,11 +1,32 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { Sky } from "@react-three/drei";
+import { WATER_Y } from "@/lib/game/collision";
 import { WORLD_RADIUS } from "@/lib/game/constants";
 import { isCoarsePointer } from "@/lib/game/device";
+import { createIslandGeometry } from "@/lib/game/island-mesh";
 import { OFFSHORE_LANE_INNER, OCEAN_RADIUS } from "@/lib/game/offshore";
 import { CoastalDress } from "./CoastalDress";
+
+function IslandMesh({ coarse }: { coarse: boolean }) {
+  const geometry = useMemo(
+    () => createIslandGeometry(coarse ? 20 : 28, coarse ? 48 : 64),
+    [coarse],
+  );
+
+  useEffect(() => () => geometry.dispose(), [geometry]);
+
+  return (
+    <mesh geometry={geometry} receiveShadow>
+      <meshPhongMaterial
+        vertexColors
+        shininess={6}
+        specular="#9aaa70"
+      />
+    </mesh>
+  );
+}
 
 export function World() {
   const coarse = useMemo(() => isCoarsePointer(), []);
@@ -41,31 +62,20 @@ export function World() {
       />
       <directionalLight color="#8a9aa0" position={[-10, 7, -8]} intensity={0.28} />
 
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.24, 0]}>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, WATER_Y - 0.02, 0]}>
         <circleGeometry args={[OCEAN_RADIUS, 32]} />
         <meshPhongMaterial color="#245868" shininess={20} specular="#7aadb8" />
       </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.2, 0]}>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, WATER_Y, 0]}>
         <circleGeometry args={[OFFSHORE_LANE_INNER, 32]} />
         <meshPhongMaterial color="#3d7288" shininess={28} specular="#9ec8d0" />
       </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.035, 0]}>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, WATER_Y + 0.018, 0]}>
         <ringGeometry args={[WORLD_RADIUS + 0.04, WORLD_RADIUS + 0.62, 48]} />
         <meshPhongMaterial color="#c5d0c4" shininess={18} specular="#e0e8dc" />
       </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.05, 0]}>
-        <ringGeometry args={[WORLD_RADIUS - 0.18, WORLD_RADIUS + 1.6, 48]} />
-        <meshPhongMaterial color="#c4b48a" shininess={8} specular="#d8c9a4" />
-      </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.003, 0]} receiveShadow>
-        <ringGeometry args={[WORLD_RADIUS - 2.35, WORLD_RADIUS + 0.02, 48]} />
-        <meshPhongMaterial color="#c2b080" shininess={12} specular="#d8c9a4" />
-      </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
-        <circleGeometry args={[WORLD_RADIUS, 48]} />
-        <meshPhongMaterial color="#5f7a48" shininess={5} specular="#9aaa70" />
-      </mesh>
 
+      <IslandMesh coarse={coarse} />
       <CoastalDress coarse={coarse} />
     </>
   );

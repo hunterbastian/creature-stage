@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import type { Group } from "three";
+import { surfaceHeight } from "@/lib/game/collision";
 import { useGameStore } from "@/lib/game/store";
 import { assertNever, type FoodKind } from "@/lib/game/types";
 
@@ -38,7 +39,8 @@ function FoodMesh({
     if (!group.current) return;
     const t = state.clock.elapsedTime + phase.current;
     const bob = aimed ? 0.16 : 0.1;
-    group.current.position.y = 0.42 + Math.sin(t * (aimed ? 2.8 : 2.2)) * bob;
+    const base = surfaceHeight(x, z) + 0.42;
+    group.current.position.y = base + Math.sin(t * (aimed ? 2.8 : 2.2)) * bob;
     group.current.rotation.y = t * 0.8;
     group.current.scale.setScalar(aimed ? 1.12 : 1);
   });
@@ -46,7 +48,7 @@ function FoodMesh({
   const color = foodColor(kind);
 
   return (
-    <group ref={group} position={[x, 0.42, z]}>
+    <group ref={group} position={[x, surfaceHeight(x, z) + 0.42, z]}>
       <mesh castShadow>
         <sphereGeometry args={[0.22, 10, 8]} />
         <meshPhongMaterial

@@ -1,4 +1,4 @@
-import { WORLD_RADIUS } from "./constants";
+import { BEACH_INNER_RADIUS, WORLD_RADIUS } from "./constants";
 import { assertNever } from "./types";
 
 /**
@@ -10,6 +10,9 @@ import { assertNever } from "./types";
  * - `OFFSHORE_LANE_INNER` / `OFFSHORE_LANE_OUTER` — swim corridor
  * - `OFFSHORE_BEASTS` — count, orbit, combat (hp / strike / maw)
  * - `SHORE_*` / `TIDE_*` — aggro, telegraph, bite, cooldown
+ *   `SHORE_DANGER_RADIUS` is `BEACH_INNER_RADIUS` (dry-sand band). Collision
+ *   uses the same radial for the beach slope; the solid lip sits outside it
+ *   so walking the sand still draws a notice. Aggro is xz radial, not height.
  * Mobile drops the farthest beast so Safari keeps three-or-fewer entities.
  * Only one beast is AI-active at a time.
  */
@@ -53,7 +56,7 @@ export type OffshoreSpec = {
 };
 
 /** Player radial ≥ this (near the beach) can draw a notice. */
-export const SHORE_DANGER_RADIUS = WORLD_RADIUS - 2.35;
+export const SHORE_DANGER_RADIUS = BEACH_INNER_RADIUS;
 /** Player radial ≤ this and the engaged beast gives up (meadow is safe). */
 export const SHORE_SAFE_RADIUS = WORLD_RADIUS - 5.15;
 /** Max distance from player to a beast that may notice. */

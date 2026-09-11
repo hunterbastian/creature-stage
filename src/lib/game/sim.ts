@@ -3,11 +3,14 @@
  * times a second would rerender the HUD. The canvas reads these fields
  * inside `useFrame`; the store only syncs stats when parts or meals change.
  */
+import { groundHeight } from "./collision";
 import { FEEL } from "./constants";
 
 export const sim = {
   x: 0,
+  y: 0,
   z: 0,
+  vy: 0,
   yaw: 0,
   yawRate: 0,
   vx: 0,
@@ -47,9 +50,11 @@ export const sim = {
 export function resetSim(x = 0, z = 0, yaw = 0): void {
   sim.x = x;
   sim.z = z;
+  sim.y = groundHeight(x, z);
   sim.yaw = yaw;
   sim.yawRate = 0;
   sim.vx = 0;
+  sim.vy = 0;
   sim.vz = 0;
   sim.moving = false;
   sim.gait = 0;
