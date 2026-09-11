@@ -21,7 +21,7 @@ Useful scripts:
 
 ```bash
 npm run lint
-npm run test          # height field / shore / nest / prop collision
+npm run test          # collision height field + procedural gait
 npm run build
 npm start          # production server after build
 ```
@@ -141,11 +141,11 @@ Knobs live in `src/lib/game/collision.ts` (`MEADOW_HEIGHT`, `WATER_Y`, `SHORE_LI
 
 Mechanical nods to Skyrim / Elden Ring, not their art:
 
-- **Weight** — walk accelerates and coasts; feet settle onto terrain instead of hovering; the camera lags and settles instead of snapping.
-- **Rhythm** — Shift / full-stick trot spends a thin breath meter, then you are winded.
+- **Weight** — walk accelerates and coasts; feet settle onto terrain instead of hovering; the camera lags and settles instead of snapping. Stride is a planted walk (long stance, short swing), not a bounce.
+- **Rhythm** — Shift / full-stick trot spends a thin breath meter, then you are winded. Trot is a slightly faster gait on the same cycle, not a cartoon skip.
 - **Tension** — Hatchling vs a plucky herd is a chase; Elder/Apex is an honor stop. The deep does not honor you — the far shore is the weighty fight.
 - **Discovery** — compass + a soft yaw pull; hold **F** or tap the needle to glance at the objective.
-- **Impact** — eat, form-up, claim, greet, mutate, and shore slams punch the camera and squash the body on a shared timing window (ready for audio later).
+- **Impact** — eat, form-up, claim, greet, mutate, and shore slams punch the camera; the jaw opens on `eatFlash` and the body squash still shares that window (ready for audio later).
 - **UI** — one objective chip, breath / vitality bars that only appear when they matter, no arcade combo spam.
 
 ## Project map
@@ -158,7 +158,7 @@ Mechanical nods to Skyrim / Elden Ring, not their art:
 | `src/lib/game/worldgen/` | Seeded coastal set dressing (biomes, density knobs, ground-Y hook) |
 | `scripts/blender/` | Headless bpy generator for the saurian glTF kit; re-export notes in `scripts/blender/README.md` |
 
-Locomotion (`x`, `y`, `z`, `yaw`, stamina, vitality, feel pulses) lives in `src/lib/game/sim.ts` and `src/lib/game/locomotion.ts` so the HUD does not rerender every frame. World collision (height field, shore lip, nest bowls, prop capsules) lives in `src/lib/game/collision.ts`. Wildlife poses live in `src/lib/game/wildlife.ts`. Leviathan moods live in `src/lib/game/offshore-ai.ts`. Form thresholds, herd-mate curve, and the current objective live in `src/lib/game/progress.ts`. Coastal set dressing is seeded in `src/lib/game/worldgen/` and drawn by `CoastalDress`.
+Locomotion (`x`, `y`, `z`, `yaw`, stamina, vitality, feel pulses) lives in `src/lib/game/sim.ts` and `src/lib/game/locomotion.ts` so the HUD does not rerender every frame. Visual walk/idle/trot/eat poses live in `src/lib/game/anim.ts` (applied in `useCreatureAnim.ts`). World collision (height field, shore lip, nest bowls, prop capsules) lives in `src/lib/game/collision.ts`. Wildlife x/z lives in `src/lib/game/wildlife.ts`. Leviathan moods live in `src/lib/game/offshore-ai.ts`. Form thresholds, herd-mate curve, and the current objective live in `src/lib/game/progress.ts`. Coastal set dressing is seeded in `src/lib/game/worldgen/` and drawn by `CoastalDress`. Creature roots follow collision footing (`sim.y` / `groundHeight`); props use `sampleGroundY` (collision binds that hook to `surfaceHeight`).
 
 ## World generation
 
@@ -174,8 +174,19 @@ The island is **seeded set dressing** on collision’s height field. Same seed �
 
 Shore micro-biomes (tide terraces, kelp wrack, rock shelves, shell fans) are authored arcs in `layout.ts`, then filled with instanced props. Nest bowls keep a clearing; `isWorldgenOccupied` is the fruit keep-out. Walkable height, shore lip, and nest rims stay in `collision.ts`.
 
+## Creature animation
+
+The Blender kit (`public/models/saurian-kit.glb`) has no clips. Theropod / sauropod / stego (and nestmates / wildlife that share `CreatureVisual`) get:
+
+- **Idle** — breath, tail drift, slow look; unique phase per agent so the flock is not a clone army
+- **Walk** — planted stride (≈60% stance), hip swing, foot lift, body roll into the plant
+- **Trot** — same cycle, slightly faster, when sprinting
+- **Eat / bite** — jaw (`mouth_*_lower` or sucker pad) plus a neck dip, driven by existing `sim.eatFlash`
+
+Tune weight in `PROFILES` inside `src/lib/game/anim.ts`. Re-export notes (and how to add real armature clips later) are in `scripts/blender/README.md`. Gait checks ride `npm test` with the collision suite.
+
 ## What's next
 
 - Shareable DNA strings and a gallery of saved body plans
-- IK / better walk cycles, idle fidgets, and eat animations
+- Optional Blender clips (`idle` / `walk` / `trot` / `eat`) layered on the procedural fallback
 - Sound and a part-color picker

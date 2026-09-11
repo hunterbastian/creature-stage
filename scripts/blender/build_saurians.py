@@ -1125,7 +1125,7 @@ def export_glb(path: Path) -> None:
         export_apply=True,
         export_cameras=False,
         export_extras=False,
-        export_animations=False,
+        export_animations=False,  # runtime uses src/lib/game/anim.ts (procedural)
         use_selection=False,
     )
     # Blender 4.2 glTF operator has drifted param names; try the rich set then fall back.

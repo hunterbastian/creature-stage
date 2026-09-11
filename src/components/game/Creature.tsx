@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, type MutableRefObject } from "react";
 import { useFrame } from "@react-three/fiber";
 import type { Group } from "three";
+import type { AnimLocomotion } from "@/lib/game/anim";
 import { findPart } from "@/lib/game/catalog";
 import { bodyPlan, hipHeight } from "@/lib/game/creature-look";
 import { sim } from "@/lib/game/sim";
@@ -18,6 +19,7 @@ import type {
   TailId,
 } from "@/lib/game/types";
 import { KitNode } from "./SaurianKit";
+import { useCreatureAnim } from "./useCreatureAnim";
 
 function tint(slot: SlotId, id: PartId): string {
   return findPart(slot, id).color;
@@ -27,14 +29,16 @@ function MouthMesh({
   id,
   jaw,
   castShadow,
+  mouthRef,
 }: {
   id: MouthId;
   jaw: [number, number, number];
   castShadow: boolean;
+  mouthRef: MutableRefObject<Group | null>;
 }) {
   const color = tint("mouth", id);
   return (
-    <group position={jaw}>
+    <group ref={mouthRef} position={jaw}>
       <KitNode
         name={`mouth_${id}`}
         colors={{ skin: color, accent: color }}
@@ -80,6 +84,7 @@ function ArmsMesh({
   arm,
   stance,
   castShadow,
+  armRefs,
 }: {
   id: ArmId;
   arm: {
@@ -88,14 +93,18 @@ function ArmsMesh({
   };
   stance: "biped" | "quad";
   castShadow: boolean;
+  armRefs: MutableRefObject<(Group | null)[]>;
 }) {
   if (id === "none" && stance !== "biped") return null;
   const color = tint("arms", id);
   return (
     <>
-      {([-1, 1] as const).map((side) => (
+      {([-1, 1] as const).map((side, index) => (
         <group
           key={side}
+          ref={(node) => {
+            armRefs.current[index] = node;
+          }}
           position={[
             arm.position[0] * side,
             arm.position[1],
@@ -123,6 +132,7 @@ function TailMesh({
   bodyColor,
   tailRoot,
   castShadow,
+  tailRef,
 }: {
   id: TailId;
   bodyColor: string;
@@ -131,10 +141,15 @@ function TailMesh({
     rotation: [number, number, number];
   };
   castShadow: boolean;
+  tailRef: MutableRefObject<Group | null>;
 }) {
   const color = id === "none" ? bodyColor : tint("tail", id);
   return (
-    <group position={tailRoot.position} rotation={tailRoot.rotation}>
+    <group
+      ref={tailRef}
+      position={tailRoot.position}
+      rotation={tailRoot.rotation}
+    >
       <KitNode
         name={`tail_${id}`}
         colors={{ skin: bodyColor, accent: color }}
@@ -170,36 +185,25 @@ function legSlots(plan: ReturnType<typeof bodyPlan>): {
   name: string;
   x: number;
   z: number;
-  phase: number;
   fore: boolean;
 }[] {
   if (plan.stance === "biped") {
     return [
-      { name: "l", x: plan.hip.x, z: plan.hip.z, phase: 0, fore: false },
-      { name: "r", x: -plan.hip.x, z: plan.hip.z, phase: Math.PI, fore: false },
+      { name: "l", x: plan.hip.x, z: plan.hip.z, fore: false },
+      { name: "r", x: -plan.hip.x, z: plan.hip.z, fore: false },
     ];
   }
   return [
-    { name: "fl", x: plan.shoulder.x, z: plan.shoulder.z, phase: 0, fore: true },
-    {
-      name: "fr",
-      x: -plan.shoulder.x,
-      z: plan.shoulder.z,
-      phase: Math.PI,
-      fore: true,
-    },
-    { name: "bl", x: plan.hip.x, z: plan.hip.z, phase: Math.PI, fore: false },
-    { name: "br", x: -plan.hip.x, z: plan.hip.z, phase: 0, fore: false },
+    { name: "fl", x: plan.shoulder.x, z: plan.shoulder.z, fore: true },
+    { name: "fr", x: -plan.shoulder.x, z: plan.shoulder.z, fore: true },
+    { name: "bl", x: plan.hip.x, z: plan.hip.z, fore: false },
+    { name: "br", x: -plan.hip.x, z: plan.hip.z, fore: false },
   ];
 }
 
-export type GaitDriver = {
-  moving: boolean;
-  /** 0–1 stride intensity. Heavier forms walk slower when omitted. */
-  gait?: number;
-};
+export type GaitDriver = AnimLocomotion;
 
-/** Shared saurian mesh + walk cycle. Pose (x/z/yaw/scale) belongs on the parent. */
+/** Shared saurian mesh + walk/idle/eat pose. World x/z/yaw/scale stay on the parent. */
 export function CreatureVisual({
   parts,
   locomotion,
@@ -209,45 +213,33 @@ export function CreatureVisual({
   locomotion: GaitDriver;
   castShadow?: boolean;
 }) {
-  const body = useRef<Group>(null);
-  const legRefs = useRef<(Group | null)[]>([]);
   const plan = useMemo(() => bodyPlan(parts.body), [parts.body]);
   const hipY = useMemo(() => hipHeight(parts.legs), [parts.legs]);
   const slots = useMemo(() => legSlots(plan), [plan]);
+  const { bodyRef, mouthRef, tailRef, armRefs, legRefs } = useCreatureAnim({
+    locomotion,
+    bodyId: parts.body,
+    plan,
+    hipY,
+    slots,
+  });
   const bodyColor = tint("body", parts.body);
   const legColor = tint("legs", parts.legs);
 
-  useFrame((state) => {
-    const t = state.clock.elapsedTime;
-    const gait = locomotion.gait ?? (locomotion.moving ? 1 : 0);
-    const moving = gait > 0.05;
-    const tempo = (plan.stance === "biped" ? 6.4 : 5.5) * (0.62 + 0.38 * gait);
-    const swing = moving
-      ? (plan.stance === "biped" ? 0.52 : 0.36) * (0.72 + 0.28 * gait)
-      : 0;
-    if (body.current) {
-      body.current.position.y = moving
-        ? Math.abs(Math.sin(t * tempo)) * (0.026 + gait * 0.028)
-        : Math.sin(t * 1.35) * 0.01;
-    }
-    for (let i = 0; i < slots.length; i += 1) {
-      const leg = legRefs.current[i];
-      if (!leg) continue;
-      leg.rotation.x = moving
-        ? Math.sin(t * tempo + slots[i].phase) * swing
-        : 0;
-    }
-  });
-
   return (
     <>
-      <group ref={body} position={[0, hipY, 0]} rotation={[plan.pitch, 0, 0]}>
+      <group ref={bodyRef} position={[0, hipY, 0]} rotation={[plan.pitch, 0, 0]}>
         <KitNode
           name={`chassis_${parts.body}`}
           colors={{ skin: bodyColor }}
           castShadow={castShadow}
         />
-        <MouthMesh id={parts.mouth} jaw={plan.jaw} castShadow={castShadow} />
+        <MouthMesh
+          id={parts.mouth}
+          jaw={plan.jaw}
+          castShadow={castShadow}
+          mouthRef={mouthRef}
+        />
         <EyesMesh
           id={parts.eyes}
           eye={plan.eye}
@@ -261,12 +253,14 @@ export function CreatureVisual({
           arm={plan.arm}
           stance={plan.stance}
           castShadow={castShadow}
+          armRefs={armRefs}
         />
         <TailMesh
           id={parts.tail}
           bodyColor={bodyColor}
           tailRoot={plan.tailRoot}
           castShadow={castShadow}
+          tailRef={tailRef}
         />
         <AccessoryMesh
           id={parts.accessory}
@@ -305,6 +299,7 @@ export function Creature() {
   useFrame(() => {
     const group = root.current;
     if (!group) return;
+    // sim.y is collision-settled footing (surfaceHeight + nests/props/lip).
     group.position.set(sim.x, sim.y, sim.z);
     group.rotation.y = sim.yaw;
     const squash = 1 + sim.eatFlash * 0.16 - sim.eatFlash * sim.eatFlash * 0.05;
