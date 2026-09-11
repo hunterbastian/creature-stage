@@ -1,30 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
-import type { MeshBasicMaterial, MeshPhongMaterial } from "three";
+import type { MeshPhongMaterial } from "three";
 import { WATER_Y } from "@/lib/game/collision";
-import { createOceanGeometry } from "@/lib/game/ocean-mesh";
 import { SHORE, SHORE_BAND } from "@/lib/game/shore-look";
-
-function OceanDisc({ coarse }: { coarse: boolean }) {
-  const geometry = useMemo(
-    () => createOceanGeometry(coarse ? 8 : 12, coarse ? 32 : 48),
-    [coarse],
-  );
-
-  useEffect(() => () => geometry.dispose(), [geometry]);
-
-  return (
-    <mesh geometry={geometry} position={[0, WATER_Y - 0.028, 0]}>
-      <meshPhongMaterial
-        vertexColors
-        shininess={SHORE.midShininess}
-        specular={SHORE.waterSpecularMid}
-      />
-    </mesh>
-  );
-}
 
 function PulsingFoamMaterial({
   opacity,
@@ -33,17 +13,19 @@ function PulsingFoamMaterial({
   opacity: number;
   pulse?: number;
 }) {
-  const ref = useRef<MeshBasicMaterial>(null);
+  const ref = useRef<MeshPhongMaterial>(null);
   useFrame(({ clock }) => {
     if (!ref.current) return;
     ref.current.opacity =
       opacity + Math.sin(clock.elapsedTime * SHORE.foamHz * Math.PI * 2) * pulse;
   });
   return (
-    <meshBasicMaterial
+    <meshPhongMaterial
       ref={ref}
       color={SHORE.foam}
       transparent
+      shininess={SHORE.foamShininess}
+      specular={SHORE.foamSpecular}
       depthWrite={false}
     />
   );
@@ -59,8 +41,8 @@ export function ShoreFoamMaterial({
 }
 
 function FoamLace({ coarse }: { coarse: boolean }) {
-  const inner = useRef<MeshBasicMaterial>(null);
-  const outer = useRef<MeshBasicMaterial>(null);
+  const inner = useRef<MeshPhongMaterial>(null);
+  const outer = useRef<MeshPhongMaterial>(null);
   const segs = coarse ? 32 : 48;
 
   useFrame(({ clock }) => {
@@ -84,11 +66,13 @@ function FoamLace({ coarse }: { coarse: boolean }) {
         <ringGeometry
           args={[SHORE_BAND.foamMid, SHORE_BAND.foamOuter, segs]}
         />
-        <meshBasicMaterial
+        <meshPhongMaterial
           ref={outer}
           color={SHORE.foamShadow}
           transparent
           opacity={SHORE.foamOuterOpacity}
+          shininess={SHORE.foamShininess}
+          specular={SHORE.foamSpecular}
           depthWrite={false}
         />
       </mesh>
@@ -100,11 +84,13 @@ function FoamLace({ coarse }: { coarse: boolean }) {
         <ringGeometry
           args={[SHORE_BAND.foamInner, SHORE_BAND.foamMid, segs]}
         />
-        <meshBasicMaterial
+        <meshPhongMaterial
           ref={inner}
           color={SHORE.foam}
           transparent
           opacity={SHORE.foamInnerOpacity}
+          shininess={SHORE.foamShininess}
+          specular={SHORE.foamSpecular}
           depthWrite={false}
         />
       </mesh>
@@ -120,7 +106,7 @@ function ShallowsOverlay({ coarse }: { coarse: boolean }) {
     if (!spec.current) return;
     spec.current.opacity =
       SHORE.shallowsOpacity +
-      Math.sin(clock.elapsedTime * SHORE.foamHz * Math.PI * 2) * 0.025;
+      Math.sin(clock.elapsedTime * SHORE.foamHz * Math.PI * 2) * 0.018;
   });
 
   return (
@@ -149,12 +135,29 @@ function ShallowsOverlay({ coarse }: { coarse: boolean }) {
 
 /**
  * Near-shore water, shallows clarity, and foam lace.
- * Lighting / fog stay in `World` (other agents own mood).
+ * Stacked phong discs (PS3-era, iOS-safe) — lighting / fog stay in `World`.
  */
 export function ShoreWater({ coarse }: { coarse: boolean }) {
+  const segs = coarse ? 32 : 48;
+
   return (
     <>
-      <OceanDisc coarse={coarse} />
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, WATER_Y - 0.03, 0]}>
+        <circleGeometry args={[SHORE_BAND.oceanRadius, segs]} />
+        <meshPhongMaterial
+          color={SHORE.deepWater}
+          shininess={SHORE.deepShininess}
+          specular={SHORE.waterSpecularDeep}
+        />
+      </mesh>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, WATER_Y - 0.012, 0]}>
+        <circleGeometry args={[SHORE_BAND.midRadius, segs]} />
+        <meshPhongMaterial
+          color={SHORE.midWater}
+          shininess={SHORE.midShininess}
+          specular={SHORE.waterSpecularMid}
+        />
+      </mesh>
       <ShallowsOverlay coarse={coarse} />
       <FoamLace coarse={coarse} />
     </>

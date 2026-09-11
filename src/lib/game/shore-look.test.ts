@@ -4,7 +4,6 @@ import { Color } from "three";
 import { BEACH_INNER_RADIUS, WORLD_RADIUS } from "./constants";
 import { WATER_Y, WATERLINE_RADIUS } from "./collision";
 import { OFFSHORE_LANE_INNER, OCEAN_RADIUS } from "./offshore";
-import { createOceanGeometry } from "./ocean-mesh";
 import {
   SHORE,
   SHORE_BAND,
@@ -62,12 +61,4 @@ test("foam lace straddles the waterline", () => {
 test("look knobs do not move the collision waterline", () => {
   assert.equal(WATER_Y, -0.22);
   assert.equal(WATERLINE_RADIUS, WORLD_RADIUS + 0.1);
-});
-
-test("ocean disc carries a radial tint", () => {
-  const geometry = createOceanGeometry(6, 12);
-  const colors = geometry.getAttribute("color");
-  assert.ok(colors);
-  assert.ok(colors.count > 12);
-  geometry.dispose();
 });

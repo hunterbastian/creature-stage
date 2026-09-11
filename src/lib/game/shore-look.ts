@@ -1,6 +1,6 @@
 /**
  * Coastal water + wet-sand look. PS3 Skyrim-era shoreline, iOS-safe:
- * vertex-colored ocean disc, one transparent shallows ring, foam lace,
+ * stacked phong ocean discs, one transparent shallows ring, foam lace,
  * darker wet-sand vertex colors. No custom shaders, particles, or extra shadows.
  *
  * Knobs:
@@ -33,8 +33,8 @@ export const SHORE = {
   /** Transparent overlay so wet sand shows through near shore. */
   shallowsOverlay: "#5a9aa0",
 
-  foam: "#e4eeea",
-  foamShadow: "#c8d8d2",
+  foam: "#d2e0da",
+  foamShadow: "#b8ccc6",
 
   poolBed: "#6e6758",
   poolRim: "#5a564c",
@@ -42,25 +42,29 @@ export const SHORE = {
 
   islandShininess: 7,
   islandSpecular: "#9aaa78",
-  midShininess: 34,
-  shallowsShininess: 62,
+  deepShininess: 24,
+  midShininess: 36,
+  shallowsShininess: 48,
   poolWaterShininess: 78,
   poolBedShininess: 18,
   poolRimShininess: 22,
 
+  waterSpecularDeep: "#6a9aa8",
   waterSpecularMid: "#8ec4cc",
   waterSpecularShallow: "#d0f0ee",
   poolSpecular: "#d8f6f0",
   wetSpecular: "#c4d4cc",
+  foamShininess: 12,
+  foamSpecular: "#dce8e4",
 
-  shallowsOpacity: 0.4,
-  foamInnerOpacity: 0.3,
-  foamOuterOpacity: 0.12,
-  foamPatchOpacity: 0.2,
-  foamPulse: 0.045,
+  shallowsOpacity: 0.28,
+  foamInnerOpacity: 0.18,
+  foamOuterOpacity: 0.09,
+  foamPatchOpacity: 0.14,
+  foamPulse: 0.03,
   foamHz: 0.22,
   poolWaterOpacity: 0.5,
-  poolFoamOpacity: 0.16,
+  poolFoamOpacity: 0.12,
 } as const;
 
 /**

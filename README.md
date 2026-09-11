@@ -191,14 +191,14 @@ Near-shore water, the wet-sand strip, foam lace, and tide-pool water share one k
 
 | Knob | Where | Notes |
 | --- | --- | --- |
-| `SHORE.deepWater` / `midWater` / `shallowsWater` | `src/lib/game/shore-look.ts` | Ocean disc vertex grade (one draw). |
+| `SHORE.deepWater` / `midWater` / `shallowsWater` | `src/lib/game/shore-look.ts` | Stacked ocean discs (deep / mid) plus shallows overlay tint. |
 | `SHORE.shallowsOverlay` / `shallowsOpacity` | same | Transparent ring so wet sand shows through near the lip. |
 | `SHORE.drySand` / `dampSand` / `wetSand` / `submergedSand` | same | Island vertex strip. Wet must stay darker than dry. |
 | `SHORE.foam*` / `foamHz` / `foamPulse` | same | Waterline lace + dress patches. One opacity pulse. |
 | `SHORE.poolBed` / `poolRim` / `poolWater` | same | Tide-pool pebble bed under clear water. |
 | `SHORE_BAND` | same | Overlay radii. `WATER_Y` / `WATERLINE_RADIUS` stay in `collision.ts`. |
 
-`ShoreWater` draws the ocean disc, shallows overlay, and foam rings. Island wet sand is vertex color in `island-mesh.ts`. Tide pools (bed / rim / water / foam) are instanced in `CoastalDress`. Mobile uses fewer ocean verts (8×32 vs 12×48) and the same shared materials.
+`ShoreWater` draws stacked ocean discs, a shallows overlay, and foam rings. Island wet sand is vertex color in `island-mesh.ts`. Tide pools (bed / rim / water / foam) are instanced in `CoastalDress`. Mobile uses 32-segment circles/rings (desktop 48) and the same shared materials.
 
 ## Creature animation
 
