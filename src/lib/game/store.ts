@@ -58,6 +58,7 @@ import {
   type SlotId,
 } from "./types";
 import { fauna, playerSpawnAt, seedMeadow, syncHerdToForm } from "./wildlife";
+import { isWorldgenOccupied } from "./worldgen";
 
 export type NearbyThreat = {
   id: string;
@@ -114,6 +115,10 @@ function tooCloseToNests(x: number, z: number, nests: NestSite[]): boolean {
   );
 }
 
+function buriedByDress(x: number, z: number): boolean {
+  return isWorldgenOccupied(x, z, isCoarsePointer());
+}
+
 export function spawnFood(
   avoidX = 0,
   avoidZ = 0,
@@ -127,6 +132,7 @@ export function spawnFood(
     const z = Math.cos(angle) * radius;
     if (Math.hypot(x - avoidX, z - avoidZ) < 3) continue;
     if (tooCloseToNests(x, z, nests)) continue;
+    if (buriedByDress(x, z)) continue;
     return {
       id: `food-${foodSeq}`,
       kind: FOOD_KINDS[Math.floor(Math.random() * FOOD_KINDS.length)],
@@ -137,8 +143,8 @@ export function spawnFood(
   return {
     id: `food-${foodSeq}`,
     kind: "berry",
-    x: 5.4,
-    z: -2.8,
+    x: 2.6,
+    z: 0.4,
   };
 }
 
@@ -164,6 +170,7 @@ function starterFruit(
     const z = spawnZ + Math.cos(yaw + drift) * dist;
     const clamped = clampIsland(x, z, 1.4);
     if (tooCloseToNests(clamped.x, clamped.z, nests)) continue;
+    if (buriedByDress(clamped.x, clamped.z)) continue;
     if (Math.hypot(clamped.x - spawnX, clamped.z - spawnZ) < 1.6) continue;
     return {
       id: `food-${foodSeq}`,

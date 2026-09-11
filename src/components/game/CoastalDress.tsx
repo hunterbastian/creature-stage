@@ -2,17 +2,21 @@
 
 import { useLayoutEffect, useMemo, useRef, type ReactNode } from "react";
 import { InstancedMesh, Object3D } from "three";
-import { surfaceHeight } from "@/lib/game/collision";
 import { assertNever } from "@/lib/game/types";
 import {
+  sampleGroundY,
   seedWorldDress,
   type HazeSpec,
   type LandformSpec,
   type PropPose,
   type TidePoolSpec,
-} from "@/lib/game/world-dress";
+} from "@/lib/game/worldgen";
 
 const dummy = new Object3D();
+
+function propY(item: PropPose): number {
+  return item.y + sampleGroundY(item.x, item.z);
+}
 
 function InstancedField({
   poses,
@@ -31,11 +35,8 @@ function InstancedField({
     const instanced = mesh.current;
     if (!instanced) return;
     poses.forEach((item, index) => {
-      dummy.position.set(
-        item.x,
-        item.y + surfaceHeight(item.x, item.z),
-        item.z,
-      );
+      dummy.rotation.order = "XYZ";
+      dummy.position.set(item.x, propY(item), item.z);
       dummy.rotation.set(item.rx, item.ry, item.rz);
       dummy.scale.set(item.sx, item.sy, item.sz);
       dummy.updateMatrix();
@@ -59,47 +60,95 @@ function InstancedField({
   );
 }
 
-function TidePool({ pool }: { pool: TidePoolSpec }) {
+/** Ground-plane decals (foam, haze, tide-pool discs). Yaw then flatten. */
+function InstancedDecals({
+  poses,
+  renderOrder,
+  receiveShadow = false,
+  followGround = true,
+  children,
+}: {
+  poses: PropPose[];
+  renderOrder?: number;
+  receiveShadow?: boolean;
+  followGround?: boolean;
+  children: ReactNode;
+}) {
+  const mesh = useRef<InstancedMesh>(null);
+
+  useLayoutEffect(() => {
+    const instanced = mesh.current;
+    if (!instanced) return;
+    poses.forEach((item, index) => {
+      dummy.position.set(
+        item.x,
+        followGround ? propY(item) : item.y,
+        item.z,
+      );
+      dummy.rotation.order = "YXZ";
+      dummy.rotation.set(-Math.PI / 2, item.ry, 0);
+      dummy.scale.set(item.sx, item.sz, 1);
+      dummy.updateMatrix();
+      instanced.setMatrixAt(index, dummy.matrix);
+    });
+    instanced.instanceMatrix.needsUpdate = true;
+    instanced.computeBoundingSphere();
+  }, [poses, followGround]);
+
+  if (!poses || poses.length === 0) return null;
+
   return (
-    <group position={[pool.x, surfaceHeight(pool.x, pool.z), pool.z]} rotation={[0, pool.yaw, 0]}>
-      <mesh
-        rotation={[-Math.PI / 2, 0, 0]}
-        position={[0, 0.008, 0]}
-        scale={[pool.sx * 1.16, pool.sz * 1.16, 1]}
-        receiveShadow
-      >
-        <ringGeometry args={[0.5, 0.74, 16]} />
-        <meshPhongMaterial color="#8a8068" shininess={14} specular="#d4c8a8" />
-      </mesh>
-      <mesh
-        rotation={[-Math.PI / 2, 0, 0]}
-        position={[0, 0.015, 0]}
-        scale={[pool.sx, pool.sz, 1]}
-        receiveShadow
-      >
-        <circleGeometry args={[0.55, 16]} />
-        <meshPhongMaterial color="#3d6e74" shininess={48} specular="#c8e8e0" />
-      </mesh>
-    </group>
+    <instancedMesh
+      ref={mesh}
+      args={[undefined, undefined, poses.length]}
+      renderOrder={renderOrder}
+      receiveShadow={receiveShadow}
+    >
+      {children}
+    </instancedMesh>
   );
 }
 
-function ShoreHaze({ haze }: { haze: HazeSpec }) {
-  return (
-    <mesh
-      rotation={[-Math.PI / 2, 0, 0]}
-      position={[haze.x, haze.y, haze.z]}
-      renderOrder={-1}
-    >
-      <circleGeometry args={[haze.radius, 12]} />
-      <meshBasicMaterial
-        color="#c8d4cc"
-        transparent
-        opacity={0.09}
-        depthWrite={false}
-      />
-    </mesh>
-  );
+function poolRimPoses(pools: TidePoolSpec[]): PropPose[] {
+  return pools.map((pool) => ({
+    x: pool.x,
+    y: 0.008,
+    z: pool.z,
+    rx: 0,
+    ry: pool.yaw,
+    rz: 0,
+    sx: pool.sx * 1.16,
+    sy: 1,
+    sz: pool.sz * 1.16,
+  }));
+}
+
+function poolWaterPoses(pools: TidePoolSpec[]): PropPose[] {
+  return pools.map((pool) => ({
+    x: pool.x,
+    y: 0.015,
+    z: pool.z,
+    rx: 0,
+    ry: pool.yaw,
+    rz: 0,
+    sx: pool.sx,
+    sy: 1,
+    sz: pool.sz,
+  }));
+}
+
+function hazePoses(haze: HazeSpec[]): PropPose[] {
+  return haze.map((item) => ({
+    x: item.x,
+    y: item.y,
+    z: item.z,
+    rx: 0,
+    ry: 0,
+    rz: 0,
+    sx: item.radius,
+    sy: 1,
+    sz: item.radius,
+  }));
 }
 
 function NestClearing({
@@ -116,7 +165,7 @@ function NestClearing({
   return (
     <mesh
       rotation={[-Math.PI / 2, 0, 0]}
-      position={[x, surfaceHeight(x, z) + 0.006, z]}
+      position={[x, sampleGroundY(x, z) + 0.006, z]}
       receiveShadow
     >
       <circleGeometry args={[radius, 16]} />
@@ -197,15 +246,24 @@ function Landform({ spec }: { spec: LandformSpec }) {
 export function CoastalDress({ coarse }: { coarse: boolean }) {
   const dress = useMemo(() => seedWorldDress(coarse), [coarse]);
   const shade = !coarse;
+  const rims = useMemo(() => poolRimPoses(dress.tidePools), [dress.tidePools]);
+  const water = useMemo(() => poolWaterPoses(dress.tidePools), [dress.tidePools]);
+  const mist = useMemo(() => hazePoses(dress.haze), [dress.haze]);
 
   return (
     <>
       {dress.clearings.map((clearing) => (
         <NestClearing key={`${clearing.x}-${clearing.z}`} {...clearing} />
       ))}
-      {dress.tidePools.map((pool) => (
-        <TidePool key={`${pool.x}-${pool.z}`} pool={pool} />
-      ))}
+
+      <InstancedDecals poses={rims} receiveShadow>
+        <ringGeometry args={[0.5, 0.74, 16]} />
+        <meshPhongMaterial color="#8a8068" shininess={14} specular="#d4c8a8" />
+      </InstancedDecals>
+      <InstancedDecals poses={water} receiveShadow>
+        <circleGeometry args={[0.55, 16]} />
+        <meshPhongMaterial color="#3d6e74" shininess={48} specular="#c8e8e0" />
+      </InstancedDecals>
 
       <InstancedField poses={dress.grass}>
         <coneGeometry args={[1, 1, 6]} />
@@ -222,6 +280,10 @@ export function CoastalDress({ coarse }: { coarse: boolean }) {
       <InstancedField poses={dress.wetRocks} castShadow={shade} receiveShadow>
         <dodecahedronGeometry args={[1, 0]} />
         <meshPhongMaterial color="#5e6864" shininess={24} specular="#c8d8d0" />
+      </InstancedField>
+      <InstancedField poses={dress.shelves} castShadow={shade} receiveShadow>
+        <dodecahedronGeometry args={[1, 0]} />
+        <meshPhongMaterial color="#7a766c" shininess={10} specular="#c8d0c4" />
       </InstancedField>
       <InstancedField poses={dress.shells}>
         <sphereGeometry args={[1, 7, 6]} />
@@ -256,9 +318,25 @@ export function CoastalDress({ coarse }: { coarse: boolean }) {
         <meshPhongMaterial color="#61684c" shininess={7} specular="#b0b888" />
       </InstancedField>
 
-      {dress.haze.map((haze) => (
-        <ShoreHaze key={`${haze.x}-${haze.z}`} haze={haze} />
-      ))}
+      <InstancedDecals poses={dress.foam} renderOrder={2}>
+        <circleGeometry args={[1, 10]} />
+        <meshBasicMaterial
+          color="#e4eee8"
+          transparent
+          opacity={0.16}
+          depthWrite={false}
+        />
+      </InstancedDecals>
+      <InstancedDecals poses={mist} renderOrder={-1} followGround={false}>
+        <circleGeometry args={[1, 12]} />
+        <meshBasicMaterial
+          color="#c8d4cc"
+          transparent
+          opacity={0.09}
+          depthWrite={false}
+        />
+      </InstancedDecals>
+
       {dress.landforms.map((spec) => (
         <Landform key={`${spec.kind}-${spec.x}-${spec.z}`} spec={spec} />
       ))}

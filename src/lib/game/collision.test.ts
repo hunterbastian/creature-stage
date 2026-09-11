@@ -12,6 +12,7 @@ import {
   surfaceHeight,
   type PropCollider,
 } from "./collision";
+import { sampleGroundY } from "./worldgen";
 import { BEACH_INNER_RADIUS as CONST_BEACH, MAX_SIZE, NEST_INTERACT_RADIUS } from "./constants";
 import { SHORE_DANGER_RADIUS, SHORE_SAFE_RADIUS, playerOnShore, playerInlandSafe } from "./offshore";
 import { NEST_LAYOUT } from "./wildlife";
@@ -96,4 +97,9 @@ test("full collide step keeps the body on the meadow", () => {
   }
   const ground = groundHeight(body.x, body.z);
   assert.ok(Math.abs(body.y - ground) < 0.02);
+});
+
+test("worldgen sampleGroundY is bound to the collision height field", () => {
+  assert.equal(sampleGroundY(0, 0), surfaceHeight(0, 0));
+  assert.equal(sampleGroundY(0, 15.2), surfaceHeight(0, 15.2));
 });

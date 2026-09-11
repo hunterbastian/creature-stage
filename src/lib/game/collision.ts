@@ -22,8 +22,9 @@ import { isCoarsePointer } from "./device";
 import { assertNever } from "./types";
 import { NEST_LAYOUT } from "./wildlife";
 import {
+  seedLayout,
   seedWorldDress,
-  TIDE_POOLS,
+  setGroundSampler,
   type PropPose,
   type TidePoolSpec,
   type WorldDress,
@@ -162,8 +163,9 @@ function nestLift(x: number, z: number): number {
 }
 
 function tideDip(x: number, z: number): number {
+  const mobile = typeof window !== "undefined" && isCoarsePointer();
   let dip = 0;
-  for (const pool of TIDE_POOLS) {
+  for (const pool of seedLayout(mobile).tidePools) {
     const next = poolDip(x, z, pool);
     if (next < dip) dip = next;
   }
@@ -184,6 +186,8 @@ export function surfaceHeight(x: number, z: number): number {
 export function groundHeight(x: number, z: number): number {
   return surfaceHeight(x, z) + nestLift(x, z);
 }
+
+setGroundSampler(surfaceHeight);
 
 export function playableRadius(size: number): number {
   const body = Math.min(MAX_SIZE, Math.max(0.7, size));
@@ -219,6 +223,7 @@ export function buildPropColliders(dress: WorldDress): PropCollider[] {
   };
   for (const pose of dress.dryRocks) push("rock", pose, PROP_ROCK_MIN);
   for (const pose of dress.wetRocks) push("rock", pose, PROP_ROCK_MIN);
+  for (const pose of dress.shelves) push("rock", pose, PROP_ROCK_MIN);
   for (const pose of dress.driftwood) push("wood", pose, PROP_WOOD_MIN);
   return out;
 }
