@@ -53,7 +53,7 @@ export const SHORE_BODY_PAD = 0.42;
 /** Inward kick when the capsule hits the lip. */
 export const SHORE_BOUNCE = 0.55;
 
-/** Inner sand floor of a nest bowl (matches Nests.tsx circle). */
+/** Inner sand floor of a nest bowl (shared with authored lining in Nests.tsx). */
 export const NEST_FLOOR_RADIUS = 0.5;
 /** Moss/weave rim crest (outer torus major radius). */
 export const NEST_RIM_RADIUS = 0.78;
@@ -139,7 +139,11 @@ function poolDip(x: number, z: number, pool: TidePoolSpec): number {
   return -0.045 * w * w;
 }
 
-function nestProfile(distance: number): number {
+/**
+ * Height of the authored nest bowl above `surfaceHeight`.
+ * Nests.tsx lathes this same profile so feet and weave share one bowl.
+ */
+export function nestBowlHeight(distance: number): number {
   if (distance >= NEST_BLEND_RADIUS) return 0;
   if (distance <= NEST_FLOOR_RADIUS) {
     const t = distance / NEST_FLOOR_RADIUS;
@@ -158,7 +162,7 @@ function nestLift(x: number, z: number): number {
   for (const nest of NEST_LAYOUT) {
     const d = Math.hypot(x - nest.x, z - nest.z);
     if (d >= NEST_BLEND_RADIUS) continue;
-    const h = nestProfile(d);
+    const h = nestBowlHeight(d);
     if (h > best) best = h;
   }
   return best;

@@ -2,6 +2,7 @@
 
 import { useLayoutEffect, useMemo, useRef, type ReactNode } from "react";
 import { InstancedMesh, Object3D, type BufferGeometry } from "three";
+import { NEST_SCOOP } from "@/lib/game/nest-look";
 import { SHORE } from "@/lib/game/shore-look";
 import { assertNever } from "@/lib/game/types";
 import {
@@ -207,15 +208,22 @@ function NestClearing({
   radius: number;
   color: string;
 }) {
+  const y = sampleGroundY(x, z) + 0.005;
   return (
-    <mesh
-      rotation={[-Math.PI / 2, 0, 0]}
-      position={[x, sampleGroundY(x, z) + 0.006, z]}
-      receiveShadow
-    >
-      <circleGeometry args={[radius, 16]} />
-      <meshPhongMaterial color={color} shininess={5} specular="#9aaa70" />
-    </mesh>
+    <group position={[x, y, z]}>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <circleGeometry args={[radius, 16]} />
+        <meshPhongMaterial color={color} shininess={5} specular="#9aaa70" />
+      </mesh>
+      <mesh
+        rotation={[-Math.PI / 2, 0, 0]}
+        position={[0, 0.002, 0]}
+        receiveShadow
+      >
+        <circleGeometry args={[radius * 0.58, 14]} />
+        <meshPhongMaterial color={NEST_SCOOP} shininess={4} specular="#a09070" />
+      </mesh>
+    </group>
   );
 }
 

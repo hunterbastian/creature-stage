@@ -107,9 +107,9 @@ export function nearPool(
 
 function nestClearings(): ClearingSpec[] {
   return [
-    { x: NEST_LAYOUT[0].x, z: NEST_LAYOUT[0].z, radius: 2.2, color: "#6e7a4c" },
-    { x: NEST_LAYOUT[1].x, z: NEST_LAYOUT[1].z, radius: 2.28, color: "#8a8462" },
-    { x: NEST_LAYOUT[2].x, z: NEST_LAYOUT[2].z, radius: 2.16, color: "#7a7650" },
+    { x: NEST_LAYOUT[0].x, z: NEST_LAYOUT[0].z, radius: 2.2, color: "#5c6844" },
+    { x: NEST_LAYOUT[1].x, z: NEST_LAYOUT[1].z, radius: 2.28, color: "#7a7358" },
+    { x: NEST_LAYOUT[2].x, z: NEST_LAYOUT[2].z, radius: 2.16, color: "#6a6848" },
   ];
 }
 
