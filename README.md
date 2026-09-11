@@ -71,6 +71,7 @@ Between forms you still grow a little each meal. Form-ups are the loud moments (
 | Walk the far shore | A leviathan may notice, surge, telegraph, then slam |
 | Eat / walk into a slammed beast | Bite it (recover window). Drive one off for **2 meals** |
 | `E` or linger in a nest | Nestle: rest (full vitality) at home, or claim a wild nest once you are Fledgling |
+| `M` or speaker button | Mute / unmute the coastal ambience bed (saved in this browser) |
 | Editor (right / sheet) | Swap body / legs / mouth / eyes / later arms, tail, accessory |
 | **Mutate** | Randomize every unlocked slot (after Fledgling) |
 | **Reset** | Pick a new starter and a new fruit scatter |
@@ -84,6 +85,7 @@ Built to be played in **landscape** on iPhone Safari:
 - Rotate to landscape. Portrait shows a light “Rotate for Tideform” hint (you can dismiss it).
 - **Left stick** walks and turns. Push the stick far forward to **trot** (same stamina as Shift). **Eat** on the right nibbles nearby fruit (walking into fruit still works). Standing in a nest, that button reads **Rest** or **Claim**. When a leviathan is open after a slam, it reads **Bite**.
 - Tap the **compass** to focus the current objective.
+- Tap the **speaker** (next to Editor, and on the starter card) to mute. iOS Safari starts the bed after the first tap.
 - **Editor** is a collapsible bottom sheet with large part taps — it stays out of the stick / eat corners. It pulses when a new slot unlocks.
 - The page is full-viewport and safe-area aware (notch / home indicator). Pinch-zoom and page-scroll are blocked while you play.
 - **iPhone GPU:** pixel ratio capped at 1.15, no MSAA, 512px shadows, fewer grass/rock clumps, wildlife without extra shadow casters. Stamina and focus are rAF overlays (no per-frame React). Hatchling flock is 5 mates, not a stadium — enough solitude curve without melting Safari.
@@ -100,7 +102,8 @@ Add the page to your Home Screen if you want a more app-like fullscreen, then ke
 - Survival nibble loop: 8 fruits in the world (one waits in front of you), they respawn after you eat them.
 - Named form progression from Hatchling to Apex, with herd-respect tiers and a shrinking flock (5 → 1 nestmate).
 - Weightier locomotion (inertia, stamina trot, hitstop, **grounded collision**) and a soft-lock focus toward objectives.
-- Landscape-first mobile HUD with a virtual stick, contextual eat/claim, and compact part editor.
+- Landscape-first mobile HUD with a virtual stick, contextual eat/claim, compact part editor, and a mute control.
+- **Coastal ambience** — a looping wind/surf/meadow bed plus quiet eat/form one-shots (`public/audio/`). Mute with **M** or the speaker button.
 - **Nests & herds** — three woven nest bowls with eggs; sauropod and stego flocks graze nearby, and nestmates wear your morph.
 - **World collision** — meadow→beach height field, solid shore lip, walkable nest rims, light rock/driftwood slide-off. No physics engine.
 - **Offshore leviathans** — Coil, Veil, Keel (and Rift on desktop) loop the far ocean. Walk the beach and one may surge, telegraph, and slam. Bite the recover window for deep marrow (2 meals). The meadow is never a death zone.
@@ -146,7 +149,7 @@ Mechanical nods to Skyrim / Elden Ring, not their art:
 - **Rhythm** — Shift / full-stick trot spends a thin breath meter, then you are winded. Trot is a slightly faster gait on the same cycle, not a cartoon skip.
 - **Tension** — Hatchling vs a plucky herd is a chase; Elder/Apex is an honor stop. The deep does not honor you — the far shore is the weighty fight.
 - **Discovery** — compass + a soft yaw pull; hold **F** or tap the needle to glance at the objective.
-- **Impact** — eat, form-up, claim, greet, mutate, and shore slams punch the camera; the jaw opens on `eatFlash` and the body squash still shares that window (ready for audio later).
+- **Impact** — eat, form-up, claim, greet, mutate, and shore slams punch the camera; the jaw opens on `eatFlash` and the body squash still shares that window. A soft coastal bed (wind / surf / meadow) sits under play, with quiet eat / form-up one-shots.
 - **UI** — one objective chip, breath / vitality bars that only appear when they matter, no arcade combo spam.
 
 ## Project map
@@ -155,11 +158,14 @@ Mechanical nods to Skyrim / Elden Ring, not their art:
 | --- | --- |
 | `src/app/` | App Router layout + page |
 | `src/components/game/` | R3F canvas, world, coastal dress, nests, wildlife herds, offshore fauna, creature, food, camera, movement loop |
-| `src/components/ui/` | Overlay editor, starter picker, touch stick, rotate hint, stats, toasts |
+| `src/components/ui/` | Overlay editor, starter picker, mute, touch stick, rotate hint, stats, toasts |
+| `src/lib/game/audio.ts` | Web Audio coastal bed + eat/form cues (iOS gesture unlock) |
 | `src/lib/game/worldgen/` | Seeded coastal set dressing (biomes, density knobs, ground-Y hook) |
+| `public/audio/` | Loop + one-shots and license notes |
 | `scripts/blender/` | Headless bpy / Node generators for the saurian + coastal-prop glTF kits; re-export notes in `scripts/blender/README.md` |
+| `scripts/audio/` | Regenerates the CC0 coastal MP3s |
 
-Locomotion (`x`, `y`, `z`, `yaw`, stamina, vitality, feel pulses) lives in `src/lib/game/sim.ts` and `src/lib/game/locomotion.ts` so the HUD does not rerender every frame. Visual walk/idle/trot/eat poses live in `src/lib/game/anim.ts` (applied in `useCreatureAnim.ts`). World collision (height field, shore lip, nest bowls, prop capsules) lives in `src/lib/game/collision.ts`. Wildlife x/z lives in `src/lib/game/wildlife.ts`. Leviathan moods live in `src/lib/game/offshore-ai.ts`. Form thresholds, herd-mate curve, and the current objective live in `src/lib/game/progress.ts`. Coastal set dressing is seeded in `src/lib/game/worldgen/` and drawn by `CoastalDress`. Creature roots follow collision footing (`sim.y` / `groundHeight`); props use `sampleGroundY` (collision binds that hook to `surfaceHeight`).
+Locomotion (`x`, `y`, `z`, `yaw`, stamina, vitality, feel pulses) lives in `src/lib/game/sim.ts` and `src/lib/game/locomotion.ts` so the HUD does not rerender every frame. Visual walk/idle/trot/eat poses live in `src/lib/game/anim.ts` (applied in `useCreatureAnim.ts`). World collision (height field, shore lip, nest bowls, prop capsules) lives in `src/lib/game/collision.ts`. Wildlife x/z lives in `src/lib/game/wildlife.ts`. Leviathan moods live in `src/lib/game/offshore-ai.ts`. Form thresholds, herd-mate curve, and the current objective live in `src/lib/game/progress.ts`. Coastal set dressing is seeded in `src/lib/game/worldgen/` and drawn by `CoastalDress`. Creature roots follow collision footing (`sim.y` / `groundHeight`); props use `sampleGroundY` (collision binds that hook to `surfaceHeight`). Coastal sound is a small Web Audio bootstrap in `src/lib/game/audio.ts` — not wired through worldgen, collision, or the Blender kit.
 
 ## World generation
 
@@ -190,8 +196,16 @@ The Blender kit (`public/models/saurian-kit.glb`) has no clips. Theropod / sauro
 
 Tune weight in `PROFILES` inside `src/lib/game/anim.ts`. Re-export notes (and how to add real armature clips later) are in `scripts/blender/README.md`. Gait checks ride `npm test` with the collision suite.
 
+## Sound
+
+A light **coastal ambience bed** (soft wind, distant surf, quiet meadow rustle) loops under play after the first tap or key — required so iOS Safari can unlock `AudioContext`. Eat and form-up reuse the existing feel pulses for tiny one-shots.
+
+**Mute:** speaker button on the starter overlay and HUD, or press **M**. The choice is stored in `localStorage` (`tideform-audio-muted`). Muting ramps gain to zero and stops the loop; the game stays fully playable with sound off.
+
+Files live in `public/audio/` (~100 KB total). They are original CC0 beds generated by `scripts/audio/make_coastal.py` (no third-party samples). Sources and licenses: [`public/audio/README.md`](public/audio/README.md).
+
 ## What's next
 
 - Shareable DNA strings and a gallery of saved body plans
 - Optional Blender clips (`idle` / `walk` / `trot` / `eat`) layered on the procedural fallback
-- Sound and a part-color picker
+- A part-color picker
