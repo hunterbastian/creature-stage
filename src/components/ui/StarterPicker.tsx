@@ -1,8 +1,19 @@
 "use client";
 
+import { useEffect } from "react";
 import { STARTER_CHOICES } from "@/lib/game/catalog";
 import { useGameStore } from "@/lib/game/store";
 import { assertNever, type BodyId } from "@/lib/game/types";
+
+function parseStarter(): BodyId | null {
+  if (typeof window === "undefined") return null;
+  const value = new URLSearchParams(window.location.search).get("starter");
+  if (value === "sleek" || value === "plump" || value === "spiky") return value;
+  if (value === "theropod") return "sleek";
+  if (value === "sauropod") return "plump";
+  if (value === "stego") return "spiky";
+  return null;
+}
 
 function swatch(id: BodyId): string {
   switch (id) {
@@ -20,6 +31,14 @@ function swatch(id: BodyId): string {
 export function StarterPicker() {
   const chosen = useGameStore((state) => state.starterChosen);
   const chooseStarter = useGameStore((state) => state.chooseStarter);
+
+  useEffect(() => {
+    const starter = parseStarter();
+    if (!starter) return;
+    if (!useGameStore.getState().starterChosen) {
+      chooseStarter(starter);
+    }
+  }, [chooseStarter]);
 
   if (chosen) return null;
 

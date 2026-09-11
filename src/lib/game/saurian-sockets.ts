@@ -26,22 +26,22 @@ export type KitSockets = {
 export const KIT_SOCKETS: Record<BodyId, KitSockets> = {
   sleek: {
     stance: "biped",
-    pitch: -0.040,
-    hip: { x: 0.190, z: -0.080 },
-    shoulder: { x: 0.260, z: 0.580 },
-    jaw: [0.000, 0.340, 1.500],
-    eye: { x: 0.175, y: 0.500, z: 1.270 },
-    brow: { x: 0.100, y: 0.600, z: 1.160 },
+    pitch: -0.060,
+    hip: { x: 0.180, z: -0.060 },
+    shoulder: { x: 0.240, z: 0.520 },
+    jaw: [0.000, 0.400, 1.380],
+    eye: { x: 0.160, y: 0.580, z: 1.180 },
+    brow: { x: 0.090, y: 0.660, z: 1.080 },
     arm: {
-      position: [0.260, 0.180, 0.580],
+      position: [0.240, 0.220, 0.520],
       rotation: [0.850, 0.000, 0.850],
     },
     tailRoot: {
-      position: [0.000, 0.120, -0.520],
-      rotation: [-0.160, 0.000, 0.000],
+      position: [0.000, 0.140, -0.380],
+      rotation: [-0.120, 0.000, 0.000],
     },
-    accessory: [0.000, 0.520, 0.220],
-    tailLength: 1.420,
+    accessory: [0.000, 0.560, 0.200],
+    tailLength: 1.280,
   },
   plump: {
     stance: "quad",

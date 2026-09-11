@@ -116,7 +116,9 @@ def make_empty(name: str, parent: bpy.types.Object | None = None) -> bpy.types.O
 
 
 def creature_to_blender(x: float, y: float, z: float) -> Vector:
-    return Vector((x, z, y))
+    # glTF +Y up export maps Blender +Y → glTF -Z. Store creature forward
+    # as Blender -Y so the kit faces +Z in Three/R3F.
+    return Vector((x, -z, y))
 
 
 def set_creature_location(obj: bpy.types.Object, x: float, y: float, z: float) -> None:
@@ -124,9 +126,9 @@ def set_creature_location(obj: bpy.types.Object, x: float, y: float, z: float) -
 
 
 def set_creature_rotation(obj: bpy.types.Object, rx: float, ry: float, rz: float) -> None:
-    # Creature Euler XYZ (pitch, yaw, roll) → Blender Euler after axis swap.
+    # Creature XYZ (pitch, yaw, roll) after mapping forward to Blender -Y.
     obj.rotation_mode = "XYZ"
-    obj.rotation_euler = Euler((rx, rz, -ry), "XYZ")
+    obj.rotation_euler = Euler((rx, -rz, ry), "XYZ")
 
 
 def mat(name: str, color: tuple[float, float, float, float], roughness: float) -> bpy.types.Material:
@@ -367,7 +369,7 @@ def make_spiral_shell(
         theta = 0.55 + u * turns * math.tau
         grow = math.exp(0.2 * theta)
         radius = 0.009 * grow
-        tube = 0.005 + 0.026 * u
+        tube = 0.012 + 0.042 * u
         # Spiral in creature XZ, slightly lifted in Y — sits on a back like a barnacle.
         x = radius * math.cos(theta)
         z = radius * math.sin(theta)
@@ -423,7 +425,7 @@ def tube_along(path: list[Vector], radii: list[float], radial: int) -> bmesh.typ
     for i in range(len(rows) - 1):
         for s in range(radial):
             s2 = (s + 1) % radial
-            bm.faces.new((rows[i][s], rows[i][s2], rows[i + 1][s2], rows[i + 1][s]))
+            bm.faces.new((rows[i][s], rows[i + 1][s], rows[i + 1][s2], rows[i][s2]))
     bm.faces.new(list(reversed(rows[0])))
     bm.faces.new(rows[-1])
     bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
@@ -454,42 +456,13 @@ def make_kite_plate(
     width: float = 0.28,
     thick: float = 0.04,
 ) -> bpy.types.Object:
-    bm = bmesh.new()
-    # Creature: thin in X, tall in Y, diamond in YZ.
-    hw = width * 0.5
-    ht = thick * 0.5
-    verts_c = [
-        (0.0, 0.0, 0.0),
-        (0.0, height, 0.02),
-        (hw, height * 0.46, 0.04),
-        (-hw, height * 0.46, 0.04),
-        (0.0, height * 0.42, -0.08),
-        (ht, height * 0.48, 0.01),
-        (-ht, height * 0.48, 0.01),
+    rings = [
+        Ring(z=0.0, y=0.0, rx=0.02, ry=0.012, cream=0.35),
+        Ring(z=0.02, y=height * 0.38, rx=width * 0.48, ry=thick, cream=0.45),
+        Ring(z=0.016, y=height * 0.72, rx=width * 0.22, ry=thick * 0.7, cream=0.5),
+        Ring(z=0.01, y=height, rx=0.012, ry=0.01, cream=0.55),
     ]
-    vs = [bm.verts.new(creature_to_blender(*p)) for p in verts_c]
-    faces = [
-        (0, 2, 1),
-        (0, 1, 3),
-        (0, 4, 2),
-        (0, 3, 4),
-        (2, 5, 1),
-        (3, 1, 6),
-        (4, 1, 5),
-        (4, 6, 1),
-        (2, 4, 5),
-        (3, 6, 4),
-    ]
-    for a, b, c in faces:
-        try:
-            bm.faces.new((vs[a], vs[b], vs[c]))
-        except ValueError:
-            pass
-    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
-    bmesh.ops.triangulate(bm, faces=bm.faces)
-    obj = object_from_bmesh(name, bm, parent, material)
-    shade_smooth(obj)
-    return obj
+    return make_loft(name, rings, parent, material, segs=8, levels=1)
 
 
 def make_toe(
@@ -537,37 +510,36 @@ def place_socket(parent: bpy.types.Object, name: str, x: float, y: float, z: flo
 def build_theropod(mats: dict[str, bpy.types.Material]) -> SocketSet:
     root = make_empty("chassis_sleek")
     rings = [
-        Ring(z=-0.58, y=0.10, rx=0.07, ry=0.07),
-        Ring(z=-0.38, y=0.14, rx=0.16, ry=0.18),
-        Ring(z=-0.16, y=0.13, rx=0.24, ry=0.28),
-        Ring(z=0.04, y=0.14, rx=0.22, ry=0.27),
-        Ring(z=0.26, y=0.18, rx=0.24, ry=0.32),
-        Ring(z=0.48, y=0.24, rx=0.28, ry=0.38),
-        Ring(z=0.68, y=0.30, rx=0.22, ry=0.30),
-        Ring(z=0.86, y=0.38, rx=0.13, ry=0.16),
-        Ring(z=1.02, y=0.46, rx=0.12, ry=0.13),
-        Ring(z=1.16, y=0.50, rx=0.17, ry=0.15, cream=0.25),
-        Ring(z=1.30, y=0.47, rx=0.19, ry=0.14, cream=0.55),
-        Ring(z=1.44, y=0.43, rx=0.12, ry=0.10, cream=0.85),
-        Ring(z=1.58, y=0.39, rx=0.06, ry=0.055, cream=1.0),
+        Ring(z=-0.42, y=0.12, rx=0.06, ry=0.06),
+        Ring(z=-0.24, y=0.16, rx=0.18, ry=0.22),
+        Ring(z=-0.06, y=0.18, rx=0.22, ry=0.28),
+        Ring(z=0.12, y=0.20, rx=0.18, ry=0.24),
+        Ring(z=0.32, y=0.26, rx=0.22, ry=0.34),
+        Ring(z=0.50, y=0.32, rx=0.26, ry=0.36),
+        Ring(z=0.66, y=0.38, rx=0.18, ry=0.26),
+        Ring(z=0.80, y=0.46, rx=0.11, ry=0.14),
+        Ring(z=0.94, y=0.54, rx=0.12, ry=0.13),
+        Ring(z=1.08, y=0.56, rx=0.16, ry=0.15, cream=0.3),
+        Ring(z=1.20, y=0.52, rx=0.18, ry=0.14, cream=0.6),
+        Ring(z=1.34, y=0.47, rx=0.11, ry=0.09, cream=0.9),
+        Ring(z=1.46, y=0.44, rx=0.055, ry=0.048, cream=1.0),
     ]
     make_loft("sleek_body", rings, root, mats["skin"], segs=12, levels=1)
 
     for side, sx in (("L", 1.0), ("R", -1.0)):
         horn = make_horn(f"sleek_horn_{side}", root, mats["keratin"], length=0.13, radius=0.026)
-        set_creature_location(horn, 0.09 * sx, 0.58, 1.18)
-        set_creature_rotation(horn, 0.35, 0.18 * sx, -0.55 * sx)
+        set_creature_location(horn, 0.08 * sx, 0.64, 1.10)
+        set_creature_rotation(horn, 0.42, 0.12 * sx, -0.62 * sx)
 
     # Shoulder / nape spiral shells — locked coastal vibe.
     shells = [
-        (0.0, 0.58, 0.86, 1.05, (-0.55, 0.0, 0.0)),
-        (0.12, 0.52, 0.68, 1.15, (-0.4, 0.55, 0.1)),
-        (-0.12, 0.52, 0.68, 1.15, (-0.4, -0.55, -0.1)),
-        (0.14, 0.50, 0.48, 1.28, (-0.32, 0.7, 0.12)),
-        (-0.14, 0.50, 0.48, 1.28, (-0.32, -0.7, -0.12)),
-        (0.10, 0.46, 0.28, 0.95, (-0.22, 0.5, 0.08)),
-        (-0.10, 0.46, 0.28, 0.95, (-0.22, -0.5, -0.08)),
-        (0.0, 0.44, 0.10, 0.78, (-0.16, 0.0, 0.0)),
+        (0.0, 0.62, 0.78, 1.15, (-0.55, 0.0, 0.0)),
+        (0.12, 0.56, 0.60, 1.25, (-0.4, 0.55, 0.1)),
+        (-0.12, 0.56, 0.60, 1.25, (-0.4, -0.55, -0.1)),
+        (0.14, 0.54, 0.40, 1.35, (-0.32, 0.7, 0.12)),
+        (-0.14, 0.54, 0.40, 1.35, (-0.32, -0.7, -0.12)),
+        (0.10, 0.50, 0.22, 1.0, (-0.22, 0.5, 0.08)),
+        (-0.10, 0.50, 0.22, 1.0, (-0.22, -0.5, -0.08)),
     ]
     for i, (x, y, z, sc, rot) in enumerate(shells):
         place_shell(root, mats, f"sleek_shell_{i}", x, y, z, sc, rot)
@@ -590,32 +562,32 @@ def build_theropod(mats: dict[str, bpy.types.Material]) -> SocketSet:
             segs=10,
             levels=0,
         )
-        set_creature_location(ring, 0.175 * sx, 0.50, 1.26)
+        set_creature_location(ring, 0.16 * sx, 0.58, 1.16)
 
-    place_socket(root, "socket_sleek_eye_L", 0.175, 0.50, 1.27)
-    place_socket(root, "socket_sleek_eye_R", -0.175, 0.50, 1.27)
-    place_socket(root, "socket_sleek_jaw", 0.0, 0.34, 1.50)
-    place_socket(root, "socket_sleek_arm_L", 0.26, 0.18, 0.58)
-    place_socket(root, "socket_sleek_arm_R", -0.26, 0.18, 0.58)
-    place_socket(root, "socket_sleek_tail", 0.0, 0.12, -0.52)
-    place_socket(root, "socket_sleek_hip_L", 0.19, 0.0, -0.08)
-    place_socket(root, "socket_sleek_hip_R", -0.19, 0.0, -0.08)
-    place_socket(root, "socket_sleek_brow_L", 0.10, 0.60, 1.16)
-    place_socket(root, "socket_sleek_brow_R", -0.10, 0.60, 1.16)
-    place_socket(root, "socket_sleek_acc", 0.0, 0.52, 0.22)
+    place_socket(root, "socket_sleek_eye_L", 0.16, 0.58, 1.18)
+    place_socket(root, "socket_sleek_eye_R", -0.16, 0.58, 1.18)
+    place_socket(root, "socket_sleek_jaw", 0.0, 0.40, 1.38)
+    place_socket(root, "socket_sleek_arm_L", 0.24, 0.22, 0.52)
+    place_socket(root, "socket_sleek_arm_R", -0.24, 0.22, 0.52)
+    place_socket(root, "socket_sleek_tail", 0.0, 0.14, -0.38)
+    place_socket(root, "socket_sleek_hip_L", 0.18, 0.0, -0.06)
+    place_socket(root, "socket_sleek_hip_R", -0.18, 0.0, -0.06)
+    place_socket(root, "socket_sleek_brow_L", 0.09, 0.66, 1.08)
+    place_socket(root, "socket_sleek_brow_R", -0.09, 0.66, 1.08)
+    place_socket(root, "socket_sleek_acc", 0.0, 0.56, 0.20)
 
     return SocketSet(
         stance="biped",
-        pitch=-0.04,
-        hip=(0.19, -0.08),
-        shoulder=(0.26, 0.58),
-        jaw=(0.0, 0.34, 1.50),
-        eye=(0.175, 0.50, 1.27),
-        brow=(0.10, 0.60, 1.16),
-        arm=((0.26, 0.18, 0.58), (0.85, 0.0, 0.85)),
-        tail_root=((0.0, 0.12, -0.52), (-0.16, 0.0, 0.0)),
-        accessory=(0.0, 0.52, 0.22),
-        tail_length=1.42,
+        pitch=-0.06,
+        hip=(0.18, -0.06),
+        shoulder=(0.24, 0.52),
+        jaw=(0.0, 0.40, 1.38),
+        eye=(0.16, 0.58, 1.18),
+        brow=(0.09, 0.66, 1.08),
+        arm=((0.24, 0.22, 0.52), (0.85, 0.0, 0.85)),
+        tail_root=((0.0, 0.14, -0.38), (-0.12, 0.0, 0.0)),
+        accessory=(0.0, 0.56, 0.20),
+        tail_length=1.28,
     )
 
 
@@ -704,14 +676,14 @@ def build_stego(mats: dict[str, bpy.types.Material]) -> SocketSet:
     make_loft("spiky_body", rings, root, mats["skin_sage"], segs=12, levels=1)
 
     plates = [
-        (-0.045, 0.42, 0.58, 0.38, 0.18, 0.08),
-        (0.05, 0.52, 0.34, 0.58, 0.24, 0.04),
-        (-0.05, 0.64, 0.10, 0.78, 0.28, 0.0),
-        (0.055, 0.74, -0.12, 0.92, 0.32, -0.04),
-        (-0.04, 0.70, -0.34, 0.84, 0.28, -0.08),
-        (0.04, 0.56, -0.54, 0.62, 0.22, -0.14),
-        (-0.03, 0.40, -0.72, 0.42, 0.16, -0.2),
-        (0.02, 0.28, -0.88, 0.28, 0.12, -0.26),
+        (-0.045, 0.36, 0.52, 0.28, 0.16, 0.08),
+        (0.05, 0.44, 0.30, 0.42, 0.20, 0.04),
+        (-0.05, 0.52, 0.08, 0.56, 0.24, 0.0),
+        (0.055, 0.58, -0.12, 0.64, 0.26, -0.04),
+        (-0.04, 0.54, -0.32, 0.58, 0.22, -0.08),
+        (0.04, 0.44, -0.50, 0.44, 0.18, -0.14),
+        (-0.03, 0.34, -0.66, 0.30, 0.14, -0.2),
+        (0.02, 0.26, -0.80, 0.20, 0.10, -0.26),
     ]
     for i, (x, y, z, h, w, pitch) in enumerate(plates):
         plate = make_kite_plate(f"spiky_plate_{i}", root, mats["plate"], height=h, width=w, thick=0.042)
@@ -773,14 +745,14 @@ def build_leg(
     root = make_empty(name)
     if kind == "stilts":
         rings = [
-            Ring(z=0.02, y=0.02, rx=0.11, ry=0.12),
-            Ring(z=0.06, y=-0.16, rx=0.13, ry=0.14),
-            Ring(z=0.08, y=-0.34, rx=0.10, ry=0.11),
-            Ring(z=0.05, y=-0.42, rx=0.08, ry=0.09),
-            Ring(z=0.02, y=-0.62, rx=0.07, ry=0.07, cream=0.15),
-            Ring(z=0.06, y=-0.80, rx=0.055, ry=0.05, cream=0.35),
-            Ring(z=0.14, y=-0.90, rx=0.09, ry=0.04, cream=0.55),
-            Ring(z=0.20, y=-0.92, rx=0.07, ry=0.03, cream=0.6),
+            Ring(z=0.04, y=0.02, rx=0.13, ry=0.14),
+            Ring(z=0.08, y=-0.18, rx=0.15, ry=0.16),
+            Ring(z=0.10, y=-0.36, rx=0.11, ry=0.12),
+            Ring(z=0.06, y=-0.44, rx=0.08, ry=0.09),
+            Ring(z=0.02, y=-0.64, rx=0.065, ry=0.065, cream=0.2),
+            Ring(z=0.08, y=-0.82, rx=0.05, ry=0.048, cream=0.4),
+            Ring(z=0.16, y=-0.90, rx=0.09, ry=0.04, cream=0.55),
+            Ring(z=0.22, y=-0.92, rx=0.07, ry=0.03, cream=0.6),
         ]
         drop = 0.94
         toe_y, toe_z = -0.92, 0.18

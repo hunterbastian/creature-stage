@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { DoubleSide } from "three";
 import { getCoastalMaps, type Finish } from "@/lib/game/creature-look";
 import { assertNever } from "@/lib/game/types";
 
@@ -29,6 +30,7 @@ export function CreatureMaterial({
           emissive={color}
           emissiveIntensity={0.035}
           vertexColors={vertexColors}
+          side={DoubleSide}
         />
       );
     case "keratin":
@@ -44,6 +46,7 @@ export function CreatureMaterial({
           emissive={color}
           emissiveIntensity={0.02}
           vertexColors={vertexColors}
+          side={DoubleSide}
         />
       );
     case "wet":
@@ -59,6 +62,7 @@ export function CreatureMaterial({
           emissive={color}
           emissiveIntensity={0.03}
           vertexColors={vertexColors}
+          side={DoubleSide}
         />
       );
     case "plate":
@@ -74,6 +78,7 @@ export function CreatureMaterial({
           emissive={color}
           emissiveIntensity={0.025}
           vertexColors={vertexColors}
+          side={DoubleSide}
         />
       );
     default:

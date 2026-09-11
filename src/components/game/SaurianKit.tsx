@@ -39,14 +39,31 @@ function lookFor(mesh: Mesh, colors: KitColors): { color: string; finish: Finish
   if (tag.includes("mat_eye") || tag.includes("_globe")) {
     return { color: EYE_GLASS, finish: "wet" };
   }
-  if (tag.includes("claw")) return { color: CLAW_GREY, finish: "keratin" };
-  if (tag.includes("wet")) {
+  if (tag.includes("claw") || tag.includes("_toe") || tag.includes("_dew")) {
+    return { color: CLAW_GREY, finish: "keratin" };
+  }
+  if (tag.includes("wet") || tag.includes("sucker") || tag.includes("_pad")) {
     return { color: colors.accent ?? colors.skin, finish: "wet" };
   }
-  if (tag.includes("keratin")) {
+  if (
+    tag.includes("keratin") ||
+    tag.includes("horn") ||
+    tag.includes("beak") ||
+    tag.includes("tooth") ||
+    tag.includes("sheath")
+  ) {
     return { color: colors.accent ?? FACE_CREAM, finish: "keratin" };
   }
-  if (tag.includes("plate") || tag.includes("cream")) {
+  if (
+    tag.includes("plate") ||
+    tag.includes("cream") ||
+    tag.includes("shell") ||
+    tag.includes("_ost") ||
+    tag.includes("eyerim") ||
+    tag.includes("vane") ||
+    tag.includes("collar") ||
+    tag.includes("club")
+  ) {
     return { color: colors.accent ?? SHELL_CREAM, finish: "plate" };
   }
   return { color: colors.skin, finish: "skin" };
@@ -62,6 +79,8 @@ function MappedObject({
   castShadow: boolean;
 }) {
   const look = isMesh(object) ? lookFor(object, colors) : null;
+  const hasColor =
+    isMesh(object) && Boolean(object.geometry.getAttribute("color"));
   return (
     <group
       position={[object.position.x, object.position.y, object.position.z]}
@@ -73,7 +92,7 @@ function MappedObject({
           <CreatureMaterial
             color={look.color}
             finish={look.finish}
-            vertexColors
+            vertexColors={hasColor}
           />
         </mesh>
       ) : null}

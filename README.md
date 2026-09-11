@@ -125,7 +125,7 @@ Horizon fauna from the far ocean lane can escalate into a real shore fight. They
 
 Knobs live in `src/lib/game/offshore.ts`. The brain is `src/lib/game/offshore-ai.ts`.
 
-Reviewer warp: open `/#hunt`, pick a starter, and Coil stages on the +Z beach so you do not wait a full orbit.
+Reviewer warp: open `/#hunt`, pick a starter, and Coil stages on the +Z beach so you do not wait a full orbit. `?starter=theropod|sauropod|stego` (or `sleek|plump|spiky`) auto-picks a chassis.
 
 ## How it should feel
 
