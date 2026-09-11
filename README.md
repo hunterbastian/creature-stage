@@ -88,13 +88,13 @@ Built to be played in **landscape** on iPhone Safari:
 - Tap the **speaker** (next to Editor, and on the starter card) to mute. iOS Safari starts the bed after the first tap.
 - **Editor** is a collapsible bottom sheet with large part taps — it stays out of the stick / eat corners. It pulses when a new slot unlocks.
 - The page is full-viewport and safe-area aware (notch / home indicator). Pinch-zoom and page-scroll are blocked while you play.
-- **iPhone GPU:** pixel ratio capped at 1.15, no MSAA, 512px shadows, fewer grass/rock clumps, wildlife without extra shadow casters. Stamina and focus are rAF overlays (no per-frame React). Hatchling flock is 5 mates, not a stadium — enough solitude curve without melting Safari.
+- **iPhone GPU:** pixel ratio capped at 1.15, no MSAA, 512px shadows, 128px bloom (no extra color-grade pass), instance budget 280, no vertical mist walls. Wildlife without extra shadow casters. Stamina and focus are rAF overlays (no per-frame React). Hatchling flock is 5 mates, not a stadium — enough solitude curve without melting Safari.
 
 Add the page to your Home Screen if you want a more app-like fullscreen, then keep the phone sideways.
 
 ## What shipped
 
-- Full-screen coastal meadow with Skyrim-PS3 lighting (warm sun, grass, sea).
+- Full-screen coastal meadow with Skyrim-PS3 salt light (warm low sun, cream haze, soft bloom).
 - Authored coastal props from a Blender/Node glTF kit (`public/models/coastal-props.glb`) — rocks, driftwood, kelp, shells, and wind-bent grove trees instance as mid-fi meshes, not primitive blobs.
 - Three locked starters: **Theropod** (biped hunter), **Sauropod** (long-neck), **Stego** (beaked herbivore, cream spiral plates). Seafoam/cream + modular accents, loaded from a Blender glTF kit (`public/models/saurian-kit.glb`). Rebuild: `blender --background --python scripts/blender/build_saurians.py` (see `scripts/blender/README.md`).
 - A modular creature: **body, legs, mouth, eyes**, plus unlockable **arms, tail, and accessory** (named glTF nodes, live editor swaps).
@@ -139,7 +139,22 @@ The island is no longer a flat disc with a radius clamp. Feet sample a cheap hei
 
 Aggro is still **xz radial**: `SHORE_DANGER_RADIUS` === `BEACH_INNER_RADIUS` (dry-sand start). The playable lip sits *outside* that band so you can still stand on the beach and draw a leviathan. Height is not part of the notice test.
 
-Knobs live in `src/lib/game/collision.ts` (`MEADOW_HEIGHT`, `WATER_Y`, `SHORE_LIP_RADIUS`, `NEST_*`, `PROP_*`, settle/gravity). The displaced dirt mesh is `src/lib/game/island-mesh.ts`.
+Knobs live in `src/lib/game/collision.ts` (`MEADOW_HEIGHT`, `WATER_Y`, `SHORE_LIP_RADIUS`, `NEST_*`, `PROP_*`, settle/gravity). The grove overlook hill is `overlookLift` in `src/lib/game/worldgen/landmarks.ts`. The displaced dirt mesh is `src/lib/game/island-mesh.ts`.
+
+## Atmosphere & vibe
+
+Salt light, not grimdark, not candy. The chase cam on iPhone landscape is the beauty shot: cream-haze horizon, wet sand, clear tide pools, a grove you can stand in.
+
+| Knob | Where | Notes |
+| --- | --- | --- |
+| `ATMOSPHERE.desktop` / `.mobile` | `src/lib/game/atmosphere.ts` | Fog near/far, sun height, bloom strength/threshold, exposure. Mobile skips the grade pass. |
+| `DRESS` | same file | Instanced prop / mist colors. |
+| `COASTAL_GRADE` | same file | Desktop-only lift/gain (cool dirt, warm sky). |
+| `SHORE` / `SHORE_BAND` | `src/lib/game/shore-look.ts` | Ocean discs, wet-sand vertex strip, foam lace, tide-pool bed/rim/water. |
+
+**Before:** gray-green exp fog, noon-ish key, flat water discs, bloom that barely kissed highlights, props as uniform scatter on a disc.
+
+**After:** linear cream fog (island readable, horizon melts), lower warm sun + cool ocean fill, near-shore water you can see the wet sand through, wet-rock tide pools with a pebble bed under clear water, grove mist, authored places (overlook hill, east tide shelf, nest hollows with packed earth).
 
 ## How it should feel
 
@@ -159,8 +174,10 @@ Mechanical nods to Skyrim / Elden Ring, not their art:
 | `src/app/` | App Router layout + page |
 | `src/components/game/` | R3F canvas, world, shore water, coastal dress, nests, wildlife herds, offshore fauna, creature, food, camera, movement loop |
 | `src/components/ui/` | Overlay editor, starter picker, mute, touch stick, rotate hint, stats, toasts |
+| `src/lib/game/atmosphere.ts` | Look knobs: fog, sun, bloom, dress colors |
+| `src/lib/game/shore-look.ts` | Water, wet sand, foam, tide-pool clarity knobs |
 | `src/lib/game/audio.ts` | Web Audio coastal bed + eat/form cues (iOS gesture unlock) |
-| `src/lib/game/worldgen/` | Seeded coastal set dressing (biomes, density knobs, ground-Y hook) |
+| `src/lib/game/worldgen/` | Seeded coastal set dressing (biomes, density knobs, landmarks, ground-Y hook) |
 | `public/audio/` | Loop + one-shots and license notes |
 | `scripts/blender/` | Headless bpy / Node generators for the saurian + coastal-prop glTF kits; re-export notes in `scripts/blender/README.md` |
 | `scripts/audio/` | Regenerates the CC0 coastal MP3s |
@@ -175,15 +192,17 @@ The island is **seeded set dressing** on collision’s height field. Same seed �
 | --- | --- | --- |
 | `WORLDGEN_SEED` (`0x71def04`) | `src/lib/game/worldgen/density.ts` | Bump to reshuffle the whole island. |
 | `DENSITY.desktop` / `DENSITY.mobile` | same file | Per-prop instance caps. Mobile is roughly half. |
+| `INSTANCE_BUDGET` | same file | Hard cap on instanced poses (desktop 560 / mobile 280). |
 | `BAND` | same file | Meadow / grove / shore / waterline radii. Groves stay on the beach–meadow edge (no forest wall). |
+| `GROVE_OVERLOOK` / `TIDE_SHELF` | `src/lib/game/worldgen/landmarks.ts` | Authored places. Overlook is a walkable hill; the shelf is a 3-pool wet-rock terrace. |
 | `PROP_CATALOG` | `src/lib/game/worldgen/catalog.ts` | Which props instance, which band they belong to. |
 | `coastal-props.glb` | `public/models/coastal-props.glb` | Unit hero meshes (rocks, wood, kelp, shells, grove trees). Rebuild with `npm run props:build`. |
-| `sampleGroundY` / `setGroundSampler` | `src/lib/game/worldgen/ground.ts` | Pose `y` is local lift. Collision binds `setGroundSampler(surfaceHeight)` so props sit on the meadow→beach field. |
+| `sampleGroundY` / `setGroundSampler` | `src/lib/game/worldgen/ground.ts` | Pose `y` is local lift. Collision binds `setGroundSampler(surfaceHeight)` so props sit on the meadow→beach field (including the overlook lift). |
 | `COASTAL_PROP_NODES` | `src/lib/game/worldgen/props-kit.ts` | Named glTF nodes swapped into `CoastalDress` instanced fields. |
 
-Shore micro-biomes (tide terraces, kelp wrack, rock shelves, shell fans) are authored arcs in `layout.ts`, then filled with instanced props. Nest bowls keep a clearing; `isWorldgenOccupied` is the fruit keep-out. Walkable height, shore lip, and nest rims stay in `collision.ts`. Prop collision cylinders use **pose scale**, not kit mesh bounds — keep unit-space meshes aligned with the old primitives.
+Shore micro-biomes (tide terraces, kelp wrack, rock shelves, shell fans) are authored arcs in `layout.ts`, then filled with instanced props. Nest bowls keep a two-tone hollow; `isWorldgenOccupied` is the fruit keep-out. Walkable height, shore lip, and nest rims stay in `collision.ts`. Prop collision cylinders use **pose scale**, not kit mesh bounds. Vertical mist walls are desktop-only.
 
-**Density / iOS:** `DENSITY.mobile` is roughly half of desktop (rocks 14 vs 26, kelp 12 vs 22, shells 26 vs 54, driftwood 7 vs 13, one fewer grove). One draw call per prop kind. Kit is untextured Phong, ~70–320 tris per hero mesh, no extra shadow casters on mobile. Grass / foam / haze stay primitive discs and cones.
+**Density / iOS:** `INSTANCE_BUDGET.mobile` is 280 poses. One draw call per prop kind. Kit is untextured Phong, ~70–320 tris per hero mesh, no extra shadow casters on mobile. Grass / foam / haze stay primitive discs.
 
 ## Coastal water & wet sand
 

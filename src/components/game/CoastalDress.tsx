@@ -1,7 +1,8 @@
 "use client";
 
 import { useLayoutEffect, useMemo, useRef, type ReactNode } from "react";
-import { InstancedMesh, Object3D, type BufferGeometry } from "three";
+import { DoubleSide, InstancedMesh, Object3D, type BufferGeometry } from "three";
+import { DRESS } from "@/lib/game/atmosphere";
 import { NEST_SCOOP } from "@/lib/game/nest-look";
 import { SHORE } from "@/lib/game/shore-look";
 import { assertNever } from "@/lib/game/types";
@@ -394,11 +395,11 @@ export function CoastalDress({ coarse }: { coarse: boolean }) {
 
       <InstancedField poses={dress.grass}>
         <coneGeometry args={[1, 1, 6]} />
-        <meshPhongMaterial color="#5e7644" shininess={5} specular="#9aaa70" />
+        <meshPhongMaterial color={DRESS.grass} shininess={5} specular="#9aaa70" />
       </InstancedField>
       <InstancedField poses={dress.reeds} geometry={kit.reeds}>
         <KitGeometry geometry={kit.reeds} fallback={<coneGeometry args={[1, 1, 6]} />} />
-        <meshPhongMaterial color="#5c6848" shininess={6} specular="#a8b088" />
+        <meshPhongMaterial color={DRESS.reeds} shininess={6} specular="#a8b088" />
       </InstancedField>
       <InstancedField
         poses={dress.dryRocks}
@@ -410,7 +411,7 @@ export function CoastalDress({ coarse }: { coarse: boolean }) {
           geometry={kit.dryRocks}
           fallback={<dodecahedronGeometry args={[1, 0]} />}
         />
-        <meshPhongMaterial color="#8a8276" shininess={7} specular="#c4b8a8" />
+        <meshPhongMaterial color={DRESS.dryRock} shininess={8} specular="#c4b8a8" />
       </InstancedField>
       <InstancedField
         poses={dress.wetRocks}
@@ -422,7 +423,11 @@ export function CoastalDress({ coarse }: { coarse: boolean }) {
           geometry={kit.wetRocks}
           fallback={<dodecahedronGeometry args={[1, 0]} />}
         />
-        <meshPhongMaterial color="#5e6864" shininess={24} specular="#c8d8d0" />
+        <meshPhongMaterial
+          color={DRESS.wetRock}
+          shininess={36}
+          specular="#d0e8e0"
+        />
       </InstancedField>
       <InstancedField
         poses={dress.shelves}
@@ -434,25 +439,25 @@ export function CoastalDress({ coarse }: { coarse: boolean }) {
           geometry={kit.shelves}
           fallback={<dodecahedronGeometry args={[1, 0]} />}
         />
-        <meshPhongMaterial color="#7a766c" shininess={10} specular="#c8d0c4" />
+        <meshPhongMaterial color={DRESS.shelf} shininess={14} specular="#c8d0c4" />
       </InstancedField>
       <InstancedField poses={dress.shells} geometry={kit.shells}>
         <KitGeometry
           geometry={kit.shells}
           fallback={<sphereGeometry args={[1, 7, 6]} />}
         />
-        <meshPhongMaterial color="#e4d8c4" shininess={20} specular="#f4eee4" />
+        <meshPhongMaterial color={DRESS.shell} shininess={28} specular="#f4eee4" />
       </InstancedField>
       <InstancedField poses={dress.spirals} geometry={kit.spirals}>
         <KitGeometry
           geometry={kit.spirals}
           fallback={<torusGeometry args={[1, 0.36, 6, 10]} />}
         />
-        <meshPhongMaterial color="#e8dcc8" shininess={22} specular="#f6f0e6" />
+        <meshPhongMaterial color={DRESS.spiral} shininess={26} specular="#f6f0e6" />
       </InstancedField>
       <InstancedField poses={dress.kelp} geometry={kit.kelp}>
         <KitGeometry geometry={kit.kelp} fallback={<coneGeometry args={[1, 1, 6]} />} />
-        <meshPhongMaterial color="#4a5a44" shininess={8} specular="#8a9c78" />
+        <meshPhongMaterial color={DRESS.kelp} shininess={8} specular="#8a9c78" />
       </InstancedField>
       <InstancedField
         poses={dress.driftwood}
@@ -464,35 +469,35 @@ export function CoastalDress({ coarse }: { coarse: boolean }) {
           geometry={kit.driftwood}
           fallback={<cylinderGeometry args={[1, 1, 1, 6]} />}
         />
-        <meshPhongMaterial color="#9a8a70" shininess={8} specular="#d4c4a8" />
+        <meshPhongMaterial color={DRESS.driftwood} shininess={8} specular="#d4c4a8" />
       </InstancedField>
       <InstancedField poses={dress.trunks} geometry={kit.trunks} castShadow={shade}>
         <KitGeometry
           geometry={kit.trunks}
           fallback={<cylinderGeometry args={[1, 1.18, 1, 6]} />}
         />
-        <meshPhongMaterial color="#7a6a52" shininess={7} specular="#c4b49a" />
+        <meshPhongMaterial color={DRESS.trunk} shininess={7} specular="#c4b49a" />
       </InstancedField>
       <InstancedField poses={dress.crowns} geometry={kit.crowns} castShadow={shade}>
         <KitGeometry
           geometry={kit.crowns}
           fallback={<icosahedronGeometry args={[1, coarse ? 0 : 1]} />}
         />
-        <meshPhongMaterial color="#5a6848" shininess={9} specular="#c4d0a8" />
+        <meshPhongMaterial color={DRESS.crown} shininess={9} specular="#c4d0a8" />
       </InstancedField>
       <InstancedField poses={dress.canopies} geometry={kit.canopies} castShadow={shade}>
         <KitGeometry
           geometry={kit.canopies}
           fallback={<coneGeometry args={[1, 1, 7]} />}
         />
-        <meshPhongMaterial color="#627050" shininess={9} specular="#c8d4b0" />
+        <meshPhongMaterial color={DRESS.canopy} shininess={9} specular="#c8d4b0" />
       </InstancedField>
       <InstancedField poses={dress.scrub} geometry={kit.scrub}>
         <KitGeometry
           geometry={kit.scrub}
           fallback={<icosahedronGeometry args={[1, 0]} />}
         />
-        <meshPhongMaterial color="#61684c" shininess={7} specular="#b0b888" />
+        <meshPhongMaterial color={DRESS.scrub} shininess={7} specular="#b0b888" />
       </InstancedField>
 
       <InstancedDecals poses={dress.foam} renderOrder={2}>
@@ -502,12 +507,22 @@ export function CoastalDress({ coarse }: { coarse: boolean }) {
       <InstancedDecals poses={mist} renderOrder={-1} followGround={false}>
         <circleGeometry args={[1, 12]} />
         <meshBasicMaterial
-          color="#c8d4cc"
+          color={DRESS.mist}
           transparent
-          opacity={0.09}
+          opacity={0.11}
           depthWrite={false}
         />
       </InstancedDecals>
+      <InstancedField poses={dress.mistWalls}>
+        <planeGeometry args={[1, 1]} />
+        <meshBasicMaterial
+          color={DRESS.mist}
+          transparent
+          opacity={0.08}
+          depthWrite={false}
+          side={DoubleSide}
+        />
+      </InstancedField>
 
       {dress.landforms.map((spec) => (
         <Landform

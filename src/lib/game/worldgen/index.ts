@@ -8,12 +8,19 @@ export { PROP_CATALOG } from "./catalog";
 export {
   BAND,
   DENSITY,
+  INSTANCE_BUDGET,
   WORLDGEN_SEED,
+  countInstancedPoses,
   densityFor,
   type DensityKnobs,
   type DensityTier,
 } from "./density";
 export { isWaterline, sampleGroundY, setGroundSampler } from "./ground";
+export {
+  GROVE_OVERLOOK,
+  TIDE_SHELF,
+  overlookLift,
+} from "./landmarks";
 export {
   TIDE_POOLS,
   getTidePools,

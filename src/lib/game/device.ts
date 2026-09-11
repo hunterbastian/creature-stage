@@ -1,4 +1,5 @@
 import { ReinhardToneMapping } from "three";
+import { atmosphereFor } from "./atmosphere";
 
 /** True for phones / tablets where a landscape play layout should win. */
 export function isCoarsePointer(): boolean {
@@ -34,6 +35,6 @@ export function canvasGlOptions(): {
     powerPreference: "high-performance",
     // Washed early-2010s tonemap — not ACES/UE5.
     toneMapping: ReinhardToneMapping,
-    toneMappingExposure: 0.98,
+    toneMappingExposure: atmosphereFor(coarse).exposure,
   };
 }

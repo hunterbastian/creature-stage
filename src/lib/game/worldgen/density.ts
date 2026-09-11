@@ -1,3 +1,5 @@
+import type { WorldDress } from "./types";
+
 /**
  * Worldgen knobs. Bump `WORLDGEN_SEED` to reshuffle the island; leave it
  * pinned so a session (and every reload) sees the same coastal layout.
@@ -7,6 +9,7 @@
  * Hero meshes live in `coastal-props.glb`; swapping kits must not raise
  * these caps.
  */
+
 export const WORLDGEN_SEED = 0x71def04;
 
 export type DensityTier = "desktop" | "mobile";
@@ -23,6 +26,8 @@ export type DensityKnobs = {
   duneScrub: number;
   foam: number;
   haze: number;
+  groveMist: number;
+  mistWalls: number;
   groveTrees: number;
   extraPools: number;
   shelves: number;
@@ -32,41 +37,54 @@ export type DensityKnobs = {
 
 export const DENSITY: Record<DensityTier, DensityKnobs> = {
   desktop: {
-    grass: 68,
+    grass: 60,
     reeds: 26,
     dryRocks: 26,
-    wetRocks: 20,
-    shells: 54,
+    wetRocks: 18,
+    shells: 50,
     kelp: 22,
     driftwood: 13,
     spirals: 12,
     duneScrub: 14,
-    foam: 20,
-    haze: 8,
+    foam: 18,
+    haze: 6,
+    groveMist: 5,
+    mistWalls: 8,
     groveTrees: 6,
-    extraPools: 6,
+    extraPools: 4,
     shelves: 6,
     kelpLines: 5,
     extraGroveStrips: 2,
   },
   mobile: {
-    grass: 34,
-    reeds: 14,
-    dryRocks: 14,
-    wetRocks: 12,
-    shells: 26,
-    kelp: 12,
-    driftwood: 7,
-    spirals: 7,
-    duneScrub: 8,
-    foam: 10,
-    haze: 4,
+    grass: 26,
+    reeds: 10,
+    dryRocks: 10,
+    wetRocks: 10,
+    shells: 20,
+    kelp: 8,
+    driftwood: 6,
+    spirals: 6,
+    duneScrub: 6,
+    foam: 8,
+    haze: 3,
+    groveMist: 3,
+    mistWalls: 0,
     groveTrees: 5,
-    extraPools: 3,
+    extraPools: 2,
     shelves: 4,
     kelpLines: 3,
     extraGroveStrips: 2,
   },
+};
+
+/**
+ * Instanced pose cap (grass + rocks + trees + haze + pool discs…).
+ * Unique landforms / nest bowls sit outside this. Mobile is the iOS budget.
+ */
+export const INSTANCE_BUDGET: Record<DensityTier, number> = {
+  desktop: 560,
+  mobile: 280,
 };
 
 export function densityFor(mobile: boolean): DensityKnobs {
@@ -87,3 +105,26 @@ export const BAND = {
   waterlineInner: 15.2,
   waterlineOuter: 16.45,
 } as const;
+
+/** All instanced prop poses CoastalDress will submit (including pool/hollow discs). */
+export function countInstancedPoses(dress: WorldDress): number {
+  return (
+    dress.grass.length +
+    dress.reeds.length +
+    dress.dryRocks.length +
+    dress.wetRocks.length +
+    dress.shells.length +
+    dress.kelp.length +
+    dress.driftwood.length +
+    dress.trunks.length +
+    dress.crowns.length +
+    dress.canopies.length +
+    dress.scrub.length +
+    dress.spirals.length +
+    dress.foam.length +
+    dress.shelves.length +
+    dress.mistWalls.length +
+    dress.haze.length +
+    dress.tidePools.length * 4
+  );
+}

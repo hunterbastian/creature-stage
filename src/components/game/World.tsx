@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useMemo } from "react";
 import { Sky } from "@react-three/drei";
+import { atmosphereFor } from "@/lib/game/atmosphere";
 import { isCoarsePointer } from "@/lib/game/device";
 import { createIslandGeometry } from "@/lib/game/island-mesh";
 import { SHORE } from "@/lib/game/shore-look";
@@ -29,25 +30,29 @@ function IslandMesh({ coarse }: { coarse: boolean }) {
 
 export function World() {
   const coarse = useMemo(() => isCoarsePointer(), []);
+  const look = atmosphereFor(coarse);
   const shadowMap = coarse ? 512 : 1024;
+  const [sunX, sunY, sunZ] = look.sunPosition;
 
   return (
     <>
-      <color attach="background" args={["#a3b6b8"]} />
-      <fogExp2 attach="fog" args={["#c8d4cc", 0.017]} />
+      <color attach="background" args={[look.background]} />
+      <fog attach="fog" args={[look.fog.color, look.fog.near, look.fog.far]} />
       <Sky
-        sunPosition={[18, 9.5, 12]}
-        turbidity={6.5}
-        rayleigh={1.8}
-        mieCoefficient={0.0045}
-        mieDirectionalG={0.78}
+        sunPosition={look.sunPosition}
+        turbidity={look.turbidity}
+        rayleigh={look.rayleigh}
+        mieCoefficient={look.mieCoefficient}
+        mieDirectionalG={look.mieDirectionalG}
       />
-      <hemisphereLight args={["#d8e4ec", "#5a6a40", 0.88]} />
-      <ambientLight color="#e8dcc4" intensity={0.46} />
+      <hemisphereLight
+        args={[look.hemiSky, look.hemiGround, look.hemiIntensity]}
+      />
+      <ambientLight color={look.ambient} intensity={look.ambientIntensity} />
       <directionalLight
-        color="#ffd4a0"
-        position={[16, 15, 10]}
-        intensity={1.18}
+        color={look.key}
+        position={[sunX, sunY, sunZ]}
+        intensity={look.keyIntensity}
         castShadow
         shadow-mapSize-width={shadowMap}
         shadow-mapSize-height={shadowMap}
@@ -59,7 +64,11 @@ export function World() {
         shadow-camera-top={22}
         shadow-camera-bottom={-22}
       />
-      <directionalLight color="#8a9aa0" position={[-10, 7, -8]} intensity={0.28} />
+      <directionalLight
+        color={look.fill}
+        position={[-sunX * 0.55, 7, -sunZ * 0.55]}
+        intensity={look.fillIntensity}
+      />
 
       <ShoreWater coarse={coarse} />
       <IslandMesh coarse={coarse} />

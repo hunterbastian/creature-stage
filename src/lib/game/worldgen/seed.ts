@@ -18,6 +18,7 @@ import {
 } from "./place";
 import { createRng, saltSeed } from "./rng";
 import type { GroveSpec, PropPose, WorldDress } from "./types";
+import { GROVE_OVERLOOK, TIDE_SHELF, isGroveOverlook } from "./landmarks";
 
 function rng(salt: number): () => number {
   return createRng(saltSeed(WORLDGEN_SEED, salt));
@@ -157,6 +158,7 @@ function groveTrees(
       const x = Math.sin(angle) * radial;
       const z = Math.cos(angle) * radial;
       if (radial < BAND.groveInner || radial > BAND.groveOuter) continue;
+      if (isGroveOverlook(grove.salt) && radial > baseR + 0.08) continue;
       if (blocked(layout.tidePools, x, z, 2.7, 0.15)) continue;
       if (trunks.some((tree) => Math.hypot(tree.x - x, tree.z - z) < 0.82)) {
         continue;
@@ -227,6 +229,113 @@ function groveTrees(
   }
 
   return { trunks, crowns, canopies, scrub };
+}
+
+function overlookFurniture(): { dryRocks: PropPose[]; driftwood: PropPose[] } {
+  const sea = GROVE_OVERLOOK.yaw;
+  const sx = Math.sin(sea);
+  const sz = Math.cos(sea);
+  const px = GROVE_OVERLOOK.x + sx * 1.58;
+  const pz = GROVE_OVERLOOK.z + sz * 1.58;
+  return {
+    dryRocks: [
+      grounded(px, 0.28, pz, 0.16, sea, 0.08, 0.64, 0.44, 0.5),
+      grounded(
+        px + sz * 0.72,
+        0.16,
+        pz - sx * 0.72,
+        0.22,
+        sea + 0.55,
+        0.1,
+        0.34,
+        0.24,
+        0.3,
+      ),
+    ],
+    driftwood: [
+      grounded(
+        px - sz * 0.88,
+        0.07,
+        pz + sx * 0.88,
+        Math.PI / 2,
+        sea + 0.38,
+        0.1,
+        0.072,
+        0.54,
+        0.072,
+      ),
+    ],
+  };
+}
+
+function tideShelfRocks(): PropPose[] {
+  const sea = TIDE_SHELF.yaw;
+  const sx = Math.sin(sea + 0.4);
+  const sz = Math.cos(sea + 0.4);
+  return [
+    grounded(
+      TIDE_SHELF.x + sx * 1.85,
+      0.22,
+      TIDE_SHELF.z + sz * 1.85,
+      0.28,
+      sea,
+      0.12,
+      0.48,
+      0.28,
+      0.4,
+    ),
+    grounded(
+      TIDE_SHELF.x - sx * 1.55,
+      0.18,
+      TIDE_SHELF.z + sz * 0.4,
+      0.2,
+      sea + 1.1,
+      0.14,
+      0.36,
+      0.22,
+      0.32,
+    ),
+    grounded(
+      TIDE_SHELF.x + sz * 1.7,
+      0.14,
+      TIDE_SHELF.z - sx * 1.7,
+      0.24,
+      sea - 0.5,
+      0.1,
+      0.3,
+      0.18,
+      0.26,
+    ),
+  ];
+}
+
+function mistWalls(layout: WorldLayout, mobile: boolean): PropPose[] {
+  const knobs = densityFor(mobile);
+  if (knobs.mistWalls <= 0) return [];
+  const out: PropPose[] = [];
+  const groves = layout.groves;
+  for (let i = 0; i < groves.length && out.length < knobs.mistWalls; i += 1) {
+    const grove = groves[i];
+    const yaw = Math.atan2(grove.x, grove.z) + Math.PI / 2;
+    const wide = grove.salt === 1 ? 4.4 : 3.2;
+    out.push(
+      pose(grove.x, 0.95, grove.z, 0, yaw, 0, wide, 1.55, 1),
+    );
+  }
+  if (out.length < knobs.mistWalls) {
+    const yaw = TIDE_SHELF.yaw + Math.PI / 2;
+    out.push(
+      pose(TIDE_SHELF.x, 0.72, TIDE_SHELF.z, 0, yaw, 0, 3.6, 1.15, 1),
+    );
+  }
+  return out.slice(0, knobs.mistWalls);
+}
+
+function shelfFoam(): PropPose[] {
+  return [
+    pose(TIDE_SHELF.x + 0.4, 0.024, TIDE_SHELF.z + 1.6, 0, 0.4, 0, 1.35, 1, 0.7),
+    pose(14.1, 0.024, 3.9, 0, 1.1, 0, 1.05, 1, 0.55),
+  ];
 }
 
 function poolRocks(layout: WorldLayout, mobile: boolean): PropPose[] {
@@ -320,6 +429,7 @@ export function seedWorldDress(mobile: boolean): WorldDress {
   const layout = seedLayout(mobile);
   const trees = groveTrees(layout, layout.groves, !mobile);
   const dressed = nestDress();
+  const sit = overlookFurniture();
   const pools = layout.tidePools;
 
   const grass = scatter(
@@ -373,7 +483,7 @@ export function seedWorldDress(mobile: boolean): WorldDress {
       const s = 0.16 + rand() * 0.2;
       return grounded(x, s * 0.42, z, 0.18, rand() * Math.PI * 2, 0.1, s, s * 0.72, s * 0.88);
     },
-  ).concat(dressed.dryRocks);
+  ).concat(dressed.dryRocks).concat(sit.dryRocks);
 
   const wetRocks = scatter(
     knobs.wetRocks,
@@ -400,7 +510,8 @@ export function seedWorldDress(mobile: boolean): WorldDress {
     },
   )
     .concat(dressed.wetRocks)
-    .concat(poolRocks(layout, mobile));
+    .concat(poolRocks(layout, mobile))
+    .concat(tideShelfRocks());
 
   const shells = scatter(
     knobs.shells,
@@ -497,7 +608,7 @@ export function seedWorldDress(mobile: boolean): WorldDress {
         radius,
       );
     },
-  ).concat(dressed.driftwood);
+  ).concat(dressed.driftwood).concat(sit.driftwood);
 
   const spirals = scatter(
     knobs.spirals,
@@ -564,8 +675,9 @@ export function seedWorldDress(mobile: boolean): WorldDress {
     canopies: trees.canopies,
     scrub: trees.scrub.concat(duneScrub),
     spirals,
-    foam: foamPatches(layout, mobile),
+    foam: foamPatches(layout, mobile).concat(shelfFoam()),
     shelves,
+    mistWalls: mistWalls(layout, mobile),
     haze: layout.haze,
     tidePools: pools,
     clearings: layout.clearings,

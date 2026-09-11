@@ -87,6 +87,7 @@ export type WorldDress = {
   spirals: PropPose[];
   foam: PropPose[];
   shelves: PropPose[];
+  mistWalls: PropPose[];
   haze: HazeSpec[];
   tidePools: TidePoolSpec[];
   clearings: ClearingSpec[];

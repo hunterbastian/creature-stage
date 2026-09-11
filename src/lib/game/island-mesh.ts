@@ -1,8 +1,5 @@
 import { BufferAttribute, BufferGeometry, Color } from "three";
-import {
-  ISLAND_MESH_RADIUS,
-  surfaceHeight,
-} from "./collision";
+import { ISLAND_MESH_RADIUS, surfaceHeight } from "./collision";
 import { terrainColor } from "./shore-look";
 
 const scratch = new Color();

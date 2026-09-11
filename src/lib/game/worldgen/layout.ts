@@ -12,6 +12,12 @@ import type {
   ShoreSector,
   TidePoolSpec,
 } from "./types";
+import {
+  GROVE_OVERLOOK,
+  TIDE_SHELF,
+  TIDE_SHELF_SATELLITES,
+  type LandmarkPin,
+} from "./landmarks";
 
 export type WorldLayout = {
   tidePools: TidePoolSpec[];
@@ -21,6 +27,7 @@ export type WorldLayout = {
   haze: HazeSpec[];
   landforms: LandformSpec[];
   clearings: ClearingSpec[];
+  landmarks: readonly LandmarkPin[];
 };
 
 /**
@@ -28,11 +35,18 @@ export type WorldLayout = {
  * nest bowls so herds still have a clearing.
  */
 const BASE_TIDE_POOLS: TidePoolSpec[] = [
-  { x: 12.6, z: 3.4, sx: 1.75, sz: 1.05, yaw: 0.35 },
+  { x: TIDE_SHELF.x, z: TIDE_SHELF.z, sx: 1.75, sz: 1.05, yaw: TIDE_SHELF.yaw },
   { x: -11.4, z: 7.2, sx: 1.45, sz: 0.88, yaw: -0.4 },
   { x: 3.4, z: -2.8, sx: 1.45, sz: 0.62, yaw: 0.2 },
   { x: -4.6, z: 1.6, sx: 1.12, sz: 0.5, yaw: 0.55 },
   { x: 10.6, z: -10.1, sx: 1.55, sz: 0.82, yaw: 1.05 },
+  ...TIDE_SHELF_SATELLITES.map((pool) => ({
+    x: pool.x,
+    z: pool.z,
+    sx: pool.sx,
+    sz: pool.sz,
+    yaw: pool.yaw,
+  })),
 ];
 
 /**
@@ -111,6 +125,35 @@ function nestClearings(): ClearingSpec[] {
     { x: NEST_LAYOUT[1].x, z: NEST_LAYOUT[1].z, radius: 2.28, color: "#7a7358" },
     { x: NEST_LAYOUT[2].x, z: NEST_LAYOUT[2].z, radius: 2.16, color: "#6a6848" },
   ];
+}
+
+function groveMist(groves: GroveSpec[], mobile: boolean): HazeSpec[] {
+  const knobs = densityFor(mobile);
+  const out: HazeSpec[] = [];
+  for (const grove of groves.slice(0, knobs.groveMist)) {
+    out.push({
+      x: grove.x,
+      y: 0.52,
+      z: grove.z,
+      radius: 3.05 + (grove.salt === 1 ? 0.7 : 0),
+    });
+    if (!mobile || grove.salt === 1) {
+      out.push({
+        x: grove.x,
+        y: 1.08,
+        z: grove.z,
+        radius: 3.7 + (grove.salt === 1 ? 0.55 : 0),
+      });
+    }
+  }
+  const sea = GROVE_OVERLOOK.yaw;
+  out.push({
+    x: GROVE_OVERLOOK.x + Math.sin(sea) * 1.35,
+    y: 0.78,
+    z: GROVE_OVERLOOK.z + Math.cos(sea) * 1.35,
+    radius: 4.15,
+  });
+  return out;
 }
 
 function extraPools(mobile: boolean, base: TidePoolSpec[]): TidePoolSpec[] {
@@ -204,7 +247,7 @@ export function seedLayout(mobile: boolean): WorldLayout {
     .concat(extraGroveStrips(mobile));
 
   const tidePools = BASE_TIDE_POOLS.concat(extraPools(mobile, BASE_TIDE_POOLS));
-  const haze = BASE_HAZE.slice(0, knobs.haze);
+  const haze = BASE_HAZE.slice(0, knobs.haze).concat(groveMist(groves, mobile));
   const sectors = mobile
     ? SHORE_SECTORS.filter((_, index) => index % 2 === 0)
     : SHORE_SECTORS;
@@ -217,6 +260,7 @@ export function seedLayout(mobile: boolean): WorldLayout {
     haze,
     landforms: LANDFORMS,
     clearings: nestClearings(),
+    landmarks: [GROVE_OVERLOOK, TIDE_SHELF],
   };
   layoutCache.set(mobile, layout);
   return layout;
