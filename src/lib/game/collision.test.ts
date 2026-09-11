@@ -20,6 +20,7 @@ import {
   type PropCollider,
 } from "./collision";
 import { DENSITY, sampleGroundY, seedWorldDress } from "./worldgen";
+import { GROVE_OVERLOOK } from "./worldgen/landmarks";
 import {
   BEACH_INNER_RADIUS as CONST_BEACH,
   MAX_SIZE,
@@ -154,4 +155,16 @@ test("mobile density caps stay below desktop for iOS", () => {
   assert.ok(mobile.kelp.length <= desktop.kelp.length);
   assert.ok(mobile.canopies.length === 0);
   assert.ok(desktop.canopies.length > 0);
+});
+
+test("grove overlook is a real hill, not a painted disc", () => {
+  const peak = surfaceHeight(GROVE_OVERLOOK.x, GROVE_OVERLOOK.z);
+  const radius = Math.hypot(GROVE_OVERLOOK.x, GROVE_OVERLOOK.z);
+  const yaw = Math.atan2(GROVE_OVERLOOK.x, GROVE_OVERLOOK.z);
+  const opposite = surfaceHeight(
+    Math.sin(yaw + Math.PI) * radius,
+    Math.cos(yaw + Math.PI) * radius,
+  );
+  assert.ok(peak > opposite + 0.06);
+  assert.equal(sampleGroundY(GROVE_OVERLOOK.x, GROVE_OVERLOOK.z), peak);
 });

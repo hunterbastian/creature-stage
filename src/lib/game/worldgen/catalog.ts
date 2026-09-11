@@ -23,6 +23,7 @@ export const PROP_CATALOG = {
   foam: { band: "waterline", instance: true, shadows: false },
   shelves: { band: "shore", instance: true, shadows: true },
   haze: { band: "waterline", instance: true, shadows: false },
+  mistWalls: { band: "grove", instance: true, shadows: false },
   tidePools: { band: "shore", instance: true, shadows: false },
   clearings: { band: "meadow", instance: false, shadows: false },
   landforms: { band: "offshore", instance: false, shadows: true },

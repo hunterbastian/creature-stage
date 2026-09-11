@@ -10,6 +10,7 @@
  *   (kit meshes in `coastal-props.glb` stay unit-primitive aligned; radii
  *   come from pose scale, never mesh bounds)
  * - `SETTLE_*` / `GRAVITY` — stick uphill, fall off rims
+ * - Grove overlook lift — `overlookLift` in `worldgen/landmarks.ts`
  *
  * Shore-danger radii stay in `offshore.ts`. `SHORE_DANGER_RADIUS` equals
  * `BEACH_INNER_RADIUS` so leviathan aggro still reads raw xz radial, not
@@ -31,6 +32,7 @@ import {
   type TidePoolSpec,
   type WorldDress,
 } from "./world-dress";
+import { overlookLift } from "./worldgen/landmarks";
 
 export { BEACH_INNER_RADIUS };
 
@@ -185,7 +187,7 @@ function tideDip(x: number, z: number): number {
 export function surfaceHeight(x: number, z: number): number {
   const radius = Math.hypot(x, z);
   const hills = meadowUndulation(x, z) * meadowMask(radius);
-  return radialShelf(radius) + hills + tideDip(x, z);
+  return radialShelf(radius) + hills + tideDip(x, z) + overlookLift(x, z);
 }
 
 /** Footing for creatures: surface plus walkable nest bowls. */

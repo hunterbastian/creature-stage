@@ -19,7 +19,7 @@ import { WATERLINE_RADIUS } from "./collision";
 import { OFFSHORE_LANE_INNER, OCEAN_RADIUS } from "./offshore";
 
 export const SHORE = {
-  meadow: "#5f7a48",
+  meadow: "#678a52",
   drySand: "#c4b486",
   dampSand: "#9a8b68",
   /** Distinctly darker than dry sand so the waterline reads wet. */
